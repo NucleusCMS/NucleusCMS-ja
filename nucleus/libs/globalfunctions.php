@@ -169,6 +169,12 @@ $manager =& MANAGER::instance();
 //set_magic_quotes_runtime(0);
 if (version_compare(PHP_VERSION, '5.3.0', '<')) {
 	ini_set('magic_quotes_runtime', '0');
+} else {
+	if (!function_exists('set_magic_quotes_runtime'))
+	{
+		// This function was DEPRECATED in PHP 5.3.0, and REMOVED as of PHP 7.0.0.
+		function set_magic_quotes_runtime() { return FALSE; }
+	}
 }
 
 // Avoid notices
