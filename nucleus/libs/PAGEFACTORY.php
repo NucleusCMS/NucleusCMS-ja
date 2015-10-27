@@ -36,7 +36,7 @@ class PAGEFACTORY extends BaseActions {
 	 */
 	function __construct($blogid) {
 		// call constructor of superclass first
-		$this->BaseActions();
+		parent::__construct();
 
 		global $manager;
 		$this->blog =& $manager->getBlog($blogid);
