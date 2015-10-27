@@ -160,7 +160,7 @@ class COMMENT {
 	 * @param array $match
 	 * @return string
 	 */
-	function prepareBody_cb($match)
+	public static function prepareBody_cb($match)
 	{
 		if ( !preg_match('/^[a-z]+/i', $match[2], $protocol) )
 		{
