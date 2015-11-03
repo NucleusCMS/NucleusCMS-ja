@@ -848,7 +848,10 @@ function doInstall() {
 	if ($charset == 'ujis') {
 		updateConfig('Language',   'japanese-euc');
 	} else if ($charset == 'latin1' || (INSTALL_LANG == 'en')) {
-		updateConfig('Language',   'english');
+		if ($charset == 'utf8')
+			updateConfig('Language',   'english-utf8');
+		else
+			updateConfig('Language',   'english');
 	}
 
 	// 7. update GOD member
