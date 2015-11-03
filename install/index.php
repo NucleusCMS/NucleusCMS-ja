@@ -152,6 +152,7 @@ function showInstallForm() {
 	<html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8" />
+		<meta name="robots" content="noindex,nofollow,noarchive" />
 		<title><?php echo _TITLE; ?></title>
 		<style type="text/css"><!--
 			@import url('../nucleus/documentation/styles/manual.css');
@@ -994,6 +995,7 @@ function doInstall() {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="robots" content="noindex,nofollow,noarchive" />
 	<title><?php echo _TITLE; ?></title>
 	<style>@import url('../nucleus/styles/manual.css');</style>
 </head>
@@ -1340,6 +1342,7 @@ function _doError($msg) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="robots" content="noindex,nofollow,noarchive" />
 	<title><?php echo _TITLE; ?></title>
 	<style>@import url('../nucleus/styles/manual.css');</style>
 </head>
@@ -1369,6 +1372,7 @@ function showErrorMessages($errors) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="robots" content="noindex,nofollow,noarchive" />
 	<title><?php echo _TITLE; ?></title>
 	<style>@import url('../nucleus/styles/manual.css');</style>
 </head>
