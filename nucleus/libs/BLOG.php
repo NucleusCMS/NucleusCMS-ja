@@ -37,7 +37,7 @@ class BLOG {
 	 *
 	 * @param $id blogid
 	 */
-	function BLOG($id) {
+	function __construct($id) {
 		$this->blogid = intval($id);
 		$this->readSettings();
 
@@ -455,7 +455,7 @@ class BLOG {
 		{
 			// no query -> show everything
 			$extraquery = '';
-			$amountfound = $this->readLogAmount($template, $maxresults, $extraQuery, $query, 1, 1);
+			$amountfound = $this->readLogAmount($template, $maxresults, $extraquery, $query, 1, 1);
 		} else {
 
 			// add LIMIT to query (to split search results into pages)
@@ -723,7 +723,11 @@ class BLOG {
 								'currentcat' => $nocatselected 
 							));
 
-		$query = 'SELECT catid, cdesc as catdesc, cname as catname FROM '.sql_table('category').' WHERE cblog=' . $this->getID() . ' ORDER BY corder ASC,cname ASC';
+		$query = 'SELECT catid, cdesc as catdesc, cname as catname FROM '.sql_table('category').' WHERE cblog=' . $this->getID();
+		if (intval($CONF['DatabaseVersion']) >= 371)
+			$query .=  ' ORDER BY corder ASC,cname ASC';
+		else
+			$query .=  ' ORDER BY cname ASC';
 		$res = sql_query($query);
 
 
@@ -794,7 +798,7 @@ class BLOG {
 	  * ordered by  number, name, shortname or description
 	  * in ascending or descending order
 	  */
-	function showBlogList($template, $bnametype, $orderby, $direction) {
+	public static function showBlogList($template, $bnametype, $orderby, $direction) {
 		global $CONF, $manager;
 
 		switch ($orderby) {
@@ -1204,13 +1208,13 @@ class BLOG {
 	}
 
 	// returns true if there is a blog with the given shortname (static)
-	function exists($name) {
+	public static function exists($name) {
 		$r = sql_query('select * FROM '.sql_table('blog').' WHERE bshortname="'.sql_real_escape_string($name).'"');
 		return (sql_num_rows($r) != 0);
 	}
 
 	// returns true if there is a blog with the given ID (static)
-	function existsID($id) {
+	public static function existsID($id) {
 		$r = sql_query('select * FROM '.sql_table('blog').' WHERE bnumber='.intval($id));
 		return (sql_num_rows($r) != 0);
 	}

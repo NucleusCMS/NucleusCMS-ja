@@ -47,9 +47,11 @@ class SKINIMPORT {
 	/**
 	 * constructor initializes data structures
 	 */
-	function SKINIMPORT() {
+	function __construct() {
 		// disable magic_quotes_runtime if it's turned on
-		set_magic_quotes_runtime(0);
+		if (version_compare(PHP_VERSION, '5.3.0', '<')) {
+			set_magic_quotes_runtime(0);
+		}
 
 		// debugging mode?
 		$this->debug = 0;
@@ -433,7 +435,7 @@ class SKINIMPORT {
 	/**
 	 * Static method that looks for importable XML files in subdirs of the given dir
 	 */
-	function searchForCandidates($dir) {
+	public static function searchForCandidates($dir) {
 		$candidates = array();
 
 		$dirhandle = opendir($dir);
@@ -470,7 +472,7 @@ class SKINEXPORT {
 	/**
 	 * Constructor initializes data structures
 	 */
-	function SKINEXPORT() {
+	function __construct() {
 		// list of templateIDs to export
 		$this->templates = array();
 

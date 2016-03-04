@@ -37,9 +37,9 @@ class ACTIONS extends BaseActions {
 	/**
 	 * Constructor for a new ACTIONS object
 	 */
-	function ACTIONS($type) {
+	function __construct($type) {
 		// call constructor of superclass first
-		$this->BaseActions();
+		parent::__construct();
 
 		$this->skintype = $type;
 
@@ -278,8 +278,8 @@ class ACTIONS extends BaseActions {
 		global $CONF, $blog, $query, $amount;
 		// TODO: Move request uri to linkparams. this is ugly. sorry for that.
 		$startpos	= intval($startpos);		// will be 0 when empty.
-		$path		= $parsed['path'];
 		$parsed		= parse_url(serverVar('REQUEST_URI'));
+		$path		= (isset($parsed['path']) ? $parsed['path'] : '');
 		$parsed		= $parsed['query'];
 		$url			= '';
 
@@ -434,7 +434,7 @@ class ACTIONS extends BaseActions {
 	 * Code that opens a bookmarklet in an popup window
 	 */
 	function parse_addpopupcode() {
-		echo "if (event &amp;&amp; event.preventDefault) event.preventDefault();winbm=window.open(this.href,'nucleusbm','scrollbars=no,width=710,height=550,left=10,top=10,status=no,resizable=yes');winbm.focus();return false;";
+		echo "if (event &amp;&amp; event.preventDefault) event.preventDefault();winbm=window.open(this.href,'nucleusbm','scrollbars=yes,width=710,height=550,left=10,top=10,status=no,resizable=yes');winbm.focus();return false;";
 	}
 	
 	/**
@@ -465,16 +465,35 @@ class ACTIONS extends BaseActions {
 	function parse_archivedate($locale = '-def-') {
 		global $archive;
 
+		// get format
+		$args = func_get_args();
+
+		// FIXME: check valid locale name
+		//       PHP7.0RC7 (win) hangup when invalid strings
+		$pattern = '@^[0-9a-z\._\-]{2,}$@i';
 		if ($locale == '-def-')
-			setlocale(LC_TIME,$template['LOCALE']);
+		{
+			// FIXME: can not determin default LOCALE
+			global $manager, $currentTemplateName;
+			if (isset($currentTemplateName) && TEMPLATE::exists($currentTemplateName))
+			{
+				$template =& $manager->getTemplate($currentTemplateName);
+				if (isset($template['LOCALE']) && preg_match($pattern, $template['LOCALE']))
+					setlocale(LC_TIME, $template['LOCALE']);
+			}
+		}
 		else
-			setlocale(LC_TIME,$locale);
+		{
+			$locale = @trim($locale);
+			if ($locale && preg_match($pattern, $locale))
+				setlocale(LC_TIME,$locale);
+			else if (func_num_args() == 1 && strlen($locale)>0)
+				array_unshift ($args, ''); // move to date format
+		}
 
 		// get archive date
 		sscanf($archive,'%d-%d-%d',$y,$m,$d);
 
-		// get format
-		$args = func_get_args();
 		// format can be spread over multiple parameters
 		if (sizeof($args) > 1) {
 			// take away locale

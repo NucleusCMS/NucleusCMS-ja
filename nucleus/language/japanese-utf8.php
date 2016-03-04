@@ -17,6 +17,14 @@
 // Note for Japanese users
 // このファイルは Nucleus の UTF-8 版日本語ランゲージファイルです。
 
+
+/********************************************
+ *        Start New for 3.71                *
+ ********************************************/
+define('_ADMIN_SYSTEMOVERVIEW_DBANDVERSION',  'データベース と バージョン');
+define('_ADMIN_SYSTEMOVERVIEW_DBDRIVER',      'データベースのドライバ');
+define('_ADMIN_SYSTEMOVERVIEW_PHPANDDB',      'PHP と データベース');
+
 define('_TEAM_NO_SELECTABLE_MEMBERS',			'選択可能なメンバーはいません');
 
 define('_LISTS_FORM_SELECT_ALL_CATEGORY',	'すべてのカテゴリ');
@@ -283,7 +291,6 @@ define('_TEAM_ADD_NEWTEAMMEMBER',					'%s(ID=%d) を、ブログ "%s" のチー�
 
 // ADMIN.php systemoverview()
 define('_ADMIN_SYSTEMOVERVIEW_HEADING',				'システム環境一覧');
-define('_ADMIN_SYSTEMOVERVIEW_PHPANDMYSQL',			'PHP と MySQL');
 define('_ADMIN_SYSTEMOVERVIEW_VERSIONS',			'バージョン');
 define('_ADMIN_SYSTEMOVERVIEW_PHPVERSION',			'PHP のバージョン');
 define('_ADMIN_SYSTEMOVERVIEW_MYSQLVERSION',		'MySQL のバージョン');
@@ -295,7 +302,6 @@ define('_ADMIN_SYSTEMOVERVIEW_DISABLE',				'無効');
 define('_ADMIN_SYSTEMOVERVIEW_NUCLEUSSYSTEM',		'Nucleus のシステムについて');
 define('_ADMIN_SYSTEMOVERVIEW_NUCLEUSVERSION',		'Nucleus のバージョン');
 define('_ADMIN_SYSTEMOVERVIEW_NUCLEUSPATCHLEVEL',	'Nucleus のパッチレベル');
-define('_ADMIN_SYSTEMOVERVIEW_NUCLEUSSETTINGS',		'重要な設定');
 define('_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK',		'バージョンチェック');
 define('_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_TXT',	'より新しいバージョンのリリースが無いか、公式サイトでチェックできます: ');
 define('_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_URL',	'http://japan.nucleuscms.org/version.php?v=%d&amp;pl=%d');
@@ -797,8 +803,8 @@ define('_LIST_PLUGS_SUBS',					'登録済みイベント：');
 define('_LIST_PLUGS_UP',					'&uarr; 上へ');
 define('_LIST_PLUGS_DOWN',					'下へ &darr;');
 define('_LIST_PLUGS_UNINSTALL',				'アンインストール');
-define('_LIST_PLUGS_ADMIN',					'管理');
-define('_LIST_PLUGS_OPTIONS',				'オプション編集');
+define('_LIST_PLUGS_ADMIN',					'管理画面');
+define('_LIST_PLUGS_OPTIONS',				'オプション設定');
 
 // plugin option list
 define('_LISTS_VALUE',						'値(内容)');
@@ -1247,7 +1253,7 @@ define('_MEMBERS_EDIT',						'メンバーの編集');
 define('_MEMBERS_EDIT_BTN',					'設定の変更');
 define('_MEMBERS_BACKTOOVERVIEW',			'メンバーの一覧に戻る');
 define('_MEMBERS_DEFLANG',					'使用する言語');
-define('_MEMBERS_USESITELANG',				'- サイトの設定を使う -');
+define('_MEMBERS_USESITELANG',				'- グローバル設定を使う -');
 
 // List of blogs (TT = tooltip)
 define('_BLOGLIST_TT_VISIT',				'サイトを見る');
@@ -1289,8 +1295,8 @@ define('_ITEMLIST_YOUR',							'あなたのアイテム');
 // Comments
 define('_COMMENTS',									'コメント');
 define('_NOCOMMENTS',								'このアイテムへのコメントはありません');
-define('_COMMENTS_YOUR',							'あなたのコメント');
-define('_NOCOMMENTS_YOUR',							'あなたのコメントはありません');
+define('_COMMENTS_YOUR',							'コメント一覧');
+define('_NOCOMMENTS_YOUR',							'コメントはありません');
 
 // LISTS (general)
 define('_LISTS_NOMORE',								'何もありません');
@@ -1356,4 +1362,4 @@ define('_EDITC_NONMEMBER',							'非メンバー');
 define('_MOVE_TITLE',								'どのBlogに移動しますか？');
 define('_MOVE_BTN',									'アイテムを移動する');
 
-?>
+define('_MISSING_DB_ENCODING',						'データベースのエンコード設定が不正です。');

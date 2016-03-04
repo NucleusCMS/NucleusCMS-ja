@@ -22,6 +22,40 @@
  */
 
 /********************************************
+ *        Start New for 3.71                *
+ ********************************************/
+define('_ADMIN_SYSTEMOVERVIEW_DBANDVERSION',  'Database and Version');
+define('_ADMIN_SYSTEMOVERVIEW_DBDRIVER',      'Database Driver');
+define('_ADMIN_SYSTEMOVERVIEW_PHPANDDB',      'PHP and Database');
+
+define('_TEAM_NO_SELECTABLE_MEMBERS',			'team does not have selectable members');
+
+define('_LISTS_FORM_SELECT_ALL_CATEGORY',	'All categories');
+
+define('_LIST_BACK_TO',				'Back to %s');
+define('_LIST_COMMENT_LIST_FOR_BLOG',		'Blog comments list');
+define('_LIST_COMMENT_LIST_FOR_ITEM',		'Comments list of items');
+define('_LIST_COMMENT_VIEW_ITEM',			'Show item');
+define('_LISTS_VIEW',						'Show');
+
+define('_LISTS_ITEM_COUNT',	'Item count');
+define('_LISTS_ORDER',	'order');
+
+define('_EBLOG_CAT_ORDER',					"This is the order of the category.<br />\nInput value will be on the smaller in number (standard 100)");
+define('_EBLOG_CAT_ORDER_DESC2',			"Input value will be on the smaller in number (standard 100)");
+
+// category order changes (batch)
+define('_BATCH_CAT_CAHANGE_ORDER',	'change the order');
+define('_ERROR_CAHANGE_CATEGORY_ORDER',		  'You can not change the sort');
+define('_CAHANGE_CATEGORY_ORDER_TITLE',		  'Please specify the order of the category');
+define('_CAHANGE_CATEGORY_ORDER_CONFIRM_DESC',	'The order of the following categories will be changed at once.If it is good, please press the button.');
+define('_CAHANGE_CATEGORY_ORDER_BTN_TITLE',	  'Change the order');
+
+define('_ADD_DATEINPUTNOW',       'now');
+define('_ADD_DATEINPUTRESET',     'reset');
+
+
+/********************************************
  *        Start New for 3.6x                *
  ********************************************/
 define('_ERROR_USER_TOO_LONG', 'Please enter a name shorter than 40 characters.');
@@ -155,10 +189,10 @@ define('_BLOGCREATED_ADVANCEDWAY2',					"Method 2: Call the weblog from existing
 define('_BLOGCREATED_ADVANCEDWAY3',					"To finish the weblog creation process, simply please fill out the final URL for your weblog: (might be the same as another already existing weblog)");
 
 // Donate!
-define('_ADMINPAGEFOOT_OFFICIALURL',				'http://nucleuscms.org/');
-define('_ADMINPAGEFOOT_DONATEURL',					'http://nucleuscms.org/donate.php');
+define('_ADMINPAGEFOOT_OFFICIALURL',				'http://japan.nucleuscms.org/');
+define('_ADMINPAGEFOOT_DONATEURL',					'http://japan.nucleuscms.org/donate.php');
 define('_ADMINPAGEFOOT_DONATE',						'Donate!');
-define('_ADMINPAGEFOOT_COPYRIGHT',					'The Nucleus Group');
+define('_ADMINPAGEFOOT_COPYRIGHT',					'The Nucleus Group Japan');
 
 // Quick menu
 define('_QMENU_MANAGE_SYSTEM',						'System info');
@@ -261,7 +295,6 @@ define('_TEAM_ADD_NEWTEAMMEMBER',					'Added %s (ID=%d) to the team of blog "%s"
 
 // ADMIN.php systemoverview()
 define('_ADMIN_SYSTEMOVERVIEW_HEADING',				'System Overview');
-define('_ADMIN_SYSTEMOVERVIEW_PHPANDMYSQL',			'PHP and MySQL');
 define('_ADMIN_SYSTEMOVERVIEW_VERSIONS',			'Versions');
 define('_ADMIN_SYSTEMOVERVIEW_PHPVERSION',			'PHP version');
 define('_ADMIN_SYSTEMOVERVIEW_MYSQLVERSION',		'MySQL version');
@@ -273,10 +306,10 @@ define('_ADMIN_SYSTEMOVERVIEW_DISABLE',				'disabled');
 define('_ADMIN_SYSTEMOVERVIEW_NUCLEUSSYSTEM',		'Your Nucleus CMS System');
 define('_ADMIN_SYSTEMOVERVIEW_NUCLEUSVERSION',		'Nucleus CMS version');
 define('_ADMIN_SYSTEMOVERVIEW_NUCLEUSPATCHLEVEL',	'Nucleus CMS patch level');
-define('_ADMIN_SYSTEMOVERVIEW_NUCLEUSSETTINGS',		'Important settings');
 define('_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK',		'Check for a new version');
 define('_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_TXT',	'Check on nucleuscms.org if a new version is available: ');
-define('_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_URL',	'http://nucleuscms.org/version.php?v=%d&amp;pl=%d');
+define('_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_URL',	'http://japan.nucleuscms.org/version.php?v=%d&amp;pl=%d');
+//define('_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_URL',	'http://nucleuscms.org/version.php?v=%d&amp;pl=%d');
 define('_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_TITLE',	'Check for upgrade');
 define('_ADMIN_SYSTEMOVERVIEW_NOT_ADMIN',			"You haven't enough rights to see the system informations.");
 
@@ -1220,7 +1253,7 @@ define('_BLOGLIST_TT_ADD',							'Add a new item to this weblog');
 define('_BLOGLIST_EDIT',							'Edit/Delete Items');
 define('_BLOGLIST_TT_EDIT',							'');
 define('_BLOGLIST_BMLET',							'Bookmarklet');
-define('_BLOGLIST_TT_BMLET',						'');
+define('_BLOGLIST_TT_BMLET',						'Set bookmarklet');
 define('_BLOGLIST_SETTINGS',						'Settings');
 define('_BLOGLIST_TT_SETTINGS',						'Edit settings or manage team');
 define('_BLOGLIST_BANS',							'Bans');
@@ -1320,4 +1353,4 @@ define('_EDITC_NONMEMBER',							'non member');
 define('_MOVE_TITLE',								'Move to which blog?');
 define('_MOVE_BTN',									'Move Item');
 
-?>
+define('_MISSING_DB_ENCODING',						'Missing database encoding.');

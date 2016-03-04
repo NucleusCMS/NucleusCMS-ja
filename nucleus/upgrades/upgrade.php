@@ -12,13 +12,15 @@
 
 include('upgrade.functions.php');
 
+load_upgrade_lang();
+
 // check if logged in etc
 if (!$member->isLoggedIn()) {
 	upgrade_showLogin('upgrade.php?from=' . intGetVar('from'));
 }
 
 if (!$member->isAdmin()) {
-	upgrade_error('Super-admin（最高管理者）のみがアップグレードを実行できます。');
+	upgrade_error(_UPG_TEXT_ONLY_SUPER_ADMIN);
 }
 
 $from = intGetVar('from');
@@ -26,45 +28,39 @@ $from = intGetVar('from');
 upgrade_start();
 
 switch($from) {
-	case 200:
-		include('upgrade2.5.php');
-		upgrade_do250();
-	case 250:
-		include('upgrade3.0.php');
-		upgrade_do300();
 	case 300:
-		include('upgrade3.1.php');
+		include_once('upgrade3.1.php');
 		upgrade_do310();
 	case 310:
-		include('upgrade3.2.php');
+		include_once('upgrade3.2.php');
 		upgrade_do320();
 	case 320:
-		include('upgrade3.3.php');
+		include_once('upgrade3.3.php');
 		upgrade_do330();
 	case 330:
-		include('upgrade3.31.php');
+		include_once('upgrade3.31.php');
 		upgrade_do331();
 	case 331:
-		include('upgrade3.4.php');
+		include_once('upgrade3.4.php');
 		upgrade_do340();
 	case 340:
-		include('upgrade3.5.php');
+		include_once('upgrade3.5.php');
 		upgrade_do350();
 	case 350:
-		include('upgrade3.6.php');
+		include_once('upgrade3.6.php');
 		upgrade_do360();
 	case 360:
-		include('upgrade3.7.php');
+		include_once('upgrade3.7.php');
 		upgrade_do370();
 	case 370:
-		include('upgrade3.7.php');
+		include_once('upgrade3.7.php');
 		upgrade_do371();
 		break;
 	default:
-		echo "<li>エラー! 実行すべきアップデートはありません</li>";
+		echo "<li>" . _UPG_TEXT_ERROR_NO_UPDATES_TO_EXECUTE . "</li>";
 		break;
 }
 
 
 
-upgrade_end('アップグレード成功');
+upgrade_end( _UPG_TEXT_UPGRADE_COMPLETED );

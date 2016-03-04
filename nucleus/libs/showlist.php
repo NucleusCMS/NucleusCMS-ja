@@ -185,7 +185,10 @@ function listplug_table_pluginlist($template, $type) {
 				echo '</td>';
 				echo '<td>';
 				if($plug->getDescription()!=='Undefined')
-					echo encode_desc($plug->getDescription()).'<br /><br />';
+				{
+					$raw_desc = $plug->getDescription();
+					echo encode_desc($raw_desc).'<br /><br />';
+				}
 					if (sizeof($plug->getEventList()) > 0) {
 						echo _LIST_PLUGS_SUBS,'<br />',hsc(implode($plug->getEventList(),', '));
 						// check the database to see if it is up-to-date and notice the user if not
@@ -368,6 +371,9 @@ function listplug_table_itemlist($template, $type) {
 			echo "<td  style=\"white-space:nowrap\" $cssclass>";
 			echo "<a href='index.php?action=itemedit&amp;itemid={$current->inumber}'>" . _LISTS_EDIT . "</a>";
 			echo " / <a href='index.php?action=itemmove&amp;itemid={$current->inumber}'>" . _LISTS_MOVE . "</a>";
+			global $manager;
+			$cloneUrl = $manager->addTicketToUrl($CONF['AdminURL'] . 'index.php?action=itemclone&itemid='.$current->inumber);
+			echo " / <a href='{$cloneUrl}'>" . _LISTS_CLONE . "</a>";
 			echo " / <a href='index.php?action=itemdelete&amp;itemid={$current->inumber}'>" . _LISTS_DELETE . "</a><br />";
 			printf(" <a href='%s' target=\"_blank\">%s</a><br />", createItemLink($current->inumber), _LISTS_VIEW);
 			// evaluate amount of comments for the item
@@ -432,7 +438,7 @@ function listplug_table_commentlist($template, $type) {
                                 echo '<br />';
                                 echo hsc($current->cmail);
                         }
-			if ($current->cemail != '') {
+			if (isset($current->cemail) && ($current->cemail != '')) {
                                 echo '<br />';
                                 echo hsc($current->cemail);
                         }
@@ -654,17 +660,18 @@ function listplug_table_skinlist($template, $type) {
 			echo '<td class="availableSkinTypes">' . hsc($current->sddesc);
 				// show list of defined parts
 				$r = sql_query('SELECT stype FROM '.sql_table('skin').' WHERE sdesc='.$current->sdnumber
-					. ' ORDER BY '
-					." stype NOT IN ('index', 'item', 'error', 'search', 'archive', 'archivelist', 'imagepopup', 'member') ASC , "
-					.' stype ASC' );
+					. " ORDER BY FIELD(stype, 'member', 'imagepopup', 'error', 'search', 'archive', 'archivelist', 'item', 'index') DESC, stype ASC"
+					 );
 				$types = array();
 				while ($o = sql_fetch_object($r))
 					array_push($types,$o->stype);
 				if (sizeof($types) > 0) {
 					$friendlyNames = SKIN::getFriendlyNames();
-					for ($i=0;$i<sizeof($types);$i++) {
+					$skinNames = array('index', 'item', 'archivelist', 'archive', 'search', 'error', 'member', 'imagepopup');
+					$total = sizeof($types);
+					for ($i=0;$i<$total;$i++) {
 						$type = $types[$i];
-						if (in_array($type, array('index', 'item', 'archivelist', 'archive', 'search', 'error', 'member', 'imagepopup'))) {
+						if (in_array($type, $skinNames)) {
 							$types[$i] = '<li>' . helpHtml('skinpart'.$type) . ' <a href="index.php?action=skinedittype&amp;skinid='.$current->sdnumber.'&amp;type='.$type.'" tabindex="'.$template['tabindex'].'">' . hsc($friendlyNames[$type]) . "</a></li>";
 						} else {
 							$types[$i] = '<li>' . helpHtml('skinpartspecial') . ' <a href="index.php?action=skinedittype&amp;skinid='.$current->sdnumber.'&amp;type='.$type.'" tabindex="'.$template['tabindex'].'">' . hsc($friendlyNames[$type]) . "</a></li>";

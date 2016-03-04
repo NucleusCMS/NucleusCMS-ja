@@ -24,7 +24,31 @@
 	-- Start Of Configurable Part --
 */
 
-include('./install_lang_japanese.php');
+global $lang;
+if (isset($_POST['lang']))
+	$lang = strtolower( $_POST['lang'] );
+else if (isset($_GET['lang']))
+	$lang = strtolower( $_GET['lang'] );
+if ($lang != 'ja')
+{
+	if (($lang == '') && in_array('ja',explode(',', @strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']))))
+		 $lang = 'ja';
+		else
+		 $lang = 'en';
+}
+
+if (file_exists('install_lang_english.php') &&
+	( ($lang == '') || ($lang != 'ja') )
+   )
+{
+	define('INSTALL_LANG' , 'en');
+	include('./install_lang_english.php');
+}
+else
+{
+	define('INSTALL_LANG' , 'ja');
+	include('./install_lang_japanese.php');
+}
 
 // array with names of plugins to install. Plugin files must be present in the nucleus/plugin/
 // directory.
@@ -53,10 +77,12 @@ $aConfSkinsToImport = array(
 */
 
 // don't give warnings for uninitialized vars
-error_reporting(E_ERROR | E_WARNING | E_PARSE);
+error_reporting(E_ALL);
 
 // make sure there's no unnecessary escaping:
-set_magic_quotes_runtime(0);
+if (version_compare(PHP_VERSION, '5.3.0', '<')) {
+    set_magic_quotes_runtime(0);
+}
 
 // if there are some plugins or skins to import, do not include vars
 // in globalfunctions.php again... so set a flag
@@ -72,6 +98,9 @@ switch(postVar('charset'))
 	case 'ujis':
 		$charset = 'EUC-JP';
 		break;
+	case 'latin1':
+		$charset = 'ISO-8859-1';
+		break;
 	case 'utf8':
 	default:
 		$charset = 'UTF-8';
@@ -79,13 +108,19 @@ switch(postVar('charset'))
 define('_CHARSET', $charset);
 
 // include core classes that are needed for login & plugin handling
-include_once('../nucleus/libs/mysql.php');
+if (!function_exists('mysql_query')) include_once('../nucleus/libs/mysql.php'); // For PHP 7
+else define('_EXT_MYSQL_EMULATE' , 0);
+
 // added for 3.5 sql_* wrapper
 global $MYSQL_HANDLER;
 //set the handler if different from mysql (or mysqli)
 //$MYSQL_HANDLER = array('pdo','mysql');
 if (!isset($MYSQL_HANDLER)) {
-	$MYSQL_HANDLER = array('mysql','');
+	if (extension_loaded('mysql') || extension_loaded('mysqli')) {
+		$MYSQL_HANDLER = array('mysql','');
+	} else {
+		$MYSQL_HANDLER = array('pdo','mysql');
+	}
 }
 include_once('../nucleus/libs/sql/'.$MYSQL_HANDLER[0].'.php');
 // end new for 3.5 sql_* wrapper
@@ -108,6 +143,9 @@ exit;
  * Show the form for the installation settings
  */
 function showInstallForm() {
+	global $lang;
+
+
 	// 0. pre check if all necessary files exist
 	doCheckFiles();
 
@@ -116,6 +154,7 @@ function showInstallForm() {
 	<html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8" />
+		<meta name="robots" content="noindex,nofollow,noarchive" />
 		<title><?php echo _TITLE; ?></title>
 		<style type="text/css"><!--
 			@import url('../nucleus/documentation/styles/manual.css');
@@ -136,12 +175,45 @@ function showInstallForm() {
 	</head>
 	<body>
 		<div style="text-align:center"><img src="../nucleus/styles/logo.gif" alt="<?php echo _ALT_NUCLEUS_CMS_LOGO; ?>" /></div> <!-- Nucleus logo -->
-		<form method="post" action="index.php">
+		<form method="post" action="index.php<?php echo "?lang=$lang";?>">
 		
 		<h1><?php echo _HEADER1; ?></h1>
 		
 		<?php echo _TEXT1; ?>
-		
+
+		<!-- select lang -->
+		<h1><?php echo _HEADER_LANG_SELECT ?></h1>
+
+		<?php echo _TEXT_LANG_SELECT1_1; ?>
+
+		<?php
+
+			$s = '';
+			$input_lang = strtolower((isset($_GET['lang']) ? strval($_GET['lang']) : $lang));
+			$items = array('ja'=>'Japanease : 日本語', 'en'=>'English : 英語');
+			foreach($items as $k=>$v)
+			{
+				$s2 = (($input_lang == $k) ? ' selected="selected"' : '');
+				$s .= sprintf("\t<option value=\"%s\"%s>%s</option>\n",
+					  $k , $s2  , htmlspecialchars($v));
+			}
+
+		?>
+		<fieldset>
+			<legend><?php echo _TEXT_LANG_SELECT1_1_TAB_HEAD; ?></legend>
+			<table>
+				<tr>
+					<td><?php echo _TEXT_LANG_SELECT1_1_TAB_FIELD1; ?></td>
+					<td>
+						<select name="lang" tabindex="10000" onChange="location.href='index.php?lang='+this.value;">
+						<?php echo $s; ?>
+						</select>
+					</td>
+				</tr>
+			</table>
+		</fieldset>
+
+		<!-- select charset  -->
 		<h1><?php echo _HEADER1_2 ?></h1>
 		
 		<?php echo _TEXT1_2; ?>
@@ -152,9 +224,14 @@ function showInstallForm() {
 				<tr>
 					<td><?php echo _TEXT1_2_TAB_FIELD1; ?></td>
 					<td>
-						<select name="charset" tabindex="10000">
+						<select name="charset" tabindex="10001">
 							<option value="utf8" selected="selected">UTF-8</option>
-							<option value="ujis" >EUC-JP</option>
+						  <?php
+						  if ($input_lang == 'ja')
+							  echo "\r<option value=\"ujis\" >EUC-JP</option>\n";
+						  else
+							  echo "\t<option value=\"latin1\" >ISO-8859-1</option>\n";
+						  ?>
 						</select>
 					</td>
 				</tr>
@@ -231,7 +308,7 @@ function showInstallForm() {
 	}
 
 	// tell people how they can have their config file filled out automatically
-	if (@file_exists('../config.php') && @!is_writable('../config.php')) {
+	if (@is_file('../config.php') && @!is_writable('../config.php')) {
 ?>
 
 		<h1><?php echo _HEADER3; ?></h1>
@@ -476,6 +553,7 @@ function tableName($unPrefixed) {
  */
 function doInstall() {
 	global $mysql_usePrefix, $mysql_prefix;
+	global $lang;
 
 	// 0. put all POST-vars into vars
 	$mysql_host		= postVar('mySQL_host');
@@ -531,17 +609,26 @@ function doInstall() {
 	if (function_exists('date_default_timezone_set')){
 		 @date_default_timezone_set((function_exists('date_default_timezone_get')) ? @date_default_timezone_get() : 'UTC');
 	}
-	
-	if ($charset == 'ujis') {
-		if(!defined('_CHARSET')) define('_CHARSET', 'EUC-JP');
-		$config_sitename = mb_convert_encoding($config_sitename, _CHARSET, 'UTF-8');
-		$user_realname  = mb_convert_encoding($user_realname, _CHARSET, 'UTF-8');
-		$blog_name	  = mb_convert_encoding($blog_name, _CHARSET, 'UTF-8');
-	} else {
-		if(!defined('_CHARSET')) define('_CHARSET', 'UTF-8');
+
+	switch (strtolower($charset)) {
+		case 'latin1':
+			if(!defined('_CHARSET'))
+				define('_CHARSET', 'ISO-8859-1');
+			break;
+		case 'ujis':
+			if(!defined('_CHARSET'))
+				define('_CHARSET', 'EUC-JP');
+			$config_sitename = mb_convert_encoding($config_sitename, _CHARSET, 'UTF-8');
+			$user_realname  = mb_convert_encoding($user_realname, _CHARSET, 'UTF-8');
+			$blog_name	  = mb_convert_encoding($blog_name, _CHARSET, 'UTF-8');
+			break;
+		case 'utf8':
+		default:
+			if(!defined('_CHARSET'))
+				define('_CHARSET', 'UTF-8');
+			break;
 	}
-	
-	
+
 	// 1. check all the data
 	$errors = array();
 
@@ -611,10 +698,27 @@ function doInstall() {
 	if ($MYSQL_CONN == false) {
 		_doError(_ERROR15 . ': ' . sql_error() );
 	}
+	
+	global $MYSQL_HANDLER , $SQL_DBH;
+	if ($MYSQL_HANDLER[0] == 'pdo')
+		$SQL_DBH = $MYSQL_CONN;
 
 	// 3. try to create database (if needed)
 	$mySqlVer = implode('.', array_map('intval', explode('.', sql_get_server_info())));
-	$collation = ($charset === 'utf8') ? 'utf8_general_ci' : 'ujis_japanese_ci';
+	switch(strtolower($charset))
+	{
+		case 'ujis':
+			$collation = 'ujis_japanese_ci';
+			break;
+		case 'latin1':
+			$collation = 'latin1_swedish_ci';
+			break;
+		case 'utf8':
+		default:
+			$collation = 'utf8_general_ci';
+	}
+
+
 	if ($mysql_create == 1) {
 		$sql = 'CREATE DATABASE '
 			 .	 "`{$mysql_database}`";
@@ -746,6 +850,11 @@ function doInstall() {
 	updateConfig('SiteName',   $config_sitename);
 	if ($charset == 'ujis') {
 		updateConfig('Language',   'japanese-euc');
+	} else if ($charset == 'latin1' || (INSTALL_LANG == 'en')) {
+		if ($charset == 'utf8')
+			updateConfig('Language',   'english-utf8');
+		else
+			updateConfig('Language',   'english');
 	}
 
 	// 7. update GOD member
@@ -840,7 +949,7 @@ function doInstall() {
 	// 14. Write config file ourselves (if possible)
 	$bConfigWritten = 0;
 
-	if (@file_exists('../config.php') && is_writable('../config.php') && $fp = @fopen('../config.php', 'w') ) {
+	if (@is_file('../config.php') && is_writable('../config.php') && $fp = @fopen('../config.php', 'w') ) {
 		$config_data = '<' . '?php' . "\n\n";
 		//$config_data .= "\n"; (extraneous, just added extra \n to previous line
 		$config_data .= "   // mySQL connection information\n";
@@ -872,7 +981,6 @@ function doInstall() {
 		$config_data .= "\n";
 		$config_data .= "   // include libs\n";
 		$config_data .= "   include(\$DIR_LIBS . 'globalfunctions.php');\n";
-		$config_data .= "?" . ">";
 
 		$result = @fputs($fp, $config_data, strlen($config_data) );
 		fclose($fp);
@@ -888,6 +996,7 @@ function doInstall() {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="robots" content="noindex,nofollow,noarchive" />
 	<title><?php echo _TITLE; ?></title>
 	<style>@import url('../nucleus/styles/manual.css');</style>
 </head>
@@ -969,6 +1078,7 @@ function doInstall() {
 		<li><?php echo _TEXT15_L1; ?></li>
 		<li><?php echo _TEXT15_L2; ?></li>
 		<li><?php echo _TEXT15_L3; ?></li>
+		<li><?php echo _TEXT15_L4; ?></li>
 		</ul>
 
 	<?php echo _TEXT16; ?>
@@ -1070,6 +1180,9 @@ function installCustomSkins(&$manager) {
 	foreach ($aConfSkinsToImport as $skinName) {
 		$importer->reset();
 		$skinFile = $DIR_SKINS . $skinName . '/skinbackup.xml';
+		$skinFile_en = $DIR_SKINS . $skinName . '/skinbackup-en.xml';
+		if ((INSTALL_LANG == 'en') && is_file($skinFile_en))
+			$skinFile = $skinFile_en;
 
 		if (!@file_exists($skinFile) ) {
 			array_push($aErrors, _ERROR23_1 . $skinFile . ' : ' . _ERROR23_2);
@@ -1230,6 +1343,7 @@ function _doError($msg) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="robots" content="noindex,nofollow,noarchive" />
 	<title><?php echo _TITLE; ?></title>
 	<style>@import url('../nucleus/styles/manual.css');</style>
 </head>
@@ -1259,6 +1373,7 @@ function showErrorMessages($errors) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="robots" content="noindex,nofollow,noarchive" />
 	<title><?php echo _TITLE; ?></title>
 	<style>@import url('../nucleus/styles/manual.css');</style>
 </head>

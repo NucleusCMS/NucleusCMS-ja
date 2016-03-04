@@ -20,7 +20,7 @@ class Backup
 	/**
 	 * Constructor
 	 */
-	function Backup()
+	function __construct()
 	{
 		// do nothing
 	}
@@ -154,7 +154,11 @@ class Backup
 		echo "DROP TABLE IF EXISTS $tablename;\n";
 		$result = sql_query("SHOW CREATE TABLE $tablename");
 		$create = sql_fetch_assoc($result);
-		echo $create['Create Table'];
+		$CreateTable = $create['Create Table'];
+		$CreateTable = preg_replace('@\s+COLLATE\s+([0-9a-zA-Z_]+)@',' COLLATE utf8_general_ci', $CreateTable);
+		$CreateTable = preg_replace('@CHARSET=([0-9a-zA-Z_]+)@','CHARSET=utf8', $CreateTable);
+		$CreateTable = preg_replace('@COLLATE=([0-9a-zA-Z_]+)@','COLLATE=utf8_general_ci', $CreateTable);
+		echo $CreateTable;
 		echo ";\n\n";
 	}
 
@@ -271,9 +275,10 @@ class Backup
 	
 		if (!file_exists($backup_file_tmpname))
 			return _BACKUP_RESTOR_UPLOAD_ERROR;
-	
-		if (!preg_match("/^(text\/[a-zA-Z]+)|(application\/(x\-)?gzip(\-compressed)?)|(application\/octet-stream)$/is", $backup_file_type) )
-			return _BACKUP_RESTOR_UPLOAD_NOCORRECTTYPE;
+		
+		if($backup_file_type==='application/download') $backup_file_type = 'application/octet-stream'; // For firefox
+		if (!preg_match('@^(text/[a-zA-Z]+)|(application/(x\-)?gzip(\-compressed)?)|(application/octet-stream)$@is', $backup_file_type) )
+			return _BACKUP_RESTOR_UPLOAD_NOCORRECTTYPE."({$backup_file_type})";
 	
 	
 		if (preg_match("/\.gz/is",$backup_file_name))
@@ -300,7 +305,11 @@ class Backup
 			else
 				$sql_query = fread(fopen($backup_file_tmpname, 'r'), $fsize);
 		}
-	
+
+		// remove utf-8 bom
+		if (substr($sql_query, 0, 3) == "\xEF\xBB\xBF")
+			$sql_query = (strlen($sql_query)>3 ? substr($sql_query, 3) : '');
+
 		// time to execute the query
 		$this->_execute_queries($sql_query);
 	}

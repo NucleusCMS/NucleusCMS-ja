@@ -23,11 +23,10 @@ $StartTime = $_SERVER['REQUEST_TIME_FLOAT'];
 
 if(ini_get('register_globals')) exit('Should be change off register_globals.');
 
-$CONF['debug'] = 0;
-if ($CONF['debug']) {
+if (isset($CONF['debug'])&&!empty($CONF['debug'])) {
 	error_reporting(E_ALL); // report all errors!
 } else {
-	if(!isset($CONF['UsingAdminArea'])||$CONF['UsingAdminArea']!=1)
+	if(!isset($CONF['UsingAdminArea'])||empty($CONF['UsingAdminArea']))
 		ini_set('display_errors','0');
 	if (!defined('E_DEPRECATED')) define('E_DEPRECATED', 8192);
 	error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
@@ -63,24 +62,11 @@ if (function_exists('date_default_timezone_set')) {
 		directory) are still on the server.
 */
 
-if (!isset($CONF['alertOnHeadersSent']) || (isset($CONF['alertOnHeadersSent'])&& $CONF['alertOnHeadersSent'] !== 0))
+if (!isset($CONF['alertOnHeadersSent']) || empty($CONF['alertOnHeadersSent']))
 {
 	$CONF['alertOnHeadersSent']  = 1;
 }
-$CONF['alertOnSecurityRisk'] = 1;
-/*$CONF['ItemURL']		   = $CONF['Self'];
-$CONF['ArchiveURL']		  = $CONF['Self'];
-$CONF['ArchiveListURL']	  = $CONF['Self'];
-$CONF['MemberURL']		   = $CONF['Self'];
-$CONF['SearchURL']		   = $CONF['Self'];
-$CONF['BlogURL']			 = $CONF['Self'];
-$CONF['CategoryURL']		 = $CONF['Self'];
-
-// switch URLMode back to normal when $CONF['Self'] ends in .php
-// this avoids urls like index.php/item/13/index.php/item/15
-if (!isset($CONF['URLMode']) || (($CONF['URLMode'] == 'pathinfo') && (substr($CONF['Self'], strlen($CONF['Self']) - 4) == '.php'))) {
-	$CONF['URLMode'] = 'normal';
-}*/
+if(!isset($CONF['alertOnSecurityRisk'])) $CONF['alertOnSecurityRisk'] = 1;
 
 /*
 	Set these to 1 to allow viewing of future items or draft items
@@ -149,7 +135,11 @@ if (!headers_sent() ) {
 }
 
 // include core classes that are needed for login & plugin handling
-include_once($DIR_LIBS . 'mysql.php');
+if (!function_exists('mysql_query'))
+	include_once($DIR_LIBS . 'mysql.php'); // For PHP 7
+else
+	define('_EXT_MYSQL_EMULATE' , 0);
+
 // added for 3.5 sql_* wrapper
 global $MYSQL_HANDLER;
 if (!isset($MYSQL_HANDLER))
@@ -254,6 +244,10 @@ default:
 
 // login/logout when required or renew cookies
 if ($action == 'login') {
+    if(!isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+        header("HTTP/1.0 404 Not Found");
+        exit;
+    }
 	// Form Authentication
 	$login = postVar('login');
 	$pw = postVar('password');
@@ -366,14 +360,29 @@ $language = getLanguageName();
 # important note that '\' must be matched with '\\\\' in preg* expressions
 include_once($DIR_LANG . str_replace(array('\\','/'), '', $language) . '.php');
 
+	if ((!defined('_ADMIN_SYSTEMOVERVIEW_DBANDVERSION'))
+		 && (defined('_CHARSET') && (strtoupper(_CHARSET) == 'UTF-8')))
+	{
+		// load undefined constant
+		if ((stripos($language, 'english')===false) && (stripos($language, 'japan')===false))
+		{
+			if (@is_file($DIR_LANG . 'english-utf8' . '.php'))
+			{
+				// load default lang
+				ob_start();
+				@include_once($DIR_LANG . 'english-utf8' . '.php');
+				ob_end_clean();
+			}
+		}
+	}
+
+
 // check if valid charset
 if (!encoding_check(false, false, _CHARSET)) {
 	foreach(array($_GET, $_POST) as $input) {
 		array_walk($input, 'encoding_check');
 	}
 }
-
-sql_set_charset(_CHARSET);
 
 /*
 	Backed out for now: See http://forum.nucleuscms.org/viewtopic.php?t=3684 for details
@@ -561,7 +570,8 @@ function intCookieVar($name) {
   * returns the currently used version (100 = 1.00, 101 = 1.01, etc...)
   */
 function getNucleusVersion() {
-	return 371;
+	global $nucleus;
+	return preg_replace('@[^0-9]@','',$nucleus['version']);
 }
 
 /**
@@ -580,16 +590,44 @@ function getNucleusPatchLevel() {
  * e.g. 3.41 or 3.41/02
  */
 function getLatestVersion() {
+	global $CONF , $admin;
+
 	if (!function_exists('curl_init')) return false;
+
+	// response version text ,  last request time
+	foreach(array('LatestVerText','LatestVerReqTime') as $key)
+	if (!array_key_exists($key,$CONF))
+	{
+		// `name`  varchar(20)
+		$query = sprintf("INSERT INTO %s (name,value) VALUES ('%s', '')", sql_table('config'), sql_real_escape_string($key));
+		sql_query($query);
+		$CONF[$key] = '';
+	}
+
+	$t = (!empty($CONF['LatestVerReqTime']) ? intval($CONF['LatestVerReqTime']):0);
+	$l_ver = (!empty($CONF['LatestVerText']) ? $CONF['LatestVerText']:'');
+	$elapsed_time = time()-$t;
+	// cache 180 minutes ,
+	if ($t>0 && ($elapsed_time > -60) && ($elapsed_time<60*180))
+	{
+		return $l_ver;
+	}
+
 	$crl = curl_init();
 	$timeout = 5;
-	curl_setopt ($crl, CURLOPT_URL,'http://nucleuscms.org/version_check.php');
+	curl_setopt ($crl, CURLOPT_URL,'http://japan.nucleuscms.org/version_check.php');
 	curl_setopt ($crl, CURLOPT_RETURNTRANSFER, 1);
 	curl_setopt ($crl, CURLOPT_CONNECTTIMEOUT, $timeout);
 	$ret = curl_exec($crl);
 	curl_close($crl);
-	return $ret;
 
+	if (empty($ret))
+		$ret = '';
+
+	$admin->updateConfig('LatestVerText', $ret);
+	$admin->updateConfig('LatestVerReqTime', strval(time()) );
+
+	return $ret;
 }
 
 /**
@@ -643,7 +681,9 @@ function sendContentType($contenttype, $pagetype = '', $charset = _CHARSET) {
 			'charset'		=> &$charset,
 			'pageType'		=>  $pagetype
 		);
-		$manager->notify('PreSendContentType', $param);
+
+		if (!function_exists('sql_connected') || sql_connected())
+			$manager->notify('PreSendContentType', $param);
 
 		// strip strange characters
 		$contenttype = preg_replace('|[^a-z0-9-+./]|i', '', $contenttype);
@@ -889,8 +929,8 @@ function selector() {
 		else                              $catextra = '';
 
 		// get previous itemid and title
-		$param = array(sql_table('item'), mysqldate($timestamp), "{$blogid}{$catextra}");
-		$query = vsprintf("SELECT inumber, ititle FROM %s WHERE itime<%s AND idraft=0 AND iblog='%s' ORDER BY itime DESC LIMIT 1", $param);
+		$param = array(sql_table('item'), mysqldate($timestamp), $blogid, $catextra);
+		$query = vsprintf("SELECT inumber, ititle FROM %s WHERE itime<%s AND idraft=0 AND iblog='%s' %s ORDER BY itime DESC LIMIT 1", $param);
 		$res = sql_query($query);
 
 		$obj = sql_fetch_object($res);
@@ -901,8 +941,8 @@ function selector() {
 		}
 
 		// get next itemid and title
-		$param = array(sql_table('item'),mysqldate($timestamp),mysqldate($b->getCorrectTime()),"{$blogid}{$catextra}");
-		$query = vsprintf("SELECT inumber, ititle FROM %s WHERE itime>%s AND itime <= %s AND idraft=0 AND iblog='%s' ORDER BY itime ASC LIMIT 1", $param);
+		$param = array(sql_table('item'),mysqldate($timestamp),mysqldate($b->getCorrectTime()),$blogid,$catextra);
+		$query = vsprintf("SELECT inumber, ititle FROM %s WHERE itime>%s AND itime <= %s AND idraft=0 AND iblog='%s' %s ORDER BY itime ASC LIMIT 1", $param);
 		$res = sql_query($query);
 
 		$obj = sql_fetch_object($res);
@@ -1162,7 +1202,8 @@ function getConfig() {
 	$res = sql_query($query);
 
 	while ($obj = sql_fetch_object($res) ) {
-		$CONF[$obj->name] = $obj->value;
+		if(!isset($CONF[$obj->name]))
+			$CONF[$obj->name] = $obj->value;
 	}
 }
 
@@ -1352,7 +1393,26 @@ function helpHtml($id) {
 
 function helplink($id) {
 	global $CONF;
-	return '<a href="' . $CONF['AdminURL'] . 'documentation/help.html#'. $id . '" onclick="if (event &amp;&amp; event.preventDefault) event.preventDefault(); return help(this.href);">';
+
+	$doc_root = get_help_root_url();
+
+	return '<a href="' . $doc_root . 'help.html#'. $id . '" onclick="if (event &amp;&amp; event.preventDefault) event.preventDefault(); return help(this.href);">';
+}
+
+function get_help_root_url() {
+	global $CONF, $DIR_NUCLEUS;
+
+	static $doc_root = null;
+	if ($doc_root === null)
+	{
+		$doc_root = $CONF['AdminURL'] . 'documentation/';
+		$lang = getLanguageName();
+		if (@stripos($lang , 'japan') === false)
+			if (is_dir($DIR_NUCLEUS . 'documentation/en'))
+				$doc_root .= 'en/';
+
+	}
+	return $doc_root;
 }
 
 function getMailFooter() {
@@ -1665,6 +1725,34 @@ function passVar($key, $value) {
 	?><input type="hidden" name="<?php echo hsc($key)?>" value="<?php echo hsc(undoMagic($value) )?>" /><?php
 }
 
+/**
+ * checkVars()
+ * 
+ * @param	string	$variables
+ * @return	void
+ */
+function checkVars()
+{
+	$variables = array('nucleus', 'CONF', 'DIR_LIBS',
+		'MYSQL_HOST', 'MYSQL_USER', 'MYSQL_PASSWORD', 'MYSQL_DATABASE',
+		'DIR_LOCALES', 'DIR_PLUGINS',
+		'GLOBALS', 'argv', 'argc', '_GET', '_POST', '_COOKIE', '_ENV', '_SESSION', '_SERVER', '_FILES');
+	
+	foreach ( $variables as $variable )
+	{
+		if ( isset($_GET[$variable])
+		  || isset($_POST[$variable])
+		  || isset($_COOKIE[$variable])
+		  || isset($_ENV[$variable])
+		  || (isset($_SESSION[$variable]) && session_id()!=='')
+		  || isset($_FILES[$variable]) )
+		{
+			die('Sorry. An error occurred.');
+		}
+	}
+	return;
+}
+
 /*
 	Date format functions (to be used from [%date(..)%] skinvars
 */
@@ -1939,6 +2027,23 @@ function ticketForPlugin(){
 			
 			# important note that '\' must be matched with '\\\\' in preg* expressions
 			include_once($DIR_LANG . preg_replace('#[\\\\|/]#', '', $language) . '.php');
+
+			if ((!defined('_ADMIN_SYSTEMOVERVIEW_DBANDVERSION'))
+				 && (defined('_CHARSET') && (strtoupper(_CHARSET) == 'UTF-8')))
+			{
+				// load undefined constant
+				if ((stripos($language, 'english')===false) && (stripos($language, 'japan')===false))
+				{
+					if (@is_file($DIR_LANG . 'english-utf8' . '.php'))
+					{
+						// load default lang
+						ob_start();
+						@include_once($DIR_LANG . 'english-utf8' . '.php');
+						ob_end_clean();
+					}
+				}
+			}
+
 			include_once($DIR_LIBS . 'PLUGINADMIN.php');
 		}
 		
@@ -2254,7 +2359,7 @@ function getBookmarklet($blogid) {
 	$document = 'document';
 	$bookmarkletline = "javascript:Q='';x=".$document.";y=window;if(x.selection){Q=x.selection.createRange().text;}else if(y.getSelection){Q=y.getSelection();}else if(x.getSelection){Q=x.getSelection();}wingm=window.open('";
 	$bookmarkletline .= $CONF['AdminURL'] . "bookmarklet.php?blogid=$blogid";
-	$bookmarkletline .="&logtext='+escape(Q)+'&loglink='+encodeURIComponent(x.location.href)+'&loglinktitle='+escape(x.title),'nucleusbm','toolbar=no,scrollbars=no,width=600,height=550,left=10,top=10,status=no,resizable=yes');wingm.focus();";
+	$bookmarkletline .="&logtext='+escape(Q)+'&loglink='+encodeURIComponent(x.location.href)+'&loglinktitle='+escape(x.title),'nucleusbm','toolbar=no,scrollbars=yes,width=600,height=550,left=10,top=10,status=no,resizable=yes');wingm.focus();";
 
 	return $bookmarkletline;
 }
@@ -2332,10 +2437,15 @@ function strftimejp($format,$timestamp = ''){
 
 function hsc($string, $flags=ENT_QUOTES, $encoding='')
 {
+// *
+// if error occured , this function returns empty string.
+// wrong  encode  makes allow xss
+// do not use ENT_IGNORE:ENT_IGNORE flag makes allow xss 
+// *
 	if($encoding==='')
 	{
 		if(defined('_CHARSET')) $encoding = _CHARSET;
-		else                    $encoding = 'utf8';
+		else                    $encoding = 'utf-8';
 	}
 	if(version_compare(PHP_VERSION, '5.2.3', '>='))
 		return htmlspecialchars($string, $flags, $encoding, false);

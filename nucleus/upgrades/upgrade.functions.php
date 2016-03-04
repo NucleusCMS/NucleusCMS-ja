@@ -19,53 +19,44 @@
 
 	include('../../config.php');
 
-	// sql_table function did not exists in nucleus <= 2.0
-	if (!function_exists('sql_table'))
-	{
-		function sql_table($name) {
-			return 'nucleus_' . $name;
+	function load_upgrade_lang() {
+		$_ = getLanguageName();
+		$langNames[] = stripos($_,'japan')!==false ? 'japanese' : $_;
+		$langNames[] = 'english';
+		foreach($langNames as $langName) {
+			$lang_path = dirname(__FILE__) . "/upgrade_lang_{$langName}.php";
+			if(is_file($lang_path)) break;
+			else $lang_path = false;
 		}
-	}
-
-	//intGetVar did not exist in very early versions
-	if (!function_exists('intGetVar')) {
-		function intGetVar($name) {
-			if (defined($_GET)) {
-				return intval($_GET[$name]);
-			} else {
-				global $HTTP_GET_VARS;
-				return intval($HTTP_GET_VARS[$name]);
-			}
-		}
+		if($lang_path) include_once($lang_path);
 	}
 
 	function upgrade_checkinstall($version) {
 		$installed = 0;
-		$tbl_config = sql_table('config');
-
 		switch($version) {
 			case '200':
-				$query = 'SELECT sdincpref FROM '.sql_table('skin_desc').' LIMIT 1';
+				$query = sprintf('SELECT sdincpref FROM %s LIMIT 1', sql_table('skin_desc'));
 				$minrows = -1;
 				break;
 			// dev only (v2.2)
 			case '220':
-				$query = 'SELECT oid FROM '.sql_table('plugin_option_desc').' LIMIT 1';
+				$query = sprintf('SELECT oid FROM %s LIMIT 1', sql_table('plugin_option_desc'));
 				$minrows = -1;
 				break;
 			// v2.5 beta
 			case '240':
-				$query = 'SELECT bincludesearch FROM ' . sql_table('blog') . ' LIMIT 1';
+				$query = sprintf('SELECT bincludesearch FROM %s LIMIT 1', sql_table('blog'));
 				$minrows = -1;
 				break;
 			default:
-				$query = sprintf("SELECT * FROM %s WHERE name='DatabaseVersion' and value>=%s LIMIT 1", $tbl_config, intval($version));
+				$query = sprintf("SELECT * FROM %s WHERE name='DatabaseVersion' and value>=%s LIMIT 1", sql_table('config'), intval($version));
 				$minrows = 1;
 				break;
 		}
 		
-		$res = mysql_query($query);
-		$installed = ($res != 0) && (mysql_num_rows($res) >= $minrows);
+		$res = sql_query($query);
+		if (($res) && (sql_num_rows($res) >= $minrows))
+			$installed = true;
 		
 		return $installed;
 	}
@@ -83,19 +74,19 @@
 	function upgrade_showLogin($type) {
 		upgrade_head();
 	?>
-		<h1>まずはログインして下さい</h1>
-		<p>下記の情報を入力して下さい:</p>
+		<h1><?php echo _UPG_TEXT_PLEASE_LOGIN;  ?></h1>
+		<p><?php echo _UPG_TEXT_ENTER_YOUR_DATA;  ?>:</p>
 
 		<form method="post" action="<?php echo $type?>">
 
 			<ul>
-				<li>名前: <input name="login" /></li>
-				<li>パスワード <input name="password" type="password" /></li>
+				<li><?php echo _UPG_TEXT_NAME; ?>: <input name="login" /></li>
+				<li><?php echo _UPG_TEXT_PASSWORD; ?> <input name="password" type="password" /></li>
 			</ul>
 
 			<p>
 				<input name="action" value="login" type="hidden" />
-				<input type="submit" value="ログイン" />
+				<input type="submit" value="<?php echo _UPG_TEXT_LOGIN; ?>" />
 			</p>
 
 		</form>
@@ -109,42 +100,30 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8" />
-	<title>Nucleus アップグレード</title>
-<?php if (file_exists("../styles/manual.css")) { ?>
-				<link rel="stylesheet" href="../styles/manual.css" type="text/css" />
-<?php }else{ ?>
-				<style type="text/css"><!--
-					.warning {
-						color: red;
-					}
-					.ok {
-						color: green;
-					}
-				--></style>
-<?php } ?>
-			</head>
-			<body>
-	<?php   }
+	<meta name="robots" content="noindex,nofollow,noarchive" />
+	<title><?php echo _UPG_TEXT_NUCLEUS_UPGRADE; ?></title>
+	<link rel="stylesheet" href="../styles/manual.css" type="text/css" />
+</head>
+<body>
+	<?php
+	}
 
 	function upgrade_foot() {
 	?>
-			</body>
-			</html>
-	<?php   }
+	</body>
+</html>
+	<?php
+	}
 
 	function upgrade_error($msg) {
 		upgrade_head();
-		?>
-		<h1>エラー!</h1>
 
-		<p>メッセージは以下の通り:</p>
+		echo "\n<h1>" . _UPG_TEXT_ERROR_FAILED . "</h1>\n";
+		echo "\n<p>" . _UPG_TEXT_ERROR_WAS . ":</p>\n";
+		echo sprintf("<blockquote><div>%s</div></blockquote>" , $msg);
 
-		<blockquote><div>
-		<?php echo $msg?>
-		</div></blockquote>
+		echo sprintf('<p><a href="index.php" onclick="history.back();">%s</a></p>' , _UPG_TEXT_BACK);
 
-		<p><a href="index.php" onclick="history.back();">戻る</a></p>
-		<?php
 		upgrade_foot();
 		exit;
 	}
@@ -155,27 +134,22 @@
 		$upgrade_failures = 0;
 
 		upgrade_head();
-		?>
-		<h1>アップグレードの実行</h1>
-		<ul>
-		<?php   }
+
+		echo "<h1>" . _UPG_TEXT_EXECUTING_UPGRADES . "</h1>\n<ul>\n";
+    }
 
 	function upgrade_end($msg = "") {
 		global $upgrade_failures;
 		$from = intGetVar('from');
 		if ($upgrade_failures > 0)
-			$msg = "いくつかのデータベース操作に失敗しました。もし以前にこのアップグレードスクリプトを実行していたのであれば、問題ないと思われます。";
+			$msg = _UPG_TEXT_QUERIES_HAVE_FAILED_01;
 
-		?>
-		</ul>
+		echo "</ul>\n";
+		echo "<h1>" . _UPG_TEXT_UPGRADE_COMPLETED_TITLE . "</h1>\n";
+		echo "<p>" . $msg . "</p>\n";
 
-		<h1>アップグレード完了!</h1>
+		echo sprintf("<p>" . _UPG_TEXT_BACK_TO_OVERVIEW . "</p>\n", "index.php?from=" . $from);
 
-		<p><?php echo $msg?></p>
-
-		<p><a href="index.php?from=<?php echo $from; ?>">アップグレード最初のページ</a>にもどる</p>
-
-		<?php
 		upgrade_foot();
 		exit;
 	}
@@ -190,13 +164,13 @@
 		global $upgrade_failures;
 
 		echo "<li>$friendly ... ";
-		$res = mysql_query($query);
+		$res = sql_query($query);
 		if (!$res) {
-			echo "<span style='color:red'>失敗</span>\n";
-			echo "<blockquote>失敗の理由: " . mysql_error() . " </blockquote>";
+			echo '<span style="color:red">' . _UPG_TEXT_FAILURE . "</span>\n";
+			echo "<blockquote>" . _UPG_TEXT_REASON_FOR_FAILURE . ": " . sql_error() . " </blockquote>";
 			$upgrade_failures++;
 		} else {
-			echo "<span style='color:green'>成功!</span><br />\n";
+			echo '<span style="color:green">' . _UPG_TEXT_SUCCESS . "</span><br />\n";
 		}
 		echo "</li>";
 		return $res;
@@ -210,9 +184,9 @@
 	  */
 	function update_version($version) {
 		global $upgrade_failures;
-		$message='Updating DatabaseVersion in config table to '.$version;
+		$message = "Updating DatabaseVersion in config table to {$version}";
 		if(0==$upgrade_failures){
-			$query = 'UPDATE ' . sql_table('config') . ' set value=\''.$version.'\' where name=\'DatabaseVersion\'';
+			$query = sprintf("UPDATE %s set value='%s' where name='DatabaseVersion'", sql_table('config'), $version);
 			upgrade_query($message, $query);
 		}else
 			echo '<li>'.$message.' ... <span class="warning">NOT EXECUTED</span>\n<blockquote>Errors occurred during upgrade process.</blockquote>';
@@ -228,9 +202,8 @@
 		// get info for indices from database
 
 		$aIndices = array();
-		$query = 'show index from ' . sql_table($table);
-		$res = mysql_query($query);
-		while ($o = mysql_fetch_object($res)) {
+		$res = sql_query( sprintf('show index from %s', sql_table($table)) );
+		while ($o = sql_fetch_object($res)) {
 			if (!$aIndices[$o->Key_name]) {
 				$aIndices[$o->Key_name] = array();
 			}
@@ -256,23 +229,21 @@
 	  * @return true if table exists, false otherwise.
 	  */
 	function upgrade_checkIfTableExists($table){
-		$query = 'SHOW TABLES LIKE \''.sql_table($table).'\'';
-		$res = mysql_query($query);
-		return ($res != 0) && (mysql_num_rows($res) == 1);
+		$res = sql_query( sprntf("SHOW TABLES LIKE '%s'", sql_table($table)) );
+		return ($res != 0) && (sql_num_rows($res) == 1);
 	}
 
 	/**
 	  * Checks to see if a given configuration value exists
 	  *
-	  * @param $value
+	  * @param $name
 	  *	 Config value to check for existance of.
 	  *	 Paramater must be MySQL escaped
 	  * @return true if configuration value exists, false otherwise.
 	  */
-	function upgrade_checkIfCVExists($value){
-		$query = 'SELECT name from '.sql_table('config').' WHERE name = \''.$value.'\'';
-		$res = mysql_query($query);
-		return ($res != 0) && (mysql_num_rows($res) == 1);
+	function upgrade_checkIfCVExists($name){
+		$res = sql_query( sprintf("SELECT name from %s WHERE name='%s'", sql_table('config'), $name) );
+		return ($res != 0) && (sql_num_rows($res) == 1);
 	}
 
 	/**
@@ -286,8 +257,6 @@
 	  * @return true if column exists, false otherwise.
 	  */
 	function upgrade_checkIfColumnExists($table, $col){
-		$query = 'DESC `'.sql_table($table).'` `'.$col.'`';
-		$res = mysql_query($query);
-		return ($res != 0) && (mysql_num_rows($res) == 1);
+		$res = sql_query( sprintf('DESC `%s` `%s`', sql_table($table), $col) );
+		return ($res != 0) && (sql_num_rows($res) == 1);
 	}
-?>

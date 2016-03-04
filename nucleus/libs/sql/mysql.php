@@ -63,17 +63,27 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc'))
 		if(substr(PHP_OS,0,3)==='WIN' && $MYSQL_HOST==='localhost')
 			$MYSQL_HOST = '127.0.0.1';
 		$MYSQL_CONN = @mysql_connect($MYSQL_HOST, $MYSQL_USER, $MYSQL_PASSWORD) or startUpError('<p>Could not connect to MySQL database.</p>', 'Connect Error');
-		sql_select_db($MYSQL_DATABASE,$MYSQL_CONN) or startUpError('<p>Could not select database: ' . mysql_error() . '</p>', 'Connect Error');
+		if (!sql_select_db($MYSQL_DATABASE,$MYSQL_CONN)) {
+			@mysql_close($MYSQL_CONN);
+			$MYSQL_CONN = NULL;
+			startUpError('<p>Could not select database: ' . mysql_error() . '</p>', 'Connect Error');
+		}
 
 		if (defined('_CHARSET')){
-			$charset  = _CHARSET;
+			$charset  = get_mysql_charset_from_php_charset(_CHARSET);
 		}else{
 			$query = sprintf("SELECT * FROM %s WHERE name='Language'", sql_table('config'));
 			$res = sql_query($query);
 			if(!$res) exit('Language name fetch error');
 			$obj = sql_fetch_object($res);
-			$CONF['Language'] = $obj->value;
-			$charset = get_charname_from_langname($CONF['Language']);
+			$Language = $obj->value;
+			$charset = get_charname_from_langname($Language);
+			$charsetOfDB = getCharSetFromDB(sql_table('config'),'name');
+			if($charset !== $charsetOfDB) {
+				global $CONF;
+				$CONF['adminAlert'] = '_MISSING_DB_ENCODING';
+				$charset = $charsetOfDB;
+			}
 		}
 		sql_set_charset($charset);
 		
@@ -85,16 +95,29 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc'))
 	  */
 	function sql_disconnect($conn = false) {
 		global $MYSQL_CONN;
-		if (!$conn) $conn = $MYSQL_CONN;
-		@mysql_close($conn);
+		if ($conn) {
+			@mysql_close($conn);
+		} else if ($MYSQL_CONN) {
+			@mysql_close($MYSQL_CONN);
+			$MYSQL_CONN = NULL;
+		}
 	}
 	
 	function sql_close($conn = false) {
 		global $MYSQL_CONN;
-		if (!$conn) $conn = $MYSQL_CONN;
-		@mysql_close($conn);
+		if ($conn) {
+			@mysql_close($conn);
+		} else if ($MYSQL_CONN) {
+			@mysql_close($MYSQL_CONN);
+			$MYSQL_CONN = NULL;
+		}
 	}
-	
+
+	function sql_connected() {
+		global $MYSQL_CONN;
+		return $MYSQL_CONN ? true : false;
+	}
+
 	/**
 	  * executes an SQL query
 	  */
@@ -351,12 +374,7 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc'))
 	 * NOTE:	iso-8859-x,windows-125x if _CHARSET is unset.
 	 */
 	function sql_set_charset($charset) {
-		switch(strtolower($charset))
-		{
-			case 'utf-8'     : $charset='utf8'; break;
-			case 'euc-jp'    : $charset='ujis'; break;
-			case 'iso-8859-1': $charset='latin1'; break;
-		}
+		$charset = get_mysql_charset_from_php_charset($charset);
 		$mySqlVer = implode('.', array_map('intval', explode('.', sql_get_server_info())));
 		if (version_compare($mySqlVer, '4.1.0', '>=')) {
 			if(defined('_CHARSET')) $_CHARSET = strtolower(_CHARSET);
@@ -372,7 +390,19 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc'))
 			elseif($charset==='ujis' && $_CHARSET==='euc-jp')
 				$res = sql_query("SET NAMES 'ujis'");
 		}
-		return $res;
+		return isset($res) ? $res : false;
+	}
+
+	function get_mysql_charset_from_php_charset($charset = 'utf-8')
+	{
+		switch(strtolower($charset))
+		{
+			case 'utf-8'        : $charset='utf8'; break;
+			case 'euc-jp'       : $charset='ujis'; break;
+			case 'iso-8859-1'   : $charset='latin1'; break;
+			case 'windows-1250' : $charset='cp1250'; break; // cp1250_general_ci
+		}
+		return $charset;
 	}
 	
 	function get_charname_from_langname($language_name='english-utf8')
@@ -433,4 +463,17 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc'))
 		}
 		return $charset_name;
 	}
+	
+    function getCharSetFromDB($tableName,$columnName) {
+    	$collation = getCollationFromDB($tableName,$columnName);
+    	if(strpos($collation,'_')===false) $charset = $collation;
+    	else list($charset,$dummy) = explode('_', $collation, 2);
+    	return $charset;
+    }
+	
+    function getCollationFromDB($tableName,$columnName) {
+        $columns = sql_query("SHOW FULL COLUMNS FROM `{$tableName}` LIKE '{$columnName}'");
+        $column = sql_fetch_object($columns);
+        return isset($column->Collation) ? $column->Collation : false;
+    }
 }

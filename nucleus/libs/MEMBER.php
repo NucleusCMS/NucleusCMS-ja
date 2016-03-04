@@ -35,7 +35,7 @@ class MEMBER {
 	/**
 	 * Constructor for a member object
 	 */
-	function MEMBER() {
+	function __construct() {
 		global $DIR_LIBS;
 		include_once("{$DIR_LIBS}phpass.class.inc.php");
 		$this->hasher = new PasswordHash();
@@ -46,7 +46,7 @@ class MEMBER {
 	 *
 	 * @static
 	 */
-	function &createFromName($displayname) {
+	public static function &createFromName($displayname) {
 		$mem = new MEMBER();
 		$mem->readFromName($displayname);
 		return $mem;
@@ -57,7 +57,7 @@ class MEMBER {
 	 *
 	 * @static
 	 */
-	function &createFromID($id) {
+	public static function &createFromID($id) {
 		$mem = new MEMBER();
 		$mem->readFromID($id);
 		return $mem;
@@ -625,7 +625,7 @@ class MEMBER {
 	 *
 	 * @static
 	 */
-	function exists($name) {
+	public static function exists($name) {
 		$r = sql_query('select * FROM '.sql_table('member')." WHERE mname='".sql_real_escape_string($name)."'");
 		return (sql_num_rows($r) != 0);
 	}
@@ -635,7 +635,7 @@ class MEMBER {
 	 *
 	 * @static
 	 */
-	function existsID($id) {
+	public static function existsID($id) {
 		$r = sql_query('select * FROM '.sql_table('member')." WHERE mnumber='".intval($id)."'");
 		return (sql_num_rows($r) != 0);
 	}
@@ -658,7 +658,7 @@ class MEMBER {
 	 *
 	 * @static
 	 */
-	function create($name, $realname, $password, $email, $url, $admin, $canlogin, $notes) {
+	public static function create($name, $realname, $password, $email, $url, $admin, $canlogin, $notes) {
 		if (!isValidMailAddress($email))
 		{
 			return _ERROR_BADMAILADDRESS;
@@ -679,8 +679,10 @@ class MEMBER {
 		{
 			return _ERROR_PASSWORDMISSING;
 		}
-		else $this->setPassword($password);
-		
+
+		$obj = new MEMBER();
+		$obj->setPassword($password);
+
 		// begin if: sometimes user didn't prefix the URL with http:// or https://, this cause a malformed URL. Let's fix it.
 		if (!preg_match('#^https?://#', $url) )
 		{
@@ -689,7 +691,7 @@ class MEMBER {
 		
 		$name = sql_real_escape_string($name);
 		$realname = sql_real_escape_string($realname);
-		$password = sql_real_escape_string($this->getPassword());
+		$password = sql_real_escape_string($obj->getPassword());
 		$email = sql_real_escape_string($email);
 		$url = sql_real_escape_string($url);
 		$admin = intval($admin);
@@ -715,7 +717,7 @@ class MEMBER {
 	 *
 	 * @author karma
 	 */
-	function getActivationInfo($key)
+	public static function getActivationInfo($key)
 	{
 		$query = 'SELECT * FROM ' . sql_table('activation') . ' WHERE vkey=\'' . sql_real_escape_string($key). '\'';
 		$res = sql_query($query);
@@ -790,7 +792,7 @@ class MEMBER {
 	 * there have been successfully filled out.
 	 * @author dekarma
 	 */
-	function activate($key)
+	public static function activate($key)
 	{
 		// get activate info
 		$info = MEMBER::getActivationInfo($key);
@@ -829,8 +831,10 @@ class MEMBER {
 	 *
 	 * @author dekarma
 	 */
-	function cleanupActivationTable()
+	public static function cleanupActivationTable()
 	{
+		global $CONF, $DIR_LIBS;
+
 		$actdays = 2;
 		if (isset($CONF['ActivationDays']) && intval($CONF['ActivationDays']) > 0) {
 		    $actdays = intval($CONF['ActivationDays']);

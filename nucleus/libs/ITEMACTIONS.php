@@ -35,9 +35,9 @@ class ITEMACTIONS extends BaseActions {
 	// true when comments need to be displayed
 	var $showComments;
 
-	function ITEMACTIONS(&$blog) {
+	function __construct(&$blog) {
 		// call constructor of superclass first
-		$this->BaseActions();
+		parent::__construct();
 
 		// extra parameters for created links
 		global $catid;
@@ -510,7 +510,7 @@ class ITEMACTIONS extends BaseActions {
 	  * Parse templatevar editpopupcode
 	  */
 	function parse_editpopupcode() {
-		echo "if (event &amp;&amp; event.preventDefault) event.preventDefault();winbm=window.open(this.href,'nucleusbm','scrollbars=no,width=710,height=550,left=10,top=10,status=no,resizable=yes');winbm.focus();return false;";
+		echo "if (event &amp;&amp; event.preventDefault) event.preventDefault();winbm=window.open(this.href,'nucleusbm','scrollbars=yes,width=710,height=550,left=10,top=10,status=no,resizable=yes');winbm.focus();return false;";
 	}
 
 	// helper functions
@@ -527,7 +527,8 @@ class ITEMACTIONS extends BaseActions {
 		$actions->setHighlight($this->strHighlight);
 		$actions->setCurrentItem($this->currentItem);
 		//$actions->setParser($parser);
-		$parser->parse($actions->highlight($data));
+		$p_data = $actions->highlight($data);
+		$parser->parse($p_data);
 	}
 
 	/*

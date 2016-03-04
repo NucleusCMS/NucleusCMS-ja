@@ -13,7 +13,7 @@
 function upgrade_do371() {
 
 	if (upgrade_checkinstall(371))
-		return 'インストール済みです';
+		return _UPG_TEXT_ALREADY_INSTALLED;
 	
 	$query = sprintf("ALTER TABLE `%s`
 					ADD `corder` int(11)     NOT NULL default '100',
@@ -22,6 +22,12 @@ function upgrade_do371() {
 
 	upgrade_query('Altering ' . sql_table('category') . ' table', $query);
 
+	// create AdminCSS setting
+	if (!upgrade_checkIfCVExists('AdminCSS')) {
+		$query = sprintf("INSERT INTO %s VALUES ('AdminCSS','contemporary_jp')", sql_table('config'));
+		upgrade_query('Creating AdminCSS config value',$query);  
+	}
+	
 	// 3.70 -> 3.71
 	// update database version
 	update_version('371');
@@ -30,7 +36,7 @@ function upgrade_do371() {
 function upgrade_do370() {
 
 	if (upgrade_checkinstall(370))
-		return 'インストール済みです';
+		return _UPG_TEXT_ALREADY_INSTALLED;
 	
 	// changing the blog table to lengthen bnotify field 
 	$query = sprintf("ALTER TABLE `%s`

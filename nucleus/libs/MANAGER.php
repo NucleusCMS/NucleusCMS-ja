@@ -57,7 +57,7 @@ class MANAGER {
       * $manager =& MANAGER::instance(); to get a reference to the object
       * instead of a copy
       */
-    function &instance() {
+    public static function &instance() {
         static $instance = array();
         if (empty($instance)) {
             $instance[0] = new MANAGER();
@@ -68,7 +68,7 @@ class MANAGER {
     /**
       * The constructor of this class initializes the object caches
       */
-    function MANAGER() {
+    function __construct() {
         $this->items = array();
         $this->blogs = array();
         $this->plugins = array();
@@ -393,6 +393,7 @@ class MANAGER {
     {
         if (isset($this->cachedInfo['installedPlugins'])) return;
         
+        $this->cachedInfo['installedPlugins'] = array();
         $res = sql_query('SELECT pid, pfile FROM ' . sql_table('plugin'));
         $this->cachedInfo['installedPlugins'] = array();
         while ($o = sql_fetch_object($res))
@@ -446,6 +447,7 @@ class MANAGER {
         $this->subscriptions = array();
 
         $res = sql_query('SELECT p.pfile as pfile, e.event as event FROM '.sql_table('plugin_event').' as e, '.sql_table('plugin').' as p WHERE e.pid=p.pid ORDER BY p.porder ASC');
+		if ($res)
         while ($o = sql_fetch_object($res)) {
             $pluginName = $o->pfile;
             $eventName = $o->event;

@@ -13,23 +13,14 @@
 function upgrade_do340() {
 
 	if (upgrade_checkinstall(340))
-		return 'インストール済みです';
+		return _UPG_TEXT_ALREADY_INSTALLED;
 	
-	// Give user warning if they are running old version of PHP
-		if (phpversion() < '5') {
-				echo '警告： Nucleusを古いバージョンのPHPで運用しようとしています。次のリリースバージョンからはPHP4のサポートはしないので、はやくPHP5に切り替えましょう！';
-		}
-
 	// lengthen tpartname column of nucleus_template
-	$query = "  ALTER TABLE `" . sql_table('template') . "`
-					MODIFY `tpartname` varchar(64) NOT NULL default '' ;";
-
+	$query = sprintf(" ALTER TABLE `%s` MODIFY `tpartname` varchar(64) NOT NULL default ''", sql_table('template'));
 	upgrade_query('Altering ' . sql_table('template') . ' table', $query);
 	
 	// lengthen tdname column of nucleus_template_desc
-	$query = "  ALTER TABLE `" . sql_table('template_desc') . "`
-					MODIFY `tdname` varchar(64) NOT NULL default '' ;";
-
+	$query = sprintf(" ALTER TABLE `%s` MODIFY `tdname` varchar(64) NOT NULL default ''", sql_table('template_desc'));
 	upgrade_query('Altering ' . sql_table('template_desc') . ' table', $query);
 	
 	// create DebugVars setting
