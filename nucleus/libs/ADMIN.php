@@ -1404,8 +1404,7 @@ class ADMIN {
 				$CONF['AdminURL'] . 'index.php?action=itemlist&blogid=' . getBlogIDFromItemID($itemid)
 			);
 		} else {
-			// TODO: set start item correctly for itemlist
-			$this->action_itemedit();
+			redirect($CONF['AdminURL'].sprintf('index.php?action=itemedit&itemid=%s',$itemid));
 		}
 	}
 
