@@ -29,10 +29,8 @@
 
 	$language = str_replace( array('\\','/'), '', getLanguageName());
 	$langfile = $language.'.php';
-	if (file_exists($langfile))
-		include_once($langfile);
-	else
-		include_once('english.php');
+	if (is_file($langfile)) include_once($langfile);
+	else                    include_once('english.php');
 
 	/**
 	  * Create admin area
@@ -906,7 +904,7 @@
 			else
 				$name = $file;
 				
-			if ($fp = @fopen($directory . $file, 'r')) {
+			if ($content = file_get_contents($directory . $file)) {
 				header("Cache-Control: ");	// leave blank to avoid IE errors
 				header("Pragma: ");			// leave blank to avoid IE errors
 				header("Content-type: application/octet-stream");
@@ -914,8 +912,7 @@
 				header("Content-length: ".(string)(filesize($directory . $file)));
 				sleep(1);
 				
-				fpassthru($fp);
-				fclose($fp);
+				echo($content);
 			}
 			else
 			{
@@ -1083,7 +1080,7 @@
 		$directory = dirname(trim(requestVar('file')));
 		$directory = sfExpandDirectory ($directory);
 		
-		if (sfValidPath($directory) && file_exists($directory . $file) && 
+		if (sfValidPath($directory) && is_file($directory . $file) && 
 			is_file($directory . $file) && is_writable($directory . $file) && sfAllowEditing($file)) 
 		{
 			$relative = sfRelativePath ($directory);
