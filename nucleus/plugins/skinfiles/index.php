@@ -1090,7 +1090,10 @@
 			echo '<a href="' . hsc($editUrl) . '" title="Edit &laquo;' . $file . '&raquo;">';
 			echo '<img src="' . hsc(sfIcon($file)) . '" alt="" /> ' . $file . '</a></p>';
 
-			$content = implode('', file($directory . $file));
+			$content = file_get_contents($directory . $file);
+			if((strtolower(_CHARSET) != 'utf-8') && function_exists('mb_convert_encoding')) {
+				$content = mb_convert_encoding($content , _CHARSET , 'AUTO');
+			}
 
 			echo '<div class="dialogbox">';
 			echo '<form method="post" action="' . hsc($pluginUrl) . '">';
@@ -1134,15 +1137,13 @@
 					copy($directory . $file,  $directory . $skinfiles->getOption('backup_prefix') . $file);
 				}
 				$content = postVar('content');
+    			if((strtolower(_CHARSET) != 'utf-8') && function_exists('mb_convert_encoding')) {
+    				$_ = file_get_contents($directory . $file);
+    				$detectc = mb_detect_encoding($_, "auto");
+    				$content = mb_convert_encoding($content , $detectc, _CHARSET);
+    			}
 				$success = false;
-				
-				if ($fh = @fopen($directory . $file, 'wb')) { 
-					
-					if (@fwrite($fh, $content) !== false)
-						$success = true;
-						
-					@fclose($fh);
-				}
+				$success = file_put_contents($directory . $file, $content);
 				
 				if ($success)
 					echo "<p class='message'>" . _SKINFILES_ERR_EDIT_FILE4 . "&laquo;" . hsc($file) . "&raquo; " . _SKINFILES_ERR_EDIT_FILE5 . "</p>";
