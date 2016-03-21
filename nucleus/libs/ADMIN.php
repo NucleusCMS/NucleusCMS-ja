@@ -5624,6 +5624,8 @@ selector();
 	function pagehead($extrahead = '') {
 		global $member, $nucleus, $CONF, $manager, $action;
 
+		sendContentType('text/html');
+		
 		$param = array(
 			'extrahead'	=> &$extrahead,
 			'action'	=>  $this->action
