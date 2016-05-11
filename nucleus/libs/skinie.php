@@ -684,6 +684,11 @@ class SKINEXPORT {
 			header('Pragma: no-cache');
 		}
 
+
+        // sort by skinname , templatename
+        asort($this->skins);
+        asort($this->templates);
+
 		echo "<nucleusskin>\n";
 
 		// meta
