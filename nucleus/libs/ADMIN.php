@@ -5714,6 +5714,13 @@ selector();
 </div>
 <div id="container">
 <div id="content">
+<?php
+        $this->loginname();
+    }
+    
+    function loginname() {
+        global $member, $nucleus, $CONF;
+        ?>
 <div class="loginname">
 <?php
         if ($member->isLoggedIn())
@@ -5748,7 +5755,7 @@ selector();
      * @todo document this
      */
     function pagefoot() {
-        global $action, $member, $manager;
+        global $manager, $member;
 
         $param = array(
             'action' => $this->action
@@ -5769,7 +5776,13 @@ selector();
             </div>
 
             </div><!-- content -->
-
+        <?php
+        $this->quickmenu();
+    }
+    
+    function quickmenu() {
+        global $action, $member, $manager;
+        ?>
             <div id="quickmenu">
 
                 <?php               // ---- user settings ----
