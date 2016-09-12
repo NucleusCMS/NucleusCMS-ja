@@ -15,3 +15,16 @@
 *.PDF	 diff=astextplain
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
+
+# export-ignore
+.gitignore           export-ignore
+.gitattributes       export-ignore
+/build               export-ignore
+/nucleus/convert     export-ignore
+/nucleus/language/archive     export-ignore
+/extra               export-ignore
+/install             export-ignore
+/media               export-ignore
+/skins               export-ignore
+/robots.txt          export-ignore
+/config.php          export-ignore
