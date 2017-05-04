@@ -35,10 +35,10 @@ foreach($srcTableNames as $srcTableName) {
     sql_query("CREATE TABLE `{$tmpTableName}` LIKE `{$srcTableName}`");
     sql_query("ALTER TABLE `{$tmpTableName}` CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci");
     
+    sql_query('SET NAMES utf8');
     $rs = sql_query("SELECT * FROM `{$srcTableName}`");
     if(sql_num_rows($rs)==0) continue;
     
-    sql_query('SET NAMES utf8');
     while($row = sql_fetch_object($rs)) {
         $fields = array();
         $values = array();
