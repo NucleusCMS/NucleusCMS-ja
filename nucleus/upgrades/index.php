@@ -70,6 +70,7 @@ if (version_compare('5.0.0',phpversion(),'<=') && $from < 371) {
         $echo[] = $sth;
     }
 }
+$echo[] = sprintf("<p><a href=\"%s\">%s</a></p>", $CONF['AdminURL'], _UPG_TEXT_BACKHOME);
 
 upgrade_head();
 echo join("\n",$echo);
