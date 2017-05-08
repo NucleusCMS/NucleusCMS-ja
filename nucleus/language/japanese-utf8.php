@@ -18,10 +18,13 @@
 // このファイルは Nucleus の UTF-8 版日本語ランゲージファイルです。
 
 /********************************************
- *        Start New for 3.7?                *
+ *        Start New for 3.7x                *
  ********************************************/
 // Skin import/export
 define('_SKINIE_ERROR_FAILEDLOAD_XML',         'XMLのロードに失敗しました');
+
+define('_ADMIN_TEXT_UPGRADE_REQUIRED',       'データベースのアップグレードが必要です');
+define('_ADMIN_TEXT_CLICK_HERE_TO_UPGRADE',  'ここをクリックしてデータベースを Nucleus v%s 用にアップグレードします');
 
 /********************************************
  *        Start New for 3.71                *

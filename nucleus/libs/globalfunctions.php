@@ -14,7 +14,11 @@
 // needed if we include globalfunctions from install.php
 global $nucleus, $CONF, $DIR_LIBS, $DIR_LANG, $manager, $member;
 
-$nucleus['version'] = 'v3.71';
+define('NUCLEUS_VERSION' ,   '3.71');
+define('NUCLEUS_VERSION_ID' , 371);
+define('NUCLEUS_DATABASE_VERSION_ID' , 371);
+
+$nucleus['version'] = 'v' . NUCLEUS_VERSION;
 $nucleus['codename'] = '';
 
 if(!isset($_SERVER['REQUEST_TIME_FLOAT'])) $_SERVER['REQUEST_TIME_FLOAT'] = microtime(true);
@@ -570,8 +574,7 @@ function intCookieVar($name) {
   * returns the currently used version (100 = 1.00, 101 = 1.01, etc...)
   */
 function getNucleusVersion() {
-	global $nucleus;
-	return preg_replace('@[^0-9]@','',$nucleus['version']);
+	return NUCLEUS_VERSION_ID;
 }
 
 /**
@@ -966,6 +969,7 @@ function selector() {
 		$query = sprintf("SELECT UNIX_TIMESTAMP(itime) as result FROM %s WHERE idraft=0 AND iblog='%s' ORDER BY itime DESC LIMIT 1", sql_table('item'), $blogid_tmp);
 		$last_timestamp=quickQuery ($query);
 
+		$y = $m = $d = 0;
 		sscanf($archive, '%d-%d-%d', $y, $m, $d);
 
 		if ($d != 0) {
@@ -1537,6 +1541,7 @@ function createLink($type, $params) {
 
 	// ask plugins first
 	$created = false;
+	$url = '';
 
 	if ($usePathInfo) {
 		$param = array(

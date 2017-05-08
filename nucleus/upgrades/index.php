@@ -48,7 +48,7 @@ if (version_compare(phpversion(),'5.0.0','<'))
 elseif ($current == 371)
     $echo[] = '<p class="ok">' . _UPG_TEXT_NO_AUTOMATIC_UPGRADES_REQUIRED . '</p>';
 else {
-    $echo[] = sprintf('<p class="warning"><a href="upgrade.php?from=%s">%s</a></p>', $current , _UPG_TEXT_CLICK_HERE_TO_UPGRADE);
+    $echo[] = sprintf('<p class="warning"><a href="upgrade.php?from=%s&db_optimize=1">%s</a></p>', $current , _UPG_TEXT_CLICK_HERE_TO_UPGRADE);
     $echo[] = '<div class="note">';
     $echo[] = sprintf('<b>%s:</b> %s' , _UPG_TEXT_NOTE50_WARNING , _UPG_TEXT_NOTE50_MAKE_BACKUP);
     $echo[] = '</div>';
@@ -70,6 +70,7 @@ if (version_compare('5.0.0',phpversion(),'<=') && $from < 371) {
         $echo[] = $sth;
     }
 }
+$echo[] = sprintf("<p><a href=\"%s\">%s</a></p>", $CONF['AdminURL'], _UPG_TEXT_BACKHOME);
 
 upgrade_head();
 echo join("\n",$echo);
