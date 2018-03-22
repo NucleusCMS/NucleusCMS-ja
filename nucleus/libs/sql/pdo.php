@@ -202,6 +202,11 @@ if (!function_exists('sql_fetch_assoc'))
 			
 // <add for garble measure>
 			if (strpos($MYSQL_HANDLER[1], 'mysql') === 0) {
+				if ($SQL_DBH && version_compare( '5.2.0', PHP_VERSION, '>' ))
+				{
+					// HY000-2014 Cannot execute queries while other unbuffered queries are active.
+					$SQL_DBH->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+				}
 				if (defined('_CHARSET')){
 					$charset  = get_mysql_charset_from_php_charset(_CHARSET);
 				}else{
@@ -220,12 +225,6 @@ if (!function_exists('sql_fetch_assoc'))
 					}
 				}
 				sql_set_charset($charset);
-
-				if ($SQL_DBH && version_compare( '5.2.0', PHP_VERSION, '>' ))
-				{
-					// HY000-2014 Cannot execute queries while other unbuffered queries are active.
-					$SQL_DBH->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
-				}
 			}
 // </add for garble measure>*/
 		} catch (PDOException $e) {
