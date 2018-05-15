@@ -425,7 +425,7 @@ class COMMENTACTIONS extends BaseActions {
 	 * Parse templatevar userwebsite
 	 */
 	function parse_userwebsite() {
-		if (!(strpos($this->currentComment['userlinkraw'], 'http://') === false))
+		if ( preg_match('@^https?://[^/]+@', $this->currentComment['userlinkraw']) )
 			echo $this->currentComment['userlinkraw'];
 	}
 
@@ -433,7 +433,7 @@ class COMMENTACTIONS extends BaseActions {
 	 * Parse templatevar userwebsitelink
 	 */
 	function parse_userwebsitelink() {
-		if (!(strpos($this->currentComment['userlinkraw'], 'http://') === false)) {
+		if ( preg_match('@^https?://[^/]+@', $this->currentComment['userlinkraw']) ) {
 			echo '<a href="'.$this->currentComment['userlinkraw'].'" rel="nofollow">'.$this->currentComment['user'].'</a>';
 		} else {
 			echo $this->currentComment['user'];
