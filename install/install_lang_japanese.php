@@ -57,6 +57,7 @@ define('_ERROR27',				'エラー！');
 define('_ERROR28',				'エラーメッセージは次の通りです');
 define('_ERROR29',				'複数のエラーを発見しました');
 define('_ERROR30',				'クエリの実行中にエラーが発生しました');
+define('_ERROR_EXTENTION_MYSQL_NOT_FOUND',  'PHP: MySQL用拡張モジュールが有効になっていません。サーバーのPHPの設定を確認してください。');
 
 define('_NOTIFICATION1',		'判別不能');
 
