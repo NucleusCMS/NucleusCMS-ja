@@ -104,9 +104,12 @@ class Backup
 		echo "# " . _BACKUP_BACKUPFILE_TITLE . " \n";
 		echo "# " . _ADMINPAGEFOOT_OFFICIALURL . "\n";
 		echo "#\n";
-		echo "# " . _BACKUP_BACKUPFILE_BACKUPDATE .  gmdate("d-m-Y H:i:s", time()) . " GMT\n";
+		if (defined('DATE_ATOM'))
+			echo "# " . _BACKUP_BACKUPFILE_BACKUPDATE .' '. date(DATE_ATOM, time()) . "\n"; // DATE_ATOM(PHP 5.1.1-)
+		else
+			echo "# " . _BACKUP_BACKUPFILE_BACKUPDATE .' '. gmdate("Y-m-d H:i:s", time()) . " GMT\n";
 		global $nucleus;
-		echo "# " . _BACKUP_BACKUPFILE_NUCLEUSVERSION . $nucleus['version'] . "\n";
+		echo "# " . _BACKUP_BACKUPFILE_NUCLEUSVERSION .' '. $nucleus['version'] . "\n";
 		echo "#\n";
 		echo "# " . _BACKUP_WARNING_NUCLEUSVERSION . "\n";
 		echo "#\n";
