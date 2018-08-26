@@ -107,6 +107,10 @@ switch(postVar('charset'))
 }
 define('_CHARSET', $charset);
 
+if (!extension_loaded('mysql') && !extension_loaded('mysqli') && !extension_loaded('pdo_mysql')) {
+    @_doError(_ERROR_EXTENTION_MYSQL_NOT_FOUND);
+}
+
 // include core classes that are needed for login & plugin handling
 if (!function_exists('mysql_query')) include_once('../nucleus/libs/mysql.php'); // For PHP 7
 else define('_EXT_MYSQL_EMULATE' , 0);
