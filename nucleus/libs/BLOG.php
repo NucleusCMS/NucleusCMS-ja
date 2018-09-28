@@ -215,7 +215,8 @@ class BLOG {
 			}
 
 			// parse item
-			$parser->parse($template['ITEM_HEADER']);
+			if (isset($template['ITEM_HEADER']))
+				$parser->parse($template['ITEM_HEADER']);
 			$param = array(
 				'blog' => &$this,
 				'item' => &$item
@@ -227,7 +228,8 @@ class BLOG {
 				'item' => &$item
 			);
 			$manager->notify('PostItem', $param);
-			$parser->parse($template['ITEM_FOOTER']);
+			if (isset($template['ITEM_FOOTER']))
+				$parser->parse($template['ITEM_FOOTER']);
 
 		}
 
@@ -240,7 +242,8 @@ class BLOG {
 				'timestamp'	=>  strtotime($old_date)
 			);
 			$manager->notify('PreDateFoot', $param);
-			$parser->parse($template['DATE_FOOTER']);
+			if (isset($template['DATE_FOOTER']))
+				$parser->parse($template['DATE_FOOTER']);
 			$param = array(
 				'blog'		=> &$this,
 				'timestamp'	=>  strtotime($old_date)
