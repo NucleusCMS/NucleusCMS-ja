@@ -320,10 +320,10 @@ class MANAGER {
     function &pidLoaded($pid) {
         $plugin=false;
         reset($this->plugins);
-        while (list($name) = each($this->plugins)) {
-            if ($pid!=$this->plugins[$name]->getId()) continue;
-            $plugin= & $this->plugins[$name];
-            break;
+        foreach ($this->plugins as $obj) {
+            if ($pid != $obj->getId())
+                continue;
+            return $obj;
         }
         return $plugin;
     }
