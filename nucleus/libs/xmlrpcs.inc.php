@@ -530,6 +530,14 @@
 		}
 
 		/**
+		* @deprecated
+		*/
+		function xmlrpc_client($dispMap=null, $serviceNow=true)
+		{
+			self::__construct($dispMap, $serviceNow);
+		}
+
+		/**
 		* Set debug level of server.
 		* @param integer $in debug lvl: determines info added to xmlrpc responses (as xml comments)
 		* 0 = no debug info,
@@ -587,7 +595,7 @@
 			if ($data === null)
 			{
 				// workaround for a known bug in php ver. 5.2.2 that broke $HTTP_RAW_POST_DATA
-                $data = file_get_contents('php://input');
+				$data = file_get_contents('php://input');
 			}
 			$raw_data = $data;
 
@@ -931,22 +939,22 @@
 
 			if ($req_encoding != '')
 			{
-                // Since parsing will fail if charset is not specified in the xml prologue,
-                // the encoding is not UTF8 and there are non-ascii chars in the text, we try to work round that...
-                // The following code might be better for mb_string enabled installs, but
-                // makes the lib about 200% slower...
-                //if (!is_valid_charset($req_encoding, array('UTF-8')))
-                if (!in_array($req_encoding, array('UTF-8', 'US-ASCII')) && !has_encoding($data)) {
-                    if ($req_encoding == 'ISO-8859-1') {
-                        $data = utf8_encode($data);
-                    } else {
-                        if (extension_loaded('mbstring')) {
-                            $data = mb_convert_encoding($data, 'UTF-8', $req_encoding);
-                        } else {
-                            error_log('XML-RPC: ' . __METHOD__ . ': invalid charset encoding of received request: ' . $req_encoding);
-                        }
-                    }
-                }
+				// Since parsing will fail if charset is not specified in the xml prologue,
+				// the encoding is not UTF8 and there are non-ascii chars in the text, we try to work round that...
+				// The following code might be better for mb_string enabled installs, but
+				// makes the lib about 200% slower...
+				//if (!is_valid_charset($req_encoding, array('UTF-8')))
+				if (!in_array($req_encoding, array('UTF-8', 'US-ASCII')) && !has_encoding($data)) {
+					if ($req_encoding == 'ISO-8859-1') {
+						$data = utf8_encode($data);
+					} else {
+						if (extension_loaded('mbstring')) {
+							$data = mb_convert_encoding($data, 'UTF-8', $req_encoding);
+						} else {
+							error_log('XML-RPC: ' . __METHOD__ . ': invalid charset encoding of received request: ' . $req_encoding);
+						}
+					}
+				}
 			}
 
 			$parser = xml_parser_create();

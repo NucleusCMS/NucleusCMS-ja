@@ -163,8 +163,10 @@ class MEMBER {
 	  * (returns false if not a team member)
 	  */
 	function isBlogAdmin($blogid) {
-		$prefix = sql_table('');
-		$query = sprintf("SELECT tadmin FROM {$prefix}team WHERE tblog='%s' AND tmember='%s'", intval($blogid), $this->getID());
+		$prefix  = sql_table('');
+		$tblog   = intval($blogid);
+		$tmember = intval($this->getID());
+		$query = "SELECT tadmin FROM {$prefix}team WHERE tblog={$tblog} AND tmember={$tmember} AND tadmin=1";
 		$res = sql_query($query);
 		
 		if (sql_num_rows($res) == 0) return 0;

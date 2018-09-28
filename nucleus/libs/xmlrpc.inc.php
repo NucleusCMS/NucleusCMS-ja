@@ -38,8 +38,8 @@
 	{
 		// For PHP 4 onward, XML functionality is always compiled-in on windows:
 		// no more need to dl-open it. It might have been compiled out on *nix...
-		//if(strtoupper(substr(PHP_OS, 0, 3) != 'WIN'))
-        if (!extension_loaded('xml') && version_compare(phpversion(),'5.3.0','<'))
+		if(strtoupper(substr(PHP_OS, 0, 3) != 'WIN'))
+		if (!extension_loaded('xml') && version_compare(phpversion(),'5.3.0','<'))
 		{
 			dl('xml.so');
 		}
@@ -209,7 +209,7 @@
 	$GLOBALS['xmlrpc_internalencoding']='ISO-8859-1';
 
 	$GLOBALS['xmlrpcName']='XML-RPC for PHP';
-	$GLOBALS['xmlrpcVersion']='3.0.1';
+	$GLOBALS['xmlrpcVersion']='3.1.1';
 
 	// let user errors start at 800
 	$GLOBALS['xmlrpcerruser']=800;
@@ -822,6 +822,7 @@
 		var $keypass='';
 		var $verifypeer=true;
 		var $verifyhost=1;
+		var $sslversion=0; // corresponds to CURL_SSLVERSION_DEFAULT
 		var $no_multicall=false;
 		var $proxy='';
 		var $proxyport=0;
@@ -873,7 +874,7 @@
 		* @param integer $port the port the server is listening on, defaults to 80 or 443 depending on protocol used
 		* @param string $method the http protocol variant: defaults to 'http', 'https' and 'http11' can be used if CURL is installed
 		*/
-		function xmlrpc_client($path, $server='', $port='', $method='')
+		function __construct($path, $server='', $port='', $method='')
 		{
 			// allow user to specify all params in $path
 			if($server == '' and $port == '' and $method == '')
@@ -941,6 +942,14 @@
 
 			// initialize user_agent string
 			$this->user_agent = $GLOBALS['xmlrpcName'] . ' ' . $GLOBALS['xmlrpcVersion'];
+		}
+
+		/**
+		* @deprecated
+		*/
+		function xmlrpc_client($path, $server='', $port='', $method='')
+		{
+			self::__construct($path, $server, $port, $method);
 		}
 
 		/**
@@ -1030,6 +1039,16 @@
 		function setSSLVerifyHost($i)
 		{
 			$this->verifyhost = $i;
+		}
+
+		/**
+		* Set attributes for SSL communication: SSL version to use. Best left at 0 (default value ): let cURL decide
+		*
+		* @param int $i
+		*/
+		public function setSSLVersion($i)
+		{
+			$this->sslversion = $i;
 		}
 
 		/**
@@ -1183,7 +1202,8 @@
 					$this->proxy_authtype,
 					$this->keepalive,
 					$this->key,
-					$this->keypass
+					$this->keypass,
+					$this->sslversion
 				);
 			}
 			elseif($method == 'http11')
@@ -1424,11 +1444,11 @@
 		function &sendPayloadHTTPS($msg, $server, $port, $timeout=0, $username='',
 			$password='', $authtype=1, $cert='',$certpass='', $cacert='', $cacertdir='',
 			$proxyhost='', $proxyport=0, $proxyusername='', $proxypassword='', $proxyauthtype=1,
-			$keepalive=false, $key='', $keypass='')
+			$keepalive=false, $key='', $keypass='', $sslVersion = 0)
 		{
 			$r =& $this->sendPayloadCURL($msg, $server, $port, $timeout, $username,
 				$password, $authtype, $cert, $certpass, $cacert, $cacertdir, $proxyhost, $proxyport,
-				$proxyusername, $proxypassword, $proxyauthtype, 'https', $keepalive, $key, $keypass);
+				$proxyusername, $proxypassword, $proxyauthtype, 'https', $keepalive, $key, $keypass, $sslVersion);
 			return $r;
 		}
 
@@ -1441,7 +1461,7 @@
 		function &sendPayloadCURL($msg, $server, $port, $timeout=0, $username='',
 			$password='', $authtype=1, $cert='', $certpass='', $cacert='', $cacertdir='',
 			$proxyhost='', $proxyport=0, $proxyusername='', $proxypassword='', $proxyauthtype=1, $method='https',
-			$keepalive=false, $key='', $keypass='')
+			$keepalive=false, $key='', $keypass='', $sslVersion = 0)
 		{
 			if(!function_exists('curl_init'))
 			{
@@ -1631,6 +1651,8 @@
 				}
 				// whether to verify cert's common name (CN); 0 for no, 1 to verify that it exists, and 2 to verify that it matches the hostname used
 				curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, $this->verifyhost);
+				// allow usage of different SSL versions
+				curl_setopt($curl, CURLOPT_SSLVERSION, $sslVersion);
 			}
 
 			// proxy info
@@ -2008,6 +2030,14 @@
 		}
 
 		/**
+		* @deprecated
+		*/
+		function xmlrpcresp($val, $fcode = 0, $fstr = '', $valtyp='')
+		{
+			self::__construct($val, $fcode, $fstr, $valtyp);
+		}
+
+		/**
 		* Returns the error code of the response.
 		* @return integer the error code of this response (0 for not-error responses)
 		* @access public
@@ -2134,6 +2164,14 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 					$this->addParam($pars[$i]);
 				}
 			}
+		}
+
+				/**
+		* @deprecated
+		*/
+		function xmlrpcmsg($meth, $pars=0)
+		{
+			self::__construct($meth, $pars);
 		}
 
 		/**
@@ -2365,7 +2403,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 				}
 				// be tolerant to line endings, and extra empty lines
 				$ar = preg_split("/\r?\n/", trim(substr($data, 0, $pos)));
-				while(list(,$line) = @each($ar))
+				foreach($ar as $line)
 				{
 					// take care of multi-line headers and cookies
 					$arr = explode(':',$line,2);
@@ -2416,7 +2454,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 									{
 										if ($tag != 'value')
 										{
-										  $GLOBALS['_xh']['cookies'][$cookiename][$tag] = $val;
+											$GLOBALS['_xh']['cookies'][$cookiename][$tag] = $val;
 										}
 									}
 								}
@@ -2647,7 +2685,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			xml_set_default_handler($parser, 'xmlrpc_dh');
 
 			// first error check: xml not well formed
-			if(!xml_parse($parser, $data, count($data)))
+			if(!xml_parse($parser, $data, 1))
 			{
 				// thanks to Peter Kocks <peter.kocks@baygate.com>
 				if((xml_get_current_line_number($parser)) == 1)
@@ -2811,6 +2849,14 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 		}
 
 		/**
+		* @deprecated
+		*/
+		function xmlrpcval($val=-1, $type='')
+		{
+			self::__construct($val, $type);
+		}
+
+		/**
 		* Add a single php value to an (unitialized) xmlrpcval
 		* @param mixed $val
 		* @param string $type
@@ -2931,7 +2977,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 				echo "$key => $val<br />";
 				if($key == 'array')
 				{
-					while(list($key2, $val2) = each($val))
+					foreach($val as $key2 => $val2)
 					{
 						echo "-- $key2 => $val2<br />";
 					}
@@ -3077,8 +3123,8 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			// add check? slower, but helps to avoid recursion in serializing broken xmlrpcvals...
 			//if (is_object($o) && (get_class($o) == 'xmlrpcval' || is_subclass_of($o, 'xmlrpcval')))
 			//{
-				reset($this->me);
-				list($typ, $val) = each($this->me);
+				$val = reset($this->me);
+				$typ = key($this->me);
 				return '<value>' . $this->serializedata($typ, $val, $charset_encoding) . "</value>\n";
 			//}
 		}
@@ -3089,9 +3135,8 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			// add check? slower, but helps to avoid recursion in serializing broken xmlrpcvals...
 			//if (is_object($o) && (get_class($o) == 'xmlrpcval' || is_subclass_of($o, 'xmlrpcval')))
 			//{
-				$ar=$o->me;
-				reset($ar);
-				list($typ, $val) = each($ar);
+				$val = reset($o->me);
+				$typ = key($o->me);
 				return '<value>' . $this->serializedata($typ, $val) . "</value>\n";
 			//}
 		}
@@ -3144,8 +3189,8 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 		function getval()
 		{
 			// UNSTABLE
-			reset($this->me);
-			list($a,$b)=each($this->me);
+			$b = reset($this->me);
+			$a = key($this->me);
 			// contributed by I Sofer, 2001-03-24
 			// add support for nested arrays to scalarval
 			// i've created a new method here, so as to
@@ -3153,8 +3198,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 
 			if(is_array($b))
 			{
-				@reset($b);
-				while(list($id,$cont) = @each($b))
+				foreach($b as $id => $cont)
 				{
 					$b[$id] = $cont->scalarval();
 				}
@@ -3164,13 +3208,11 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			if(is_object($b))
 			{
 				$t = get_object_vars($b);
-				@reset($t);
-				while(list($id,$cont) = @each($t))
+				foreach($t as $id => $cont)
 				{
 					$t[$id] = $cont->scalarval();
 				}
-				@reset($t);
-				while(list($id,$cont) = @each($t))
+				foreach($t as $id => $cont)
 				{
 					@$b->$id = $cont;
 				}
@@ -3186,8 +3228,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 		*/
 		function scalarval()
 		{
-			reset($this->me);
-			list(,$b)=each($this->me);
+			$b = reset($this->me);
 			return $b;
 		}
 
@@ -3200,7 +3241,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 		function scalartyp()
 		{
 			reset($this->me);
-			list($a,)=each($this->me);
+			$a = key($this->me);
 			if($a==$GLOBALS['xmlrpcI4'])
 			{
 				$a=$GLOBALS['xmlrpcInt'];
@@ -3333,8 +3374,8 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			case 'scalar':
 				if (in_array('extension_api', $options))
 				{
-					reset($xmlrpc_val->me);
-					list($typ,$val) = each($xmlrpc_val->me);
+					$val = reset($xmlrpc_val->me);
+					$typ = key($xmlrpc_val->me);
 					switch ($typ)
 					{
 						case 'dateTime.iso8601':
@@ -3507,8 +3548,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 				else
 				{
 					$arr = array();
-					reset($php_val);
-					while(list($k,$v) = each($php_val))
+					foreach($php_val as $k => $v)
 					{
 						$arr[$k] = php_xmlrpc_encode($v, $options);
 					}
@@ -3595,7 +3635,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			}
 		}
 
-        $parser = xml_parser_create();
+		$parser = xml_parser_create();
 		xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, true);
 		// What if internal encoding is not in one of the 3 allowed?
 		// we use the broadest one, ie. utf8!
@@ -3832,7 +3872,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 
 		// test if encoding is specified in the xml declaration
 		// Details:
-		// SPACE:		 (#x20 | #x9 | #xD | #xA)+ === [ \x9\xD\xA]+
+		// SPACE:		(#x20 | #x9 | #xD | #xA)+ === [ \x9\xD\xA]+
 		// EQ:			SPACE?=SPACE? === [ \x9\xD\xA]*=[ \x9\xD\xA]*
 		if (preg_match('/^<\?xml\s+version\s*=\s*' . "((?:\"[a-zA-Z0-9_.:-]+\")|(?:'[a-zA-Z0-9_.:-]+'))" .
 			'\s+encoding\s*=\s*' . "((?:\"[A-Za-z][A-Za-z0-9._-]*\")|(?:'[A-Za-z][A-Za-z0-9._-]*'))/",

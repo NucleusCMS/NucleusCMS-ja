@@ -751,12 +751,15 @@ class ACTIONS extends BaseActions {
 		global $itemid, $manager, $blog, $highlight;
 		$template =& $manager->getTemplate($template);
 
-		// create parser object & action handler
+		$item = ITEM::getitem($itemid, 0, 0);
+		if (empty($item))
+			return;
+
+        // create parser object & action handler
 		$actions = new ITEMACTIONS($blog);
 		$parser = new PARSER($actions->getDefinedActions(),$actions);
 		$actions->setTemplate($template);
 		$actions->setParser($parser);
-		$item = ITEM::getitem($itemid, 0, 0);
 		$actions->setCurrentItem($item);
 
 		$comments = new COMMENTS($itemid);
