@@ -4,7 +4,7 @@
 	<head>
 		<!--
 			Nucleus: PHP/MySQL Weblog CMS (http://nucleuscms.org/)
-			Copyright (C) 2002-2017 The Nucleus Group
+			Copyright (C) 2002-2018 The Nucleus Group
 
 			This program is free software; you can redistribute it and/or
 			modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@
 			<b>はじめに:</b>
 			<ul>
 				<li>このマニュアルは管理エリアにて使用しているポップアップヘルプ(<a href="help.html">help.html</a>)に記載されていない内容を収録しております。Nucleusの<a href="#installation">インストールガイド</a>も収録しておりますので参考にしてください。</li>
-				<li>デベロッパーの方は、 <a href="devdocs/index.html">開発者向けマニュアル</a> を併せてご覧下さい。</li>
+				<li>開発者の方は、 <a href="devdocs/index.html">開発者向けマニュアル</a> を併せてご覧下さい。</li>
 			</ul>
 		</div>
 
@@ -90,7 +90,9 @@
 			<li>バックアップが簡単</li>
 			<li>XML-RPC インターフェイス ( <a href="http://plant.blogger.com/api/">Blogger API</a> / <a href="http://www.xmlrpc.com/metaWeblogApi">metaWeblog API</a> / <a href="http://www.movabletype.org/docs/mtmanual_programmatic.html#xmlrpc%20api">Movable Type API</a> 採用)</li>
 			<li>XHTML 準拠</li>
+<!--
 			<li>Blogger と GreyMatter blogsからのコンバートツール</li>
+-->
 			<li>...</li>
 		</ul>
 
@@ -99,8 +101,8 @@
 		</p>
 
 		<ul>
-			<li><a href="http://php.net/manual/ja/">PHP</a> (バージョン 5.0.5 以降)</li>
-			<li><a href="http://dev.mysql.com/doc/mysql/ja/">MySQL</a> データベース (バージョン 4 以降)</li>
+			<li><a href="http://php.net/manual/ja/">PHP</a> (バージョン 5.0.5 以降 / PHP7.3 Ready / PHP5.6以上を推奨)</li>
+			<li><a href="http://dev.mysql.com/doc/mysql/ja/">MySQL</a> データベース (バージョン 4 以降 / MySQL5.5以上を推奨)</li>
 			<li>デザインのカスタマイズをする場合は、<acronym title="Hypertext Markup Language">HTML</acronym> と <acronym title="Cascading Style Sheets">CSS</acronym> の基礎知識</li>
 		</ul>
 
@@ -119,7 +121,7 @@
 		<p>
 			Nucleus: PHP/MySQL Weblog CMS (http://nucleuscms.org/)
 			<br />
-			Copyright (C) 2002-2017 The Nucleus Group
+			Copyright (C) 2002-2018 The Nucleus Group
 		</p>
 
 		<p>このプログラムはフリーウェアです。
@@ -255,10 +257,10 @@
 
 		<h1>セキュリティについて <a name="security" href="#top" class="toplink"><img src="icon-up.gif" width="15" height="15" alt="back to top" /></a></h1>
 
-		<h2>mySQL のパスワード</h2>
+		<h2>データベースのパスワード</h2>
 
 		<p>
-			NucleusはphpスクリプトからmySQLデータベースにアクセスしますので、phpスクリプト内にmySQLパスワードを書き込んでおく必要があります。 複数ユーザーで使用するサーバの場合は100%安全ではないことをご了解下さい。また、ログイン名とログインパスワードを盗まれる可能性もあることもお知りおきください。phpスクリプトに重要な情報を埋め込んで使用する事の是非について調べたい方は詳しい方におたずね下さい。
+			NucleusはphpスクリプトからMySQLデータベースにアクセスしますので、phpスクリプト内にMySQLのパスワードを書き込んでおく必要があります。 複数ユーザーで使用するサーバの場合は100%安全ではないことをご了解下さい。また、ログイン名とログインパスワードを盗まれる可能性もあることもお知りおきください。phpスクリプトに重要な情報を埋め込んで使用する事の是非について調べたい方は詳しい方におたずね下さい。
 		</p>
 
 		<p>
@@ -363,7 +365,7 @@
 		<div class="faq">
 			<div class="question">トップページにアクセスすると「Connection Error」と表示されました。なぜですか？</div>
 			<div class="answer">
-			Nucleusがデータベースサーバにアクセスできないことを意味しています。<i>config.php</i>の最初で定義しているデータベース接続情報が正確かどうかをもう一度確認してみてください(パスワードがxxxxxxのままというケースがよくあります)。 また、本当にmySQLサーバがダウンしているのが原因かもしれません。
+			Nucleusがデータベースサーバにアクセスできないことを意味しています。<i>config.php</i>の最初で定義しているデータベース接続情報が正確かどうかをもう一度確認してみてください(パスワードがxxxxxxのままというケースがよくあります)。 また、本当にMySQLサーバがダウンしているのが原因かもしれません。
 			</div>
 		</div>
 
@@ -384,6 +386,21 @@
 			<div class="answer">xml-rss.php ( xml-rss2.php , rsd.php ) を削除して、念のために「xmlrss」(「feeds/rss20」)という名前のスキン／テンプレートを削除してください。</div>
 		</div>
 
+		<div class="faq">
+			<div class="question">転送量を削減したい。</div>
+			<div class="answer"><ul>
+				<li>PHPの設定: zlib拡張が有効になっているか確認してください。</li>
+				<li>apache設定: mod_deflateの設定を .htaccess に加えてください。</li>
+			</ul></div>
+		</div>
+
+		<div class="faq">
+			<div class="question">ある日突然、空白ページになったり、データベースのエラーが表示されるようになりました。</div>
+			<div class="answer"><ul>
+				<li>データベースのオーバーヘッドが増したり、インデックスが破損したりしている可能性がありますので、データベース管理ツールで、テーブルの「修復」および「最適化」を実行してください。</li>
+				<li>レンタルサーバーをお使いの場合は、サーバーのメンテナンス情報などで何らかのアップグレードがなかったか確認をしてください。</li>
+			</ul></div>
+		</div>
 
 		<h1>謝辞 <a name="credits" href="#top" class="toplink"><img src="icon-up.gif" width="15" height="15" alt="back to top" /></a></h1>
 
