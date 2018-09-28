@@ -311,7 +311,10 @@ class BLOG {
 
 		$query = 'INSERT INTO '.sql_table('item').' (ITITLE, IBODY, IMORE, IBLOG, IAUTHOR, ITIME, ICLOSED, IDRAFT, ICAT, IPOSTED) '
 			   . "VALUES ('$ititle', '$ibody', '$imore', $blogid, $authorid, '$timestamp', $closed, $draft, $catid, $posted)";
-		sql_query($query);
+		$res = sql_query($query);
+		if (!$res) {
+			return 0;
+		}
 		$itemid = sql_insert_id();
 
 		$param = array('itemid' => $itemid);
@@ -324,7 +327,7 @@ class BLOG {
 		if (!$draft && !$isFuture && $this->getNotifyAddress() && $this->notifyOnNewItem())
 			$this->sendNewItemNotification($itemid, $title, $body);
 
-			return $itemid;
+		return $itemid;
 	}
 
 	function sendNewItemNotification($itemid, $title, $body) {
