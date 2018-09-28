@@ -457,100 +457,105 @@ if ($CONF['URLMode'] == 'pathinfo') {
 	if (!isset($CONF['SpecialskinKey']) || $CONF['SpecialskinKey'] == '') {
 		$CONF['SpecialskinKey'] = 'special';
 	}
+}
 
-	$parsed = false;
-	$param = array(
-		'type'		=>  basename(serverVar('SCRIPT_NAME') ), // e.g. item, blog, ...
-		'info'		=>  $virtualpath,
-		'complete'	=> &$parsed
-	);
-	$manager->notify('ParseURL', $param);
+if (empty($CONF['UsingAdminArea'])) {
+	if ($CONF['URLMode'] == 'pathinfo') {
+		$parsed = false;
+		$param = array(
+			'type'		=>  basename(serverVar('SCRIPT_NAME') ), // e.g. item, blog, ...
+			'info'		=>  $virtualpath,
+			'complete'	=> &$parsed
+		);
+		$manager->notify('ParseURL', $param);
 
-	if (!$parsed) {
-		// default implementation
-		$data = explode("/", $virtualpath );
-		for ($i = 0; $i < sizeof($data); $i++) {
-			switch ($data[$i]) {
-				case $CONF['ItemKey']: // item/1 (blogid)
-					$i++;
+		if (!$parsed) {
+			// default implementation
+			$data = explode("/", $virtualpath );
+			for ($i = 0; $i < sizeof($data); $i++) {
+				switch ($data[$i]) {
+					case $CONF['ItemKey']: // item/1 (blogid)
+						$i++;
 
-					if ($i < sizeof($data) ) {
-						$itemid = intval($data[$i]);
-					}
-					break;
+						if ($i < sizeof($data) ) {
+							$itemid = intval($data[$i]);
+						}
+						break;
 
-				case $CONF['ArchivesKey']: // archives/1 (blogid)
-					$i++;
+					case $CONF['ArchivesKey']: // archives/1 (blogid)
+						$i++;
 
-					if ($i < sizeof($data) ) {
-						$archivelist = intval($data[$i]);
-					}
-					break;
+						if ($i < sizeof($data) ) {
+							$archivelist = intval($data[$i]);
+						}
+						break;
 
-				case $CONF['ArchiveKey']: // two possibilities: archive/yyyy-mm or archive/1/yyyy-mm (with blogid)
-					if ((($i + 1) < sizeof($data) ) && (!strstr($data[$i + 1], '-') ) ) {
-						$blogid = intval($data[++$i]);
-					}
+					case $CONF['ArchiveKey']: // two possibilities: archive/yyyy-mm or archive/1/yyyy-mm (with blogid)
+						if ((($i + 1) < sizeof($data) ) && (!strstr($data[$i + 1], '-') ) ) {
+							$blogid = intval($data[++$i]);
+						}
 
-					$i++;
+						$i++;
 
-					if ($i < sizeof($data) ) {
-						$archive = $data[$i];
-					}
-					break;
+						if ($i < sizeof($data) ) {
+							$archive = $data[$i];
+						}
+						break;
 
-				case 'blogid': // blogid/1
-				case $CONF['BlogKey']: // blog/1
-					$i++;
+					case 'blogid': // blogid/1
+					case $CONF['BlogKey']: // blog/1
+						$i++;
 
-					if ($i < sizeof($data) ) {
-						$blogid = intval($data[$i]);
-					}
-					break;
+						if ($i < sizeof($data) ) {
+							$blogid = intval($data[$i]);
+						}
+						break;
 
-				case $CONF['CategoryKey']: // category/1 (catid)
-				case 'catid':
-					$i++;
+					case $CONF['CategoryKey']: // category/1 (catid)
+					case 'catid':
+						$i++;
 
-					if ($i < sizeof($data) ) {
-						$catid = intval($data[$i]);
-					}
-					break;
+						if ($i < sizeof($data) ) {
+							$catid = intval($data[$i]);
+						}
+						break;
 
-				case $CONF['MemberKey']:
-					$i++;
+					case $CONF['MemberKey']:
+						$i++;
 
-					if ($i < sizeof($data) ) {
-						$memberid = intval($data[$i]);
-					}
-					break;
+						if ($i < sizeof($data) ) {
+							$memberid = intval($data[$i]);
+						}
+						break;
 
-				case $CONF['SpecialskinKey']:
-					$i++;
+					case $CONF['SpecialskinKey']:
+						$i++;
 
-					if ($i < sizeof($data) ) {
-						$special = $data[$i];
-						$_REQUEST['special'] = $special;
-					}
-					break;
+						if ($i < sizeof($data) ) {
+							$special = $data[$i];
+							$_REQUEST['special'] = $special;
+						}
+						break;
 
-				default:
-					// skip...
+					default:
+						// skip...
+				}
 			}
 		}
+
+		/* 	PostParseURL is a place to cleanup any of the path-related global variables before the selector function is run.
+			It has 2 values in the data in case the original virtualpath is needed, but most the use will be in tweaking
+			global variables to clean up (scrub out catid or add catid) or to set someother global variable based on
+			the values of something like catid or itemid
+			New in 3.60
+		*/
+		$param = array(
+			'type' => basename(serverVar('SCRIPT_NAME') ), // e.g. item, blog, ...
+			'info' => $virtualpath
+		);
+		$manager->notify('PostParseURL', $param);
 	}
 }
-/* 	PostParseURL is a place to cleanup any of the path-related global variables before the selector function is run.
-	It has 2 values in the data in case the original virtualpath is needed, but most the use will be in tweaking
-	global variables to clean up (scrub out catid or add catid) or to set someother global variable based on
-	the values of something like catid or itemid
-	New in 3.60
-*/
-$param = array(
-	'type' => basename(serverVar('SCRIPT_NAME') ), // e.g. item, blog, ...
-	'info' => $virtualpath
-);
-$manager->notify('PostParseURL', $param);
 
 function include_libs($file,$once=true,$require=true){
 	global $DIR_LIBS;
