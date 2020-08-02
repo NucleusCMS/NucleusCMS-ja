@@ -17,6 +17,7 @@
  */
 
 // bookmarklet is part of admin area (might need XML-RPC)
+
 $CONF = array();
 $CONF['UsingAdminArea'] = 1;
 
@@ -36,7 +37,7 @@ if (!$member->isLoggedIn() ) {
 }
 
 // on successfull login
-if ( ($action == 'login') && ($member->isLoggedIn() ) ) {
+if ( ($action == 'login') && ($member->isLoggedIn())) {
     $action = requestVar('nextaction');
 }
 
@@ -45,8 +46,9 @@ if ($action == '') {
 }
 
 $actiontype = postVar('actiontype');
-if($actiontype==='delete'||$actiontype==='itemdeleteconfirm')
+if($actiontype === 'delete' || $actiontype === 'itemdeleteconfirm') {
     $action = $actiontype;
+}
 
 sendContentType('text/html', 'bookmarklet-' . $action);
 
@@ -56,27 +58,48 @@ $action = strtolower($action);
 $aActionsNotToCheck = array('login', 'add', 'edit');
 
 if (!in_array($action, $aActionsNotToCheck) ) {
-
     if (!$manager->checkTicket() ) {
         bm_doError(_ERROR_BADTICKET);
     }
-
 }
 
 // find out what to do
 switch ($action) {
-    case 'additem'           : bm_doAddItem();    break; // adds the item for real
-    case 'edit'              : bm_doEditForm();   break; // shows the edit item form
-    case 'edititem'          : bm_doEditItem();   break; // edits the item for real
-    case 'delete'            : bm_doDeleteItem(); break;
-    case 'itemdeleteconfirm' : bm_doDeleteItemComplete(); break;
-    case 'login'             : bm_doError(_BOOKMARKLET_ERROR_SOMETHINGWRONG); break; // on login, 'action' gets changed to 'nextaction'
-        // shows the fill in form
-    case 'add': default      : bm_doShowForm();   break;
+    case 'additem': // adds the item for real
+        bm_doAddItem();
+        break;
+
+    case 'edit': // shows the edit item form
+        bm_doEditForm();
+        break;
+
+    case 'edititem': // edits the item for real
+        bm_doEditItem();
+        break;
+
+    case 'delete':
+        bm_doDeleteItem();
+        break;
+
+    case 'itemdeleteconfirm':
+        bm_doDeleteItemComplete();
+        break;
+
+    case 'login': // on login, 'action' gets changed to 'nextaction'
+        bm_doError(_BOOKMARKLET_ERROR_SOMETHINGWRONG);
+        break;
+
+    case 'add': // shows the fill in form
+    default:
+        bm_doShowForm();
+        break;
 }
 
-function bm_doAddItem() {
-    global $member, $manager, $CONF;
+function bm_doAddItem()
+{
+    global $member;
+    global $manager;
+    global $CONF;
 
     $manager->loadClass('ITEM');
     $result = ITEM::createFromRequest();
@@ -89,11 +112,11 @@ function bm_doAddItem() {
     $blog =& $manager->getBlog($blogid);
 
     if ($result['status'] == 'newcategory') {
-        $href      = 'index.php?action=categoryedit&amp;blogid=' . $blogid . '&amp;catid=' . $result['catid'];
-        $onclick   = 'if (event &amp;&amp; event.preventDefault) event.preventDefault(); window.open(this.href); return false;';
-        $title     = _BOOKMARKLET_NEW_WINDOW;
-        $aTag      = ' <a href="' . $href . '" onclick="' . $onclick . '" title="' . $title . '">';
-        $message   = _BOOKMARKLET_NEW_CATEGORY . $aTag . _BOOKMARKLET_NEW_CATEGORY_EDIT . '</a>';
+        $href = 'index.php?action=categoryedit&amp;blogid=' . $blogid . '&amp;catid=' . $result['catid'];
+        $onclick = 'if (event &amp;&amp; event.preventDefault) event.preventDefault(); window.open(this.href); return false;';
+        $title = _BOOKMARKLET_NEW_WINDOW;
+        $aTag = ' <a href="' . $href . '" onclick="' . $onclick . '" title="' . $title . '">';
+        $message = _BOOKMARKLET_NEW_CATEGORY . $aTag . _BOOKMARKLET_NEW_CATEGORY_EDIT . '</a>';
         $extrahead = '';
     } else {
         $message = _ITEM_ADDED;
@@ -119,7 +142,11 @@ EOT;
         $ticket = $manager->getNewTicket();
         $itemid = intRequestVar('itemid');
         $title = postVar('title');
-        $msg = str_replace(array('<%_CONFIRMTXT_ITEM%>','<%_DELETE_CONFIRM_BTN%>','<%ticket%>','<%itemid%>','<%itemtitle%>'), array(_CONFIRMTXT_ITEM,_DELETE_CONFIRM_BTN,$ticket,$itemid,$title), $msg);
+        $msg = str_replace(
+            array('<%_CONFIRMTXT_ITEM%>','<%_DELETE_CONFIRM_BTN%>','<%ticket%>','<%itemid%>','<%itemtitle%>'),
+            array(_CONFIRMTXT_ITEM,_DELETE_CONFIRM_BTN,$ticket,$itemid,$title),
+            $msg
+        );
         bm_message(_DELETE_CONFIRM_BTN, _DELETE_CONFIRM, $msg, '', 0);
         exit;
 }
@@ -134,8 +161,11 @@ function bm_doDeleteItemComplete()
     exit;
 }
 
-function bm_doEditItem() {
-    global $member, $manager, $CONF;
+function bm_doEditItem()
+{
+    global $member;
+    global $manager;
+    global $CONF;
 
     $itemid = intRequestVar('itemid');
     $catid = postVar('catid');
@@ -208,13 +238,12 @@ function bm_doEditItem() {
     }
 }
 
-function bm_loginAndPassThrough() {
-
+function bm_loginAndPassThrough()
+{
     $blogid = intRequestVar('blogid');
     $log_text = requestVar('logtext');
     $log_link = requestVar('loglink');
     $log_linktitle = requestVar('loglinktitle');
-
     ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html <?php echo _HTML_XML_NAME_SPACE_AND_LANG_CODE; ?>>
@@ -247,14 +276,14 @@ function bm_loginAndPassThrough() {
     <?php
 }
 
-function bm_doShowForm() {
+function bm_doShowForm()
+{
     global $member;
-
+    
     $blogid = intRequestVar('blogid');
     $log_text = trim(requestVar('logtext'));
     $log_link = requestVar('loglink');
     $log_linktitle = requestVar('loglinktitle');
-
     $log_text = uniDecode($log_text,_CHARSET);
     $log_linktitle = uniDecode($log_linktitle,_CHARSET);
 
@@ -287,7 +316,8 @@ function bm_doShowForm() {
     $factory->createAddForm('bookmarklet', $item);
 }
 
-function bm_doEditForm() {
+function bm_doEditForm()
+{
     global $member, $manager;
 
     $itemid = intRequestVar('itemid');
@@ -315,20 +345,22 @@ function bm_doEditForm() {
     $formfactory->createEditForm('bookmarklet', $item);
 }
 
-function bm_doError($msg) {
+function bm_doError($msg)
+{
     bm_message(_ERROR, _ERRORMSG, $msg);
     die;
 }
 
-function bm_message($title, $head, $msg, $extrahead = '', $showClose = 1) {
+function bm_message($title, $head, $msg, $extrahead = '', $showClose = 1)
+{
     ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html <?php echo _HTML_XML_NAME_SPACE_AND_LANG_CODE; ?>>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=<?php echo _CHARSET ?>" />
 <title><?php echo $title ?></title>
-    <?php bm_style(); ?>
-    <?php echo $extrahead; ?>
+<?php bm_style(); ?>
+<?php echo $extrahead; ?>
 </head>
 <body>
 <h1><?php echo $head; ?></h1>
@@ -342,27 +374,28 @@ function bm_message($title, $head, $msg, $extrahead = '', $showClose = 1) {
     <?php
 }
 
-function bm_style() {
+function bm_style()
+{
     echo '<link rel="stylesheet" type="text/css" href="styles/bookmarklet.css" />';
     echo '<link rel="stylesheet" type="text/css" href="styles/addedit.css" />';
 }
 
-function bm_doContextMenuCode() {
+function bm_doContextMenuCode()
+{
     global $CONF;
-    // https://msdn.microsoft.com/ja-jp/library/ms534165(v=vs.85).aspx
-
     $baseurl = $CONF['AdminURL'] . "bookmarklet.php?blogid=" . intGetVar('blogid');
-    ?>
+?>
 <script type="text/javascript" defer="defer">
 var oWindow   = window.external.menuArguments;
 var oDocument = oWindow.document;
 var lt;
 <?php
-// debug
-//    echo "alert(typeof oWindow.getSelection);";
-//    // can not access href , ie xss filter
-//    echo "alert(typeof oWindow.location.href);";
-//    echo "if (typeof oWindow.location.href == 'unknown') { for (var name in oWindow.location) { alert(name); } }";
+    /*/debug
+   echo "alert(typeof oWindow.getSelection);";
+   // can not access href , ie xss filter
+   echo "alert(typeof oWindow.location.href);";
+   echo "if (typeof oWindow.location.href == 'unknown') { for (var name in oWindow.location) { alert(name); } }";
+   //*/
 ?>
 if (typeof oWindow.getSelection == "function") {
     lt = escape(oWindow.getSelection().getRangeAt(0).toString());
@@ -376,22 +409,25 @@ if (wingm) {
     wingm.focus();
 }
 </script>
-    <?php
+<?php
 }
 
-function uniDecode($str,$charcode){
+function uniDecode($str,$charcode)
+{
     $text = preg_replace_callback("/%u[0-9A-Za-z]{4}/", 'toUtf8', $str);
     return mb_convert_encoding($text, $charcode, 'UTF-8');
 }
-function toUtf8($ar){
+
+function toUtf8($ar)
+{
     foreach($ar as $val){
         $val = intval(substr($val,2),16);
-        if($val < 0x7F){        // 0000-007F
+        if($val < 0x7F){ // 0000-007F
             $c .= chr($val);
         }elseif($val < 0x800) { // 0080-0800
             $c .= chr(0xC0 | ($val / 64));
             $c .= chr(0x80 | ($val % 64));
-        }else{                // 0800-FFFF
+        }else{ // 0800-FFFF
             $c .= chr(0xE0 | (($val / 64) / 64));
             $c .= chr(0x80 | (($val / 64) % 64));
             $c .= chr(0x80 | ($val % 64));
@@ -399,4 +435,3 @@ function toUtf8($ar){
     }
     return $c;
 }
-
