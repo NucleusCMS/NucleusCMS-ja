@@ -1245,4 +1245,3 @@
 			print $r->serialize();
 		}
 	}
-?>

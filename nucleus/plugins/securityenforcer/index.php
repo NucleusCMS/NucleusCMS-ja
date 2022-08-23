@@ -81,5 +81,3 @@ Admin area for NP_SecurityEnforcer
 	echo '</form>';
 	
 	$oPluginAdmin->end();
-
-?>

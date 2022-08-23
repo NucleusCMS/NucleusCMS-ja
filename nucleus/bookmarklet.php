@@ -396,5 +396,3 @@ function toUtf8($ar){
 	}
 	return $c;
 }
-
-?>

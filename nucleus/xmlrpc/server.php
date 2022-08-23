@@ -328,4 +328,3 @@ function _error($err, $msg) {
 	global $xmlrpcerruser;
 	return new xmlrpcresp(0, $xmlrpcerruser + $err, $msg);
 }
-?>

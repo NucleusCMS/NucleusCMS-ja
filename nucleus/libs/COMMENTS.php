@@ -439,5 +439,3 @@ class COMMENTS {
 	}
 
 }
-
-?>

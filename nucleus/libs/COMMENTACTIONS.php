@@ -699,4 +699,3 @@ class COMMENTACTIONS extends BaseActions {
 	}
 
 }
-?>

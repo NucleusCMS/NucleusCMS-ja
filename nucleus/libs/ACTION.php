@@ -553,5 +553,3 @@ class ACTION
 	}
 
 }
-
-?>

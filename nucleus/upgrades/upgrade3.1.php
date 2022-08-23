@@ -20,5 +20,3 @@ function upgrade_do310() {
     update_version('310');
     // nothing!
 }
-
-?>

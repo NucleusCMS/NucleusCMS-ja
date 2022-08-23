@@ -61,5 +61,3 @@ function upgrade_do330() {
 
 
 }
-
-?>

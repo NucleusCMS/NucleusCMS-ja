@@ -813,5 +813,3 @@ class SKINEXPORT {
 
 	}
 }
-
-?>

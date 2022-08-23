@@ -419,5 +419,3 @@ class PAGEFACTORY extends BaseActions {
 	}
 
 }
-
-?>

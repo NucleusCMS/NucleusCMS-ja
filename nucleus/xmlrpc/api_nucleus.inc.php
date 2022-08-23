@@ -335,5 +335,3 @@ if (!isset($member))
 		)
 
 	);
-
-?>

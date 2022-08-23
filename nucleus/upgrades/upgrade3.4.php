@@ -46,5 +46,3 @@ function upgrade_do340() {
 	update_version('340');
 	
 }
-
-?>

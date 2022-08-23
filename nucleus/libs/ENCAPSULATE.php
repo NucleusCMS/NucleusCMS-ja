@@ -447,4 +447,3 @@ class BATCH extends ENCAPSULATE {
 	}
 
 }
-?>

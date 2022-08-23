@@ -40,5 +40,3 @@ function upgrade_do331() {
         echo "<li>" . _UPG_TEXT_NOTE_PING01 . "</li>";
     }
 }
-
-?>

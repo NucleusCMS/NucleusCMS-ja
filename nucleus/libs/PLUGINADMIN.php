@@ -124,7 +124,3 @@ for (i=0;document.forms[i];i++){
  
 	}
 }
-
-
-
-?>
