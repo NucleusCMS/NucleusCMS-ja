@@ -18,6 +18,8 @@ define('NUCLEUS_VERSION', '3.71');
 define('NUCLEUS_VERSION_ID', 371);
 define('NUCLEUS_DATABASE_VERSION_ID', 371);
 
+include_once($DIR_LIBS. 'phpfunctions.php');
+
 $nucleus['version'] = 'v' . NUCLEUS_VERSION;
 $nucleus['codename'] = '';
 
