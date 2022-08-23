@@ -29,7 +29,7 @@ if (PHP_VERSION_ID >= 80000) {
     if (!isset($CONF['debug']) || empty($CONF['debug'])) {
         exit();
     }
-    if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) && in_array('ja',explode(',', @strtolower((string) $_SERVER['HTTP_ACCEPT_LANGUAGE'])))) {
+    if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) && in_array('ja', explode(',', @strtolower((string) $_SERVER['HTTP_ACCEPT_LANGUAGE'])))) {
         exit('<h1>エラー</h1><div>このバージョンは、PHP 8.0 以降に対応していません。</div>
             <div>PHP 8.0 以降で動作させるには、Nucleus CMS 3.80 以降が必要です。</div>');
     }
@@ -51,7 +51,11 @@ if (ini_get('register_globals')) {
 }
 
 if (isset($CONF['debug'])&&!empty($CONF['debug'])) {
-    error_reporting(E_ALL); // report all errors!
+    if (70400 <= PHP_VERSION_ID) {
+        error_reporting(E_ALL & ~(E_DEPRECATED | E_STRICT));
+    } else {
+        error_reporting(E_ALL); // report all errors!
+    }
 } else {
     if (!isset($CONF['UsingAdminArea'])||empty($CONF['UsingAdminArea'])) {
         ini_set('display_errors', '0');
@@ -288,6 +292,16 @@ if ($action == 'login') {
         header("HTTP/1.0 404 Not Found");
         exit;
     }
+
+    if (isset($_POST['login'])) {
+        // force trim login
+        $_POST['login'] = substr((string) $_POST['login'], 0, 32);
+    }
+    if (isset($_POST['password'])) {
+        // force trim password
+        $_POST['password'] = substr((string) $_POST['password'], 0, 40);
+    }
+
     // Form Authentication
     $login = postVar('login');
     $pw = postVar('password');
@@ -2159,9 +2173,7 @@ function ticketForPlugin()
         echo '<p>' . _ERROR_BADTICKET . "</p>\n";
 
         /* Show the form to confirm action */
-        // PHP 4.0.x support
-        $get=  (isset($_GET))  ? $_GET  : $HTTP_GET_VARS;
-        $post= (isset($_POST)) ? $_POST : $HTTP_POST_VARS;
+
         // Resolve URI and QUERY_STRING
         if ($uri=serverVar('REQUEST_URI')) {
             list($uri,$qstring)=explode('?', $uri);
@@ -2179,11 +2191,13 @@ function ticketForPlugin()
             case 'POST':
                 echo '<form method="POST" action="'.hsc($uri.$qstring).'">';
                 $manager->addTicketHidden();
+                $post= $_POST;
                 _addInputTags($post);
                 break;
             case 'GET':
                 echo '<form method="GET" action="'.hsc($uri).'">';
                 $manager->addTicketHidden();
+                $get=  $_GET;
                 _addInputTags($get);
             default:
                 break;
@@ -2209,7 +2223,7 @@ function _addInputTags(&$keys, $prefix = '')
         if (is_array($value)) {
             _addInputTags($value, $key);
         } else {
-            if (get_magic_quotes_gpc()) {
+            if (PHP_VERSION_ID < 50400 && get_magic_quotes_gpc()) {
                 $value=stripslashes($value);
             }
             if ($key=='ticket') {
@@ -2284,7 +2298,7 @@ function sanitizeArray(&$array)
 
         // when magic quotes is on, need to use stripslashes,
         // and then addslashes
-        if (get_magic_quotes_gpc()) {
+        if (PHP_VERSION_ID < 50400 && get_magic_quotes_gpc()) {
             $val = stripslashes($val);
         }
         // note that we must use addslashes here because this function is called before the db connection is made
@@ -2626,4 +2640,20 @@ function isDebugMode()
         return false;
     }
     return !empty($CONF['debug']);
+}
+function file_get_extension($filename, $period = false)
+{
+    $basename = basename((string) $filename);
+    $i = strrpos($basename, '.');
+    if ($i === false) {
+        return '';
+    }
+    if (! $period) {
+        $i++;
+    }
+    $ext = substr($basename, $i);
+    if (strlen($ext)>0 && $ext !== '.') {
+        return $ext;
+    }
+    return '';
 }

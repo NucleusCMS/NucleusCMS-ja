@@ -22,10 +22,13 @@
  */
 
 /********************************************
- *        Start New for 3.7?                *
+ *        Start New for 3.7x                *
  ********************************************/
 // Skin import/export
 define('_SKINIE_ERROR_FAILEDLOAD_XML',        'Failed to Load XML');
+
+define('ERROR_PASSWORD_INVALID_CHARACTERS',  'password contains invalid characters');
+
 
 /********************************************
  *        Start New for 3.71                *

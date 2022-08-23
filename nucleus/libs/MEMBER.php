@@ -16,27 +16,27 @@ class MEMBER
 {
 
     // 1 when authenticated, 0 when not
-    var $loggedin = 0;
-    var $password;      // not the actual password, but rather a MD5 hash
+    public $loggedin = 0;
+    public $password;       // not the actual password, but rather a MD5 hash
 
-    var $cookiekey;     // value that should also be in the client cookie to allow authentication
+    public $cookiekey;      // value that should also be in the client cookie to allow authentication
 
     // member info
-    var $id = -1;
-    var $realname;
-    var $displayname;
-    var $email;
-    var $url;
-    var $language = '';     // name of the language file to use (e.g. 'english' -> english.php)
-    var $admin = 0;         // (either 0 or 1)
-    var $canlogin = 0;      // (either 0 or 1)
-    var $notes;
-    var $autosave = 1;      // if the member use the autosave draft function
+    public $id = -1;
+    public $realname;
+    public $displayname;
+    public $email;
+    public $url;
+    public $language = '';      // name of the language file to use (e.g. 'english' -> english.php)
+    public $admin = 0;          // (either 0 or 1)
+    public $canlogin = 0;       // (either 0 or 1)
+    public $notes;
+    public $autosave = 1;       // if the member use the autosave draft function
 
     /**
      * Constructor for a member object
      */
-    function __construct()
+    public function __construct()
     {
         global $DIR_LIBS;
         include_once("{$DIR_LIBS}phpass.class.inc.php");
@@ -82,7 +82,7 @@ class MEMBER
       * Returns true when succeeded, returns false when failed
       * 3.40 adds CustomLogin event
       */
-    function login($formv_username, $formv_password)
+    public function login($formv_username, $formv_password)
     {
         global $manager;
         
@@ -121,7 +121,7 @@ class MEMBER
     /**
      * Login using cookie key
      */
-    function cookielogin($username, $cookiekey)
+    public function cookielogin($username, $cookiekey)
     {
         $this->loggedin = 0;
         
@@ -136,12 +136,12 @@ class MEMBER
         return 1;
     }
 
-    function logout()
+    public function logout()
     {
         $this->loggedin=0;
     }
 
-    function isLoggedIn()
+    public function isLoggedIn()
     {
         return $this->loggedin;
     }
@@ -164,7 +164,7 @@ class MEMBER
         $this->setURL($obj->murl);
         $this->setDisplayName($obj->mname);
         $this->setAdmin($obj->madmin);
-        $this->id = $obj->mnumber;
+        $this->id = (int) $obj->mnumber;
         $this->setCanLogin($obj->mcanlogin);
         $this->setNotes($obj->mnotes);
         $this->setLanguage($obj->deflang);
@@ -178,7 +178,7 @@ class MEMBER
       * Returns true if member is an admin for the given blog
       * (returns false if not a team member)
       */
-    function isBlogAdmin($blogid)
+    public function isBlogAdmin($blogid)
     {
         $prefix  = sql_table('');
         $tblog   = intval($blogid);
@@ -193,13 +193,13 @@ class MEMBER
         }
     }
 
-    function blogAdminRights($blogid)
+    public function blogAdminRights($blogid)
     {
         return ($this->isAdmin() || $this->isBlogAdmin($blogid));
     }
 
 
-    function teamRights($blogid)
+    public function teamRights($blogid)
     {
         return ($this->isAdmin() || $this->isTeamMember($blogid));
     }
@@ -207,7 +207,7 @@ class MEMBER
     /**
       * Returns true if this member is a team member of the given blog
       */
-    function isTeamMember($blogid)
+    public function isTeamMember($blogid)
     {
         $query = 'SELECT * FROM '.sql_table('team').' WHERE'
                . ' tblog=' . intval($blogid)
@@ -216,7 +216,7 @@ class MEMBER
         return (sql_num_rows($res) != 0);
     }
 
-    function canAddItem($catid)
+    public function canAddItem($catid)
     {
         global $manager;
 
@@ -253,7 +253,7 @@ class MEMBER
       *   - member is admin of the blog associated with the comment
       *   - member is author of the item associated with the comment
       */
-    function canAlterComment($commentid)
+    public function canAlterComment($commentid)
     {
         if ($this->isAdmin()) {
             return 1;
@@ -274,7 +274,7 @@ class MEMBER
       *        - member is the author of the item
       *        - member is admin of the the associated blog
       */
-    function canAlterItem($itemid)
+    public function canAlterItem($itemid)
     {
         if ($this->isAdmin()) {
             return 1;
@@ -290,7 +290,7 @@ class MEMBER
       * Return true if member can be deleted. This means that there are no items
       * posted by the member left
       */
-    function canBeDeleted()
+    public function canBeDeleted()
     {
         $res = sql_query('SELECT * FROM '.sql_table('item').' WHERE iauthor=' . $this->getID());
         return (sql_num_rows($res) == 0);
@@ -303,7 +303,7 @@ class MEMBER
       * @param itemid
       * @param newcat (can also be of form 'newcat-x' with x=blogid)
       */
-    function canUpdateItem($itemid, $newcat)
+    public function canUpdateItem($itemid, $newcat)
     {
         global $manager;
 
@@ -449,7 +449,7 @@ class MEMBER
     /**
       * Returns an array of all blogids for which member has admin rights
       */
-    function getAdminBlogs()
+    public function getAdminBlogs()
     {
         $blogs = array();
 
@@ -472,7 +472,7 @@ class MEMBER
     /**
       * Returns an array of all blogids for which member has team rights
       */
-    function getTeamBlogs($incAdmin = 1)
+    public function getTeamBlogs($incAdmin = 1)
     {
         $incAdmin = intval($incAdmin);
         $blogs = array();
@@ -580,20 +580,24 @@ class MEMBER
     
     function checkPassword($pw)
     {
-        return (md5($pw) == $this->getPassword());
+        if (str_contains($this->getPassword(), '$')) {
+            return $this->hasher->CheckPassword($pw, $this->getPassword());
+        } else {
+            return md5($pw) === $this->getPassword();
+        }
     }
 
-    function getRealName()
+    public function getRealName()
     {
         return $this->realname;
     }
 
-    function setRealName($name)
+    public function setRealName($name)
     {
         $this->realname = $name;
     }
 
-    function getEmail()
+    public function getEmail()
     {
         return $this->email;
     }
@@ -610,7 +614,12 @@ class MEMBER
 
     function setPassword($pwd)
     {
+        if (! self::checkIfValidPasswordCharacters($pwd)) {
+            return false;
+        }
         $this->password = $this->hasher->HashPassword($pwd);
+
+        return true;
     }
 
     function getCookieKey()
@@ -766,6 +775,12 @@ class MEMBER
         }
         if (!$password) {
             return _ERROR_PASSWORDMISSING;
+        }
+        if (strlen($password) < 6) {
+            return _ERROR_PASSWORDTOOSHORT;
+        }
+        if (! self::checkIfValidPasswordCharacters($password)) {
+            return ERROR_PASSWORD_INVALID_CHARACTERS;
         }
 
         $obj = new MEMBER();
@@ -932,27 +947,36 @@ class MEMBER
         // 1. walk over all entries, and see if special actions need to be performed
         $res = sql_query('SELECT * FROM ' . sql_table('activation') . ' WHERE vtime < \'' . date('Y-m-d H:i:s', $boundary) . '\'');
 
-        while ($o = sql_fetch_object($res)) {
-            switch ($o->vtype) {
-                case 'register':
-                    // delete all information about this site member. registration is undone because there was
-                    // no timely activation
-                    include_once($DIR_LIBS . 'ADMIN.php');
-                    ADMIN::deleteOneMember(intval($o->vmember));
-                    break;
-                case 'addresschange':
-                    // revert the e-mail address of the member back to old address
-                    list($oldEmail, $oldCanLogin) = explode('/', $o->vextra);
-                    sql_query('UPDATE ' . sql_table('member') . ' SET mcanlogin=' . intval($oldCanLogin). ', memail=\'' . sql_real_escape_string($oldEmail). '\' WHERE mnumber=' . intval($o->vmember));
-                    break;
-                case 'forgot':
-                    // delete the activation link and ignore. member can request a new password using the
-                    // forgot password link
-                    break;
+        if ($res) {
+            while ($o = sql_fetch_object($res)) {
+                switch ($o->vtype) {
+                    case 'register':
+                        // delete all information about this site member. registration is undone because there was
+                        // no timely activation
+                        include_once($DIR_LIBS . 'ADMIN.php');
+                        ADMIN::deleteOneMember(intval($o->vmember));
+                        break;
+                    case 'addresschange':
+                        // revert the e-mail address of the member back to old address
+                        list($oldEmail, $oldCanLogin) = explode('/', $o->vextra);
+                        sql_query('UPDATE ' . sql_table('member') . ' SET mcanlogin=' . intval($oldCanLogin). ', memail=\'' . sql_real_escape_string($oldEmail). '\' WHERE mnumber=' . intval($o->vmember));
+                        break;
+                    case 'forgot':
+                        // delete the activation link and ignore. member can request a new password using the
+                        // forgot password link
+                        break;
+                }
             }
         }
 
         // 2. delete activation entries for real
         sql_query('DELETE FROM ' . sql_table('activation') . ' WHERE vtime < \'' . date('Y-m-d H:i:s', $boundary) . '\'');
+    }
+
+    public static function checkIfValidPasswordCharacters($password)
+    {
+        // check Characters
+        // 0x21-0x7e : 0-9 a-z A-Z ! " # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
+        return preg_match('/^[\x21-\x7e]{6,}$/', $password);
     }
 }

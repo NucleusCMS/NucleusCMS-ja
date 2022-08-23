@@ -54,10 +54,11 @@ if(is_file($DIR_LIBS . 'globalfunctions.php')) {
     // コアライブラリのパースをします
     include($DIR_LIBS.'globalfunctions.php');
 } else {
-	header('Content-type: text/html; charset=utf-8');
-	if (in_array('ja',explode(',', @strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']))))
-		echo '設定がおかしいです。<a href="./install/index.php">インストール用スクリプト</a>を起動するか、config.phpの設定値を変更して下さい。';
-	else
-		echo '<h1>Configuration error</h1> <p>please run the <a href="./install/index.php">install script</a> or modify config.php</p>';
-	exit;
+    header('Content-type: text/html; charset=utf-8');
+    if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) && in_array('ja',explode(',', @strtolower((string) $_SERVER['HTTP_ACCEPT_LANGUAGE'])))) {
+        echo '設定がおかしいです。<a href="./install/index.php">インストール用スクリプト</a>を起動するか、config.phpの設定値を変更して下さい。';
+    } else {
+        echo '<h1>Configuration error</h1> <p>please run the <a href="./install/index.php">install script</a> or modify config.php</p>';
+    }
+    exit;
 }

@@ -67,7 +67,7 @@ class TEMPLATE
         sql_query('DELETE FROM '.sql_table('template')." WHERE tpartname='". sql_real_escape_string($type) ."' and tdesc=" . intval($id));
 
         // write new thingie
-        if ($content) {
+        if (strlen($content) > 0) {
             sql_query('INSERT INTO '.sql_table('template')." SET tcontent='" . sql_real_escape_string($content) . "', tpartname='" . sql_real_escape_string($type) . "', tdesc=" . intval($id));
         }
     }

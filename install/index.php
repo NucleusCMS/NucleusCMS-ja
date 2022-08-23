@@ -85,8 +85,11 @@ $aConfSkinsToImport = array(
 	-- End Of Configurable Part --
 */
 
+if (!defined('E_DEPRECATED')) {
+    define('E_DEPRECATED', 8192);
+}
 // don't give warnings for uninitialized vars
-error_reporting(E_ALL);
+error_reporting(E_ALL & ~(E_DEPRECATED | E_STRICT));
 
 // make sure there's no unnecessary escaping:
 if (version_compare(PHP_VERSION, '5.3.0', '<')) {
@@ -129,11 +132,21 @@ global $MYSQL_HANDLER;
 //set the handler if different from mysql (or mysqli)
 //$MYSQL_HANDLER = array('pdo','mysql');
 if (!isset($MYSQL_HANDLER)) {
-	if (extension_loaded('mysql') || extension_loaded('mysqli')) {
-		$MYSQL_HANDLER = array('mysql','');
-	} else {
-		$MYSQL_HANDLER = array('pdo','mysql');
-	}
+    if (version_compare(PHP_VERSION, '7.0.0', '>=')) {
+        // PHP[7.0-]
+        if (extension_loaded('pdo_mysql')) {
+            $MYSQL_HANDLER = array('pdo','mysql');
+        } else {
+            $MYSQL_HANDLER = array('mysql','');
+        }
+    } else {
+        // PHP 5.x
+        if (extension_loaded('mysql') || extension_loaded('mysqli')) {
+            $MYSQL_HANDLER = array('mysql','');
+        } else {
+            $MYSQL_HANDLER = array('pdo','mysql');
+        }
+    }
 }
 include_once('../nucleus/libs/sql/'.$MYSQL_HANDLER[0].'.php');
 // end new for 3.5 sql_* wrapper

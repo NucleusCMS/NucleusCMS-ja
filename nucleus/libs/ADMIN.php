@@ -1999,19 +1999,19 @@ class ADMIN
 				<td><?php echo _MEMBERS_DISPLAY?> <?php help('shortnames');?>
 				<br /><small><?php echo _MEMBERS_DISPLAY_INFO?></small>
 				</td>
-				<td><input tabindex="10010" name="name" size="32" maxlength="32" /></td>
+				<td><input tabindex="10010" name="name" size="32" maxlength="32" required autocomplete="off" /></td>
 			</tr><tr>
 				<td><?php echo _MEMBERS_REALNAME?></td>
-				<td><input name="realname" tabindex="10020" size="40" maxlength="60" /></td>
+				<td><input name="realname" tabindex="10020" size="40" maxlength="60" required autocomplete="off" /></td>
 			</tr><tr>
-				<td><?php echo _MEMBERS_PWD?></td>
-				<td><input name="password" tabindex="10030" size="16" maxlength="40" type="password" /></td>
+				<td><?php echo _MEMBERS_PWD?> <?php help('password');?></td>
+				<td><input name="password" tabindex="10030" size="16" maxlength="40" type="password" required autocomplete="off"  pattern="^[\x21-\x7e]{6,}$" /></td>
 			</tr><tr>
 				<td><?php echo _MEMBERS_REPPWD?></td>
-				<td><input name="repeatpassword" tabindex="10035" size="16" maxlength="40" type="password" /></td>
+				<td><input name="repeatpassword" tabindex="10035" size="16" maxlength="40" type="password" required pattern="^[\x21-\x7e]{6,}$" /></td>
 			</tr><tr>
 				<td><?php echo _MEMBERS_EMAIL?></td>
-				<td><input name="email" tabindex="10040" size="40" maxlength="60" /></td>
+				<td><input name="email" tabindex="10040" size="40" maxlength="60" required /></td>
 			</tr><tr>
 				<td><?php echo _MEMBERS_URL?></td>
 				<td><input name="url" tabindex="10050" size="40" maxlength="100" /></td>
@@ -2089,7 +2089,7 @@ class ADMIN
 			</td>
 			<td>
 			<?php if ($CONF['AllowLoginEdit'] || $member->isAdmin()) { ?>
-				<input name="name" tabindex="10" maxlength="32" size="32" value="<?php echo  hsc($mem->getDisplayName()); ?>" />
+				<input name="name" tabindex="10" maxlength="32" size="32" value="<?php echo  hsc($mem->getDisplayName()); ?>" required />
 			<?php } else {
 			    echo hsc($member->getDisplayName());
 			}
@@ -2098,23 +2098,23 @@ class ADMIN
 		</tr>
 		<tr>
 			<td><?php echo _MEMBERS_REALNAME?></td>
-			<td><input name="realname" tabindex="20" maxlength="60" size="40" value="<?php echo  hsc($mem->getRealName()); ?>" /></td>
+			<td><input name="realname" tabindex="20" maxlength="60" size="40" value="<?php echo  hsc($mem->getRealName()); ?>" required /></td>
 		</tr>
 		<?php if ($CONF['AllowLoginEdit'] || $member->isAdmin()) { ?>
 		<tr>
-			<td><?php echo _MEMBERS_PWD?></td>
-			<td><input type="password" tabindex="30" maxlength="40" size="16" name="password" autocomplete="off" /></td>
+			<td><?php echo _MEMBERS_PWD?> <?php help('password');?></td>
+			<td><input type="password" tabindex="30" maxlength="40" size="16" name="password" autocomplete="off" pattern="^$|^[\x21-\x7e]{6,}$" /></td>
 		</tr>
 		<tr>
 			<td><?php echo _MEMBERS_REPPWD?></td>
-			<td><input type="password" tabindex="35" maxlength="40" size="16" name="repeatpassword" autocomplete="off" /></td>
+			<td><input type="password" tabindex="35" maxlength="40" size="16" name="repeatpassword" autocomplete="off" pattern="^$|^[\x21-\x7e]{6,}$" /></td>
 		</tr>
 		<?php } ?>
 		<tr>
 			<td><?php echo _MEMBERS_EMAIL?>
 				<br /><small><?php echo _MEMBERS_EMAIL_EDIT?></small>
 			</td>
-			<td><input name="email" tabindex="40" size="40" maxlength="60" value="<?php echo  hsc($mem->getEmail()); ?>" /></td>
+			<td><input name="email" tabindex="40" size="40" maxlength="60" value="<?php echo  hsc($mem->getEmail()); ?>" required /></td>
 		</tr>
 		<tr>
 			<td><?php echo _MEMBERS_URL?></td>
@@ -2446,7 +2446,7 @@ class ADMIN
 						<input type="hidden" name="key" value="<?php echo hsc($key) ?>" />
 
 						<table><tr>
-							<td><?php echo _MEMBERS_PWD?></td>
+							<td><?php echo _MEMBERS_PWD?> <?php help('password');?></td>
 							<td><input type="password" maxlength="40" size="16" name="password" autocomplete="off" /></td>
 						</tr><tr>
 							<td><?php echo _MEMBERS_REPPWD?></td>
@@ -2504,7 +2504,7 @@ class ADMIN
         $password	   = postVar('password');
         $repeatpassword = postVar('repeatpassword');
 
-        if (!$password) {
+        if (!trim($password) || (trim($password) != $password)) {
             return $this->_showActivationPage($key, _ERROR_PASSWORDMISSING);
         }
         
@@ -2512,7 +2512,7 @@ class ADMIN
             return $this->_showActivationPage($key, _ERROR_PASSWORDMISMATCH);
         }
         
-        if (strlen($password) < 6) {
+        if ($password && (strlen($password) < 6)) {
             return $this->_showActivationPage($key, _ERROR_PASSWORDTOOSHORT);
         }
         
@@ -7352,7 +7352,7 @@ selector();
             }
             if (count($aFound) > 0) {
                 $title = _ERRORS_STARTUPERROR3;
-                $msg   = _ERRORS_STARTUPERROR1. implode($aFound, '</li><li>')._ERRORS_STARTUPERROR2;
+                $msg   = _ERRORS_STARTUPERROR1. implode('</li><li>', $aFound)._ERRORS_STARTUPERROR2;
                 // check core upgrade
                 if (intval($CONF['DatabaseVersion']) < NUCLEUS_DATABASE_VERSION_ID) {
                     if (!defined('_ADMIN_TEXT_UPGRADE_REQUIRED')) {

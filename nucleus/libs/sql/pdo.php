@@ -526,7 +526,12 @@ if (!function_exists('sql_fetch_assoc')) {
  */
     function sql_num_rows($res)
     {
-        return $res->rowCount();
+        // DELETE, INSERT, UPDATE
+        // do not use : SELECT
+        if (is_object($res)) {
+            return $res->rowCount();
+        }
+        return 0;
     }
     
 /**
@@ -551,7 +556,9 @@ if (!function_exists('sql_fetch_assoc')) {
     function sql_fetch_assoc($res)
     {
         $results = array();
-        $results = $res->fetch(PDO::FETCH_ASSOC);
+        if ($res) {
+            $results = $res->fetch(PDO::FETCH_ASSOC);
+        }
         return $results;
     }
     
@@ -561,7 +568,9 @@ if (!function_exists('sql_fetch_assoc')) {
     function sql_fetch_array($res)
     {
         $results = array();
-        $results = $res->fetch(PDO::FETCH_BOTH);
+        if ($res) {
+            $results = $res->fetch(PDO::FETCH_BOTH);
+        }
         return $results;
     }
     
@@ -570,33 +579,47 @@ if (!function_exists('sql_fetch_assoc')) {
  */
     function sql_fetch_object($res)
     {
-        $results = null;
-        $results = $res->fetchObject();
-        return $results;
+        if (! $res || ! is_object($res)) {
+            return null;
+        }
+
+        return $res->fetchObject();
     }
-    
+
 /**
  * Get a result row as an enumerated array
  */
     function sql_fetch_row($res)
     {
-        $results = array();
-        $results = $res->fetch(PDO::FETCH_NUM);
-        return $results;
+        if (! $res || ! is_object($res)) {
+            return array();
+        }
+
+        return $res->fetch(PDO::FETCH_NUM);
     }
-    
+
+    function sql_fetch_column($res, $column_number = 0)
+    {
+        if (! $res) {
+            return false;
+        }
+
+        return $res->fetchColumn($column_number);
+    }
+
+
 /**
  * Get column information from a result and return as an object
  */
     function sql_fetch_field($res, $offset = 0)
     {
-        $results = array();
-        $obj = null;
-        $results = $res->getColumnMeta($offset);
-        foreach ($results as $key => $value) {
-            $obj->$key = $value;
+        if (is_object($res) && ($res instanceof PDOStatement)) {
+            $results = $res->getColumnMeta($offset);
+            if (is_array($results) && count($results)>0) {
+                return (object) $results;
+            }
         }
-        return $obj;
+        return null;
     }
     
 /**
@@ -636,6 +659,13 @@ if (!function_exists('sql_fetch_assoc')) {
         return $SQL_DBH->getAttribute(constant("PDO::ATTR_CLIENT_VERSION"));
     }
     
+    function sql_get_db()
+    {
+        global $SQL_DBH;
+
+        return $SQL_DBH;
+    }
+
 /**
  * Get SQL server version
  */
