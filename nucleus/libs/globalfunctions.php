@@ -2601,3 +2601,12 @@ function loadCoreClassFor_spl_prephp53($classname)
         require_once "{$DIR_LIBS}/{$classname}.php";
     }
 }
+
+function isDebugMode()
+{
+    global $CONF;
+    if (!isset($CONF['debug'])) {
+        return false;
+    }
+    return !empty($CONF['debug']);
+}
