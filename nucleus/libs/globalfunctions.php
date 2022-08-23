@@ -20,6 +20,23 @@ define('NUCLEUS_DATABASE_VERSION_ID', 371);
 
 include_once($DIR_LIBS. 'phpfunctions.php');
 
+if (PHP_VERSION_ID >= 80000) {
+    if (!headers_sent()) {
+        header("HTTP/1.0 503 Service Unavailable");
+        header("Cache-Control: no-cache, must-revalidate");
+        header("Expires: Mon, 01 Jan 2018 00:00:00 GMT");
+    }
+    if (!isset($CONF['debug']) || empty($CONF['debug'])) {
+        exit();
+    }
+    if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) && in_array('ja',explode(',', @strtolower((string) $_SERVER['HTTP_ACCEPT_LANGUAGE'])))) {
+        exit('<h1>エラー</h1><div>このバージョンは、PHP 8.0 以降に対応していません。</div>
+            <div>PHP 8.0 以降で動作させるには、Nucleus CMS 3.80 以降が必要です。</div>');
+    }
+    exit('<h1>Error</h1><div>This version does not support PHP 8.0 or later.</div>
+        <div>Nucleus CMS version 3.80 or later is required to work with PHP8.0 or later.</div>');
+}
+
 $nucleus['version'] = 'v' . NUCLEUS_VERSION;
 $nucleus['codename'] = '';
 

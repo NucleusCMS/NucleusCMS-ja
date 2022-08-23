@@ -24,6 +24,15 @@
 	-- Start Of Configurable Part --
 */
 
+if (version_compare('8.0.0',phpversion(),'<=')) {
+    if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) && in_array('ja',explode(',', @strtolower((string) $_SERVER['HTTP_ACCEPT_LANGUAGE'])))) {
+        exit('<h1>エラー</h1><div>このバージョンは、PHP 8.0 以降に対応していません。</div>
+            <div>PHP 8.0 以降で動作させるには、Nucleus CMS 3.80 以降が必要です。</div>');
+    }
+    exit('<h1>Error</h1><div>This version does not support PHP 8.0 or later.</div>
+        <div>Nucleus CMS version 3.80 or later is required to work with PHP8.0 or later.</div>');
+}
+
 global $lang;
 if (isset($_POST['lang']))
 	$lang = strtolower( $_POST['lang'] );
