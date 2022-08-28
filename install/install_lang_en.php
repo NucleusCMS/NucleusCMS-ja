@@ -18,6 +18,7 @@
 
 define('_INSTALL_TEXT_ERROR_ROOT_CONFIGFOLDER_NOT_WRITABLE',
     'Nucleus root folder (../) is not writable. Nucleus installer  can not write the config.php file.');
+define('_INSTALL_TEXT_ERROR_INSTALLATION_EXPIRED', 'Your installation has expired. Please re-upload install/index.php with a current timestamp.');
 define('_INSTALL_TEXT_ERROR_CONFIG_EXIST',
     'The config.php file already exists. To reinstall, you need to delete ../config.php.');
 define('_INSTALL_TEXT_ERROR_PHP_MINIMUM_REQUIREMENT',
