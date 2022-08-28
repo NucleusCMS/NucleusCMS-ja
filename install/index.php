@@ -76,7 +76,19 @@ if (isset($_REQUEST['lang'])) {
 
 if (!$lang) {
     $v         = '';
-    $http_lang = explode('-', @strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']));
+    $http_lang = array();
+    if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+        if (function_exists('locale_accept_from_http')) {
+            $http_lang = (string) @locale_accept_from_http($_SERVER['HTTP_ACCEPT_LANGUAGE']);
+            $http_lang = preg_replace('/[\-_].+$/', '', $http_lang);
+            $http_lang = array($http_lang);
+        } else {
+            $http_lang = preg_replace('/q=[^,;]+/', ',', @strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']));
+            $http_lang = preg_replace('/-[^,;]+/', ',', $http_lang);
+            $http_lang = preg_split('/[,;]/', $http_lang, -1, PREG_SPLIT_NO_EMPTY);
+            $http_lang = array_unique($http_lang);
+        }
+    }
 
     foreach ($http_lang as $key) {
         if (!isset($install_lang_defs[$key])) {
