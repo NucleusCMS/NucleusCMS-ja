@@ -217,7 +217,7 @@ if (! function_exists('sql_fetch_assoc')) {
             }
         } catch (PDOException $e) {
             $DBH = null;
-            if (isDebugMode()) {
+            if (isDebugMode() || (defined('NC_MTN_MODE') && NC_MTN_MODE == 'install')) {
                 $msg = '<p>a1 Error!: ' . hsc($e->getMessage()) . '</p>';
             } else {
                 $msg = '<p>a1 Error!: ';

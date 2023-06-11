@@ -22,6 +22,12 @@ function startUpError($msg, $title)
     if (! defined('_CHARSET')) {
         define('_CHARSET', 'UTF-8');
     }
+    if (!defined('NC_LIBS_PATH')) {
+        if (!headers_sent())
+          header("HTTP/1.0 500 Internal Server Error");
+        printf('<h1>%s</h1><p>%s</p>', $title, $msg);
+        exit;
+    }
     $tpl = file_get_contents(NC_LIBS_PATH
                                          . 'include/startup_error.template');
     $ph              = [];
