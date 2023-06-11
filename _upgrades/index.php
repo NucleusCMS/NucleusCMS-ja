@@ -14,7 +14,7 @@
  *
  */
 
-if (version_compare(phpversion(), '5.5.0', '<') || 90000 <= PHP_VERSION_ID) {
+if (version_compare(phpversion(), '7.4.0', '<') || 90000 <= PHP_VERSION_ID) {
     $ver = explode('.', phpversion());
     $ver = sprintf('PHP%d.%d', $ver[0], $ver[1]);
     if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])

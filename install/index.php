@@ -24,7 +24,7 @@
     -- Start Of Configurable Part --
 */
 
-if (version_compare(phpversion(), '5.5.0', '<') || 90000 <= PHP_VERSION_ID) {
+if (version_compare(phpversion(), '7.4.0', '<') || 90000 <= PHP_VERSION_ID) {
     $ver = explode('.', phpversion());
     $ver = sprintf('PHP%d.%d', $ver[0], $ver[1]);
     if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])
@@ -51,7 +51,7 @@ define('ENABLE_SQLITE_INSTALL', 0); // allow sqlite install , boolean  PHP[7.1-]
 define('INSTALL_PRIORITY_MYSQL_MODULE', PHP_VERSION_ID <= 70000 ? 1 : 0); // mode , 0: pdo mysql , 1: mysql module
 define('DEBUG_INSTALL_QUERY', 0); // debug query
 define('DEBUG_INSTALL_STEPS', 0); // debug
-define('NUCLEUS_INSTALL_MINIMUM_PHP_VERSION', '5.5.0'); // (string) , format : dot separated
+define('NUCLEUS_INSTALL_MINIMUM_PHP_VERSION', '7.4.0'); // (string) , format : dot separated
 
 define('ENABLE_INSTALL_LANG_EUCJP', 1); // allow Jpanase euc-jp install , boolean
 

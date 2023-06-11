@@ -16,7 +16,7 @@
  * @copyright Copyright (C) The Nucleus Group
  */
 
-if (version_compare(phpversion(), '5.5.0', '<') || 90000 <= PHP_VERSION_ID) {
+if (version_compare(phpversion(), '7.4.0', '<') || 90000 <= PHP_VERSION_ID) {
     if (!headers_sent()) {
         header("HTTP/1.0 503 Service Unavailable");
         header("Cache-Control: no-cache, must-revalidate");
@@ -50,7 +50,7 @@ global $nucleus, $CONF, $manager, $member;
 
 //if(is_file(NC_CORE_PATH.'autoload.php')) include_once(NC_CORE_PATH.'autoload.php');
 
-define('HAS_CATCH_ERROR', version_compare('7.0.0', PHP_VERSION, '<='));
+define('HAS_CATCH_ERROR', true); // deprecated - HAS_CATCH_ERROR
 
 include_once(NC_LIBS_PATH . 'version.php');
 include_once(NC_LIBS_PATH . 'phpfunctions.php');
