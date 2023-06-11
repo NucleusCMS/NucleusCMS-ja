@@ -276,17 +276,6 @@ class MANAGER
      */
     private function _loadPlugin($NP_Name)
     {
-        if (! HAS_CATCH_ERROR) {
-            $this->_loadPluginRaw($NP_Name);
-
-            return class_exists($NP_Name);
-        }
-
-        return $this->_loadPluginTry($NP_Name);
-    }
-
-    private function _loadPluginTry($NP_Name)
-    {
         $success = false;
         try {
             $this->_loadPluginRaw($NP_Name);
@@ -689,12 +678,6 @@ class MANAGER
                                    $this->plugins[$listener],
                                    $event_funcname
                                ));
-            if (! HAS_CATCH_ERROR) {
-                if ($has_plugin) {
-                    $this->plugins[$listener]->$event_funcname($data);
-                }
-                continue;
-            }
 
             try {
                 if ($has_plugin) {

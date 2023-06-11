@@ -195,14 +195,6 @@ class PARSER
             }
             if (in_array('plugin', $this->actions)
                 && $manager->pluginInstalled('NP_' . $action)) {
-                if (! HAS_CATCH_ERROR) {
-                    $this->doAction(sprintf(
-                        'plugin(%s%s%s)',
-                        $action,
-                        $this->pdelim,
-                        implode($this->pdelim, $params)
-                    ));
-                } else {
                     try {
                         $this->doAction(sprintf(
                             'plugin(%s%s%s)',
@@ -236,7 +228,6 @@ class PARSER
                             throw $e;
                         }
                     }
-                }
             } elseif (confVar('DebugVars')) {
                 echo '&lt;%', $action, '(', implode(
                     $this->pdelim,
