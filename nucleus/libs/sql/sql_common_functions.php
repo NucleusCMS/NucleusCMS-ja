@@ -334,7 +334,7 @@ function fix_mysql_sqlmode($conn_or_dbh = null)
 
     $options = array_diff(
         explode(',', $sqlmode),
-        ['NO_ZERO_DATE', 'NO_ZERO_IN_DATE']
+        ['NO_ZERO_DATE', 'NO_ZERO_IN_DATE', 'STRICT_TRANS_TABLES']
     );
     $new_sqlmode = implode(',', $options);
     if (strcmp($sqlmode, $new_sqlmode) != 0) {
