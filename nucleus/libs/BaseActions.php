@@ -15,305 +15,329 @@
  * It should never be used on it's own
  */
 
-class BaseActions {
+class BaseActions
+{
+    // depth level for includes (max. level is 3)
+    public $level;
 
-	// depth level for includes (max. level is 3)
-	var $level;
+    // array of evaluated conditions (true/false). The element at the end is the one for the most nested
+    // if block.
+    public $if_conditions;
 
-	// array of evaluated conditions (true/false). The element at the end is the one for the most nested
-	// if block.
-	var $if_conditions;
+    // in the "elseif" / "elseifnot" sequences, if one of the conditions become "true" remained conditions should not
+    // be tested. this variable (actually a stack) holds this information.
+    public $if_execute;
 
-	// in the "elseif" / "elseifnot" sequences, if one of the conditions become "true" remained conditions should not
-	// be tested. this variable (actually a stack) holds this information.
-	var $if_execute;
+    // at all times, can be evaluated to either true if the current block needs to be displayed. This
+    // variable is used to decide to skip skinvars in parts that will never be outputted.
+    public $if_currentlevel;
 
-	// at all times, can be evaluated to either true if the current block needs to be displayed. This
-	// variable is used to decide to skip skinvars in parts that will never be outputted.
-	var $if_currentlevel;
+    // contains a search string with keywords that need to be highlighted. These get parsed into $aHighlight
+    public $strHighlight;
 
-	// contains a search string with keywords that need to be highlighted. These get parsed into $aHighlight
-	var $strHighlight;
+    // array of keywords that need to be highlighted in search results (see the highlight()
+    // and parseHighlight() methods)
+    public $aHighlight;
 
-	// array of keywords that need to be highlighted in search results (see the highlight()
-	// and parseHighlight() methods)
-	var $aHighlight;
+    // reference to the parser object that is using this object as actions-handler
+    public $parser;
 
-	// reference to the parser object that is using this object as actions-handler
-	var $parser;
+    public function __construct()
+    {
+        $this->level = 0;
 
-	function __construct() {
-		$this->level = 0;
+        // if nesting level
+        $this->if_conditions   = array(); // array on which condition values are pushed/popped
+        $this->if_execute      = array(); 	// array on which condition values are pushed/popped
+        $this->if_currentlevel = 1;		// 1 = current level is displayed; 0 = current level not displayed
 
-		// if nesting level
-		$this->if_conditions = array(); // array on which condition values are pushed/popped
-		$this->if_execute = array(); 	// array on which condition values are pushed/popped
-		$this->if_currentlevel = 1;		// 1 = current level is displayed; 0 = current level not displayed
+        // highlights
+        $this->strHighlight = '';			// full highlight
+        $this->aHighlight   = array();		// parsed highlight
+    }
 
-		// highlights
-		$this->strHighlight = '';			// full highlight
-		$this->aHighlight = array();		// parsed highlight
+    // include file (no parsing of php)
+    public function parse_include($filename)
+    {
+        @readfile($this->getIncludeFileName($filename));
+    }
 
-	}
+    // php-include file
+    public function parse_phpinclude($filename)
+    {
+        includephp($this->getIncludeFileName($filename));
+    }
 
-	// include file (no parsing of php)
-	function parse_include($filename) {
-		@readfile($this->getIncludeFileName($filename));
-	}
+    // parsed include
+    public function parse_parsedinclude($filename)
+    {
+        // check current level
+        if ($this->level > 3) {
+            return;	// max. depth reached (avoid endless loop)
+        }
+        global $skinid;
+        $skin = new SKIN($skinid);
+        $file = $this->getIncludeFileName($filename);
+        if (!$skin->isValid && !file_exists($file)) {
+            return;
+        }
+        $contents = strpos($filename, '/') === false ? $skin->getContent($filename) : false;
+        if (!$contents) {
+            if (!is_file($file)) {
+                return;
+            }
+            $contents = file_get_contents($file);
+            if (empty($contents)) {
+                return;
+            }
+        }
+        $this->level = $this->level + 1;
+        // parse file contents
+        if (strpos($contents, '<%') !== false) {
+            $this->parser->parse($contents);
+        } else {
+            echo $contents;
+        }
 
-	// php-include file
-	function parse_phpinclude($filename) {
-		includephp($this->getIncludeFileName($filename));
-	}
+        $this->level = $this->level - 1;
+    }
 
-	// parsed include
-	function parse_parsedinclude($filename) {
-		// check current level
-		if ($this->level > 3)
-		{
-			return;	// max. depth reached (avoid endless loop)
-		}
-		global $skinid;
-		$skin = new SKIN($skinid);
-		$file = $this->getIncludeFileName($filename);
-		if (!$skin->isValid && !file_exists($file))
-		{
-			return;
-		}
-		$contents = strpos($filename,'/')===false ? $skin->getContent($filename) : false;
-		if (!$contents)
-		{
-			if (!is_file($file))
-			{
-				return;
-			}
-			$contents = file_get_contents($file);
-			if (empty($contents))
-			{
-				return;
-			}
-		}
-		$this->level = $this->level + 1;
-		// parse file contents
-		if(strpos($contents,'<%')!==false)
-			$this->parser->parse($contents);
-		else
-			echo $contents;
+    /**
+     * Returns the correct location of the file to be included, according to
+     * parser properties
+     *
+     * IF IncludeMode = 'skindir' => use skindir
+     */
+    public function getIncludeFileName($filename)
+    {
+        // leave absolute filenames and http urls as they are
+        if (
+            (substr($filename, 0, 1) == '/')
+            || (substr($filename, 0, 7) == 'http://')
+            || (substr($filename, 0, 6) == 'ftp://')
+        ) {
+            return $filename;
+        }
 
-		$this->level = $this->level - 1;
-	}
+        $filename = PARSER::getProperty('IncludePrefix') . $filename;
+        if (PARSER::getProperty('IncludeMode') == 'skindir') {
+            global $DIR_SKINS;
+            return $DIR_SKINS . $filename;
+        } else {
+            return $filename;
+        }
+    }
 
-	/**
-	 * Returns the correct location of the file to be included, according to
-	 * parser properties
-	 *
-	 * IF IncludeMode = 'skindir' => use skindir
-	 */
-	function getIncludeFileName($filename) {
-		// leave absolute filenames and http urls as they are
-		if (
-				(substr($filename,0,1) == '/')
-			||	(substr($filename,0,7) == 'http://')
-			||	(substr($filename,0,6) == 'ftp://')
-			)
-			return $filename;
+    /**
+     * Inserts an url relative to the skindir (useful when doing import/export)
+     *
+     * e.g. <skinfile(default/myfile.sth)>
+     */
+    public function parse_skinfile($filename)
+    {
+        global $CONF;
 
-		$filename = PARSER::getProperty('IncludePrefix') . $filename;
-		if (PARSER::getProperty('IncludeMode') == 'skindir') {
-			global $DIR_SKINS;
-			return $DIR_SKINS . $filename;
-		} else {
-			return $filename;
-		}
-	}
+        echo $CONF['SkinsURL'] . PARSER::getProperty('IncludePrefix') . $filename;
+    }
 
-	/**
-	 * Inserts an url relative to the skindir (useful when doing import/export)
-	 *
-	 * e.g. <skinfile(default/myfile.sth)>
-	 */
-	function parse_skinfile($filename) {
-		global $CONF;
+    /**
+     * Sets a property for the parser
+     */
+    public function parse_set($property, $value)
+    {
+        PARSER::setProperty($property, $value);
+    }
 
-		echo $CONF['SkinsURL'] . PARSER::getProperty('IncludePrefix') . $filename;
-	}
+    /**
+     * Helper function: add if condition
+     */
+    public function _addIfCondition($condition)
+    {
+        array_push($this->if_conditions, $condition);
 
-	/**
-	 * Sets a property for the parser
-	 */
-	function parse_set($property, $value) {
-		PARSER::setProperty($property, $value);
-	}
+        $this->_updateTopIfCondition();
 
-	/**
-	 * Helper function: add if condition
-	 */
-	function _addIfCondition($condition) {
+        ob_start();
+    }
 
-		array_push($this->if_conditions,$condition);
+    public function _updateTopIfCondition()
+    {
+        if (count($this->if_conditions) == 0) {
+            $this->if_currentlevel = 1;
+        } else {
+            $this->if_currentlevel = $this->if_conditions[count($this->if_conditions) - 1];
+        }
+    }
 
-		$this->_updateTopIfCondition();
+    /**
+     * Helper function for elseif / elseifnot
+     */
+    public function _addIfExecute()
+    {
+        array_push($this->if_execute, 0);
+    }
 
-		ob_start();
-	}
+    /**
+     * Helper function for elseif / elseifnot
+     * @param string condition to be fullfilled
+     */
+    public function _updateIfExecute($condition)
+    {
+        $index                    = count($this->if_execute) - 1;
+        $this->if_execute[$index] = $this->if_execute[$index] || $condition;
+    }
 
-	function _updateTopIfCondition() {
-		if (sizeof($this->if_conditions) == 0)
-			$this->if_currentlevel = 1;
-		else
-			$this->if_currentlevel = $this->if_conditions[sizeof($this->if_conditions) - 1];
-	}
+    /**
+     * returns the currently top if condition
+     */
+    public function _getTopIfCondition()
+    {
+        return $this->if_currentlevel;
+    }
 
-	/**
-	 * Helper function for elseif / elseifnot
-	 */
-	function _addIfExecute() {
-		array_push($this->if_execute, 0);
-	}
+    /**
+     * Sets the search terms to be highlighted
+     *
+     * @param $highlight
+     *                    A series of search terms
+     */
+    public function setHighlight($highlight)
+    {
+        $this->strHighlight = $highlight;
+        if ($highlight) {
+            $this->aHighlight = parseHighlight($highlight);
+        }
+    }
 
-	/**
-	 * Helper function for elseif / elseifnot
-	 * @param string condition to be fullfilled
-	 */
-	function _updateIfExecute($condition) {
-		$index = sizeof($this->if_execute) - 1;
-		$this->if_execute[$index] = $this->if_execute[$index] || $condition;
-	}
+    /**
+     * Applies the highlight to the given piece of text
+     *
+     * @param &$data
+     *                Data that needs to be highlighted
+     * @see setHighlight
+     */
+    public function highlight(&$data)
+    {
+        if ($this->aHighlight) {
+            return highlight($data, $this->aHighlight, $this->template['SEARCH_HIGHLIGHT']);
+        } else {
+            return $data;
+        }
+    }
 
-	/**
-	 * returns the currently top if condition
-	 */
-	function _getTopIfCondition() {
-		return $this->if_currentlevel;
-	}
+    /**
+     * Parses <%if%> statements
+     */
+    public function parse_if()
+    {
+        $this->_addIfExecute();
 
-	/**
-	 * Sets the search terms to be highlighted
-	 *
-	 * @param $highlight
-	 *		A series of search terms
-	 */
-	function setHighlight($highlight) {
-		$this->strHighlight = $highlight;
-		if ($highlight) {
-			$this->aHighlight = parseHighlight($highlight);
-		}
-	}
+        $args      = func_get_args();
+        $condition = call_user_func_array(array($this,'checkCondition'), $args);
+        $this->_addIfCondition($condition);
+    }
 
-	/**
-	 * Applies the highlight to the given piece of text
-	 *
-	 * @param &$data
-	 *		Data that needs to be highlighted
-	 * @see setHighlight
-	 */
-	function highlight(&$data) {
-		if ($this->aHighlight)
-			return highlight($data,$this->aHighlight,$this->template['SEARCH_HIGHLIGHT']);
-		else
-			return $data;
-	}
+    /**
+     * Parses <%else%> statements
+     */
+    public function parse_else()
+    {
+        if (count($this->if_conditions) == 0) {
+            return;
+        }
+        array_pop($this->if_conditions);
+        if ($this->if_currentlevel) {
+            echo ob_get_clean();
+            $this->_updateIfExecute(1);
+            $this->_addIfCondition(0);
+        } elseif ($this->if_execute[count($this->if_execute) - 1]) {
+            ob_end_clean();
+            $this->_addIfCondition(0);
+        } else {
+            ob_end_clean();
+            $this->_addIfCondition(1);
+        }
+    }
 
-	/**
-	 * Parses <%if%> statements
-	 */
-	function parse_if() {
-		$this->_addIfExecute();
+    /**
+     * Parses <%elseif%> statements
+     */
+    public function parse_elseif()
+    {
+        if (count($this->if_conditions) == 0) {
+            return;
+        }
+        array_pop($this->if_conditions);
+        if ($this->if_currentlevel) {
+            echo ob_get_clean();
+            $this->_updateIfExecute(1);
+            $this->_addIfCondition(0);
+        } elseif ($this->if_execute[count($this->if_execute) - 1]) {
+            ob_end_clean();
+            $this->_addIfCondition(0);
+        } else {
+            ob_end_clean();
+            $args      = func_get_args();
+            $condition = call_user_func_array(array($this,'checkCondition'), $args);
+            $this->_addIfCondition($condition);
+        }
+    }
 
-		$args = func_get_args();
-		$condition = call_user_func_array(array($this,'checkCondition'), $args);
-		$this->_addIfCondition($condition);
-	}
+    /**
+     * Parses <%ifnot%> statements
+     */
+    public function parse_ifnot()
+    {
+        $this->_addIfExecute();
 
-	/**
-	 * Parses <%else%> statements
-	 */
-	function parse_else() {
-		if (sizeof($this->if_conditions) == 0) return;
-		array_pop($this->if_conditions);
-		if ($this->if_currentlevel) {
-			echo ob_get_clean();
-			$this->_updateIfExecute(1);
-			$this->_addIfCondition(0);
-		} elseif ($this->if_execute[sizeof($this->if_execute) - 1]) {
-			ob_end_clean();
-			$this->_addIfCondition(0);
-		} else {
-			ob_end_clean();
-			$this->_addIfCondition(1);
-		}
-	}
+        $args      = func_get_args();
+        $condition = call_user_func_array(array($this,'checkCondition'), $args);
+        $this->_addIfCondition(!$condition);
+    }
 
-	/**
-	 * Parses <%elseif%> statements
-	 */
-	function parse_elseif() {
-		if (sizeof($this->if_conditions) == 0) return;
-		array_pop($this->if_conditions);
-		if ($this->if_currentlevel) {
-			echo ob_get_clean();
-			$this->_updateIfExecute(1);
-			$this->_addIfCondition(0);
-		} elseif ($this->if_execute[sizeof($this->if_execute) - 1]) {
-			ob_end_clean();
-			$this->_addIfCondition(0);
-		} else {
-			ob_end_clean();
-			$args = func_get_args();
-			$condition = call_user_func_array(array($this,'checkCondition'), $args);
-			$this->_addIfCondition($condition);
-		}
-	}
+    /**
+     * Parses <%elseifnot%> statements
+     */
+    public function parse_elseifnot()
+    {
+        if (count($this->if_conditions) == 0) {
+            return;
+        }
+        array_pop($this->if_conditions);
+        if ($this->if_currentlevel) {
+            echo ob_get_clean();
+            $this->_updateIfExecute(1);
+            $this->_addIfCondition(0);
+        } elseif ($this->if_execute[count($this->if_execute) - 1]) {
+            ob_end_clean();
+            $this->_addIfCondition(0);
+        } else {
+            ob_end_clean();
+            $args      = func_get_args();
+            $condition = call_user_func_array(array($this,'checkCondition'), $args);
+            $this->_addIfCondition(!$condition);
+        }
+    }
 
-	/**
-	 * Parses <%ifnot%> statements
-	 */
-	function parse_ifnot() {
-		$this->_addIfExecute();
+    /**
+     * Ends a conditional if-block
+     * see e.g. ifcat (BLOG), ifblogsetting (PAGEFACTORY)
+     */
+    public function parse_endif()
+    {
+        // we can only close what has been opened
+        if (count($this->if_conditions) == 0) {
+            return;
+        }
 
-		$args = func_get_args();
-		$condition = call_user_func_array(array($this,'checkCondition'), $args);
-		$this->_addIfCondition(!$condition);
-	}
+        if ($this->if_currentlevel) {
+            echo ob_get_clean();
+        } else {
+            ob_end_clean();
+        }
+        array_pop($this->if_conditions);
+        array_pop($this->if_execute);
 
-	/**
-	 * Parses <%elseifnot%> statements
-	 */
-	function parse_elseifnot() {
-		if (sizeof($this->if_conditions) == 0) return;
-		array_pop($this->if_conditions);
-		if ($this->if_currentlevel) {
-			echo ob_get_clean();
-			$this->_updateIfExecute(1);
-			$this->_addIfCondition(0);
-		} elseif ($this->if_execute[sizeof($this->if_execute) - 1]) {
-			ob_end_clean();
-			$this->_addIfCondition(0);
-		} else {
-			ob_end_clean();
-			$args = func_get_args();
-			$condition = call_user_func_array(array($this,'checkCondition'), $args);
-			$this->_addIfCondition(!$condition);
-		}
-	}
-
-	/**
-	 * Ends a conditional if-block
-	 * see e.g. ifcat (BLOG), ifblogsetting (PAGEFACTORY)
-	 */
-	function parse_endif() {
-		// we can only close what has been opened
-		if (sizeof($this->if_conditions) == 0) return;
-
-		if ($this->if_currentlevel) {
-			echo ob_get_clean();
-		} else {
-			ob_end_clean();
-		}
-		array_pop($this->if_conditions);
-		array_pop($this->if_execute);
-
-		$this->_updateTopIfCondition();
-	}
+        $this->_updateTopIfCondition();
+    }
 }
-?>
