@@ -35,9 +35,13 @@
 
 		<div class="heading">
 			Nucleus CMS マニュアル
-			<i>(v3.71)</i>
+			<i>(v3.71 EOL)</i>
 		</div>
 
+		<div class="note"><span style="color: red; font-weight: bold; font-size: x-large">警告</span>
+			<div style="margin-left: 2em;  font-size: large">このバージョンはセキュリティサポート期限が切れています。最新のバージョンをダウンロードしてお使いください。</div>
+		</div>
+		<br />
 		<div class="note">
 			<b>はじめに:</b>
 			<ul>
@@ -101,8 +105,19 @@
 		</p>
 
 		<ul>
-			<li><a href="http://php.net/manual/ja/">PHP</a> (バージョン 5.0.5 以降 / PHP7.3 Ready / PHP5.6以上を推奨)</li>
-			<li><a href="http://dev.mysql.com/doc/mysql/ja/">MySQL</a> データベース (バージョン 4 以降 / MySQL5.5以上を推奨)</li>
+			<li>Webサーバー: apache</li>
+			<li><a href="https://jp.php.net/manual/ja/">PHP</a> : バージョン : 5.2 - 8.3 <!-- dev : 5.2 - 8.3 -->
+				<div>PHP 5/7/8.0の公式サポートは、すでに終了しています。<br />
+					詳細は、こちらをご覧ください。
+					<a href="https://www.php.net/supported-versions.php" target="_blank">https://www.php.net/supported-versions.php</a></div>
+				
+				<div class="note">
+					<div style="margin-left: 2em;  font-size: medium">PHP8: テストされていません。 <br />
+					PHP9以降：動作しません。
+					</div>
+				</div>
+			</li>
+			<li><a href="https://dev.mysql.com/doc/mysql/ja/">MySQL</a> データベース (MySQL5.5以上を推奨)<br />MySQL8.0を使う場合はPHP7以上が必要</li>
 			<li>デザインのカスタマイズをする場合は、<acronym title="Hypertext Markup Language">HTML</acronym> と <acronym title="Cascading Style Sheets">CSS</acronym> の基礎知識</li>
 		</ul>
 
@@ -206,9 +221,22 @@
 			</ul>
 		</div>
 
-		<h2>2. サーバに転送</h2>
+		<h2>2. install/install-config.php の作成と編集</h2>
+
+		<p class='note'>インストール完了前にサイト乗っ取り被害を防止するための簡易的な対策です。</p>
+		<p class='note'>インストール作業はinstall/install-config.phpを転送してから３０分の制限がありますので、時間を超えた・超えそうな場合はinstall/install-config.phpを再転送してください</p>
+		<p>
+			(2-1) 「install/install-config.sample.php」を名称変更またはコピーして、「install/install-config.php」という名前のファイルを作成してください。
+		</p>
+		<p>
+			(2-2) ファイルをメモ帳などで開き、適当なユーザー名とパスワードを入力してください。インストールページのアクセス可否を決めるためのもので、最初のアクセスでこの値の入力を求められます。<br />
+			この値は、インストール作業以外には使われません。
+		</p>
+
+		<h2>3. サーバに転送</h2>
 
 		<p>
+
 			FTPソフトを使ってサーバに全部のファイルを転送します。拡張子が.phpのファイルは必ずASCIIモードで転送してください。モードを間違えると動作しません。
 		</p>
 
@@ -227,7 +255,7 @@
 		</ol>
 
 
-		<h2>3. /install/ディレクトリにアクセス</h2>
+		<h2>4. /install/ディレクトリにアクセス</h2>
 
 		<p>
 			ブラウザを開いてサーバに転送した/install/ディレクトリにアクセスします。URLは下記のようになります。(<i>www.yoursite.com</i> と <i>yourpath</i>の部分は読み替えてください)
@@ -243,7 +271,7 @@
 			<b>注意:</b> <i>/install/</i> ディレクトリにアクセスした際、「If you see this text in your browser...」というテキストが表示されたり、 index.phpのダウンロードが促されたりした場合は、そのサーバではphpスクリプトは動作しません。当然、残念ながらphpスクリプトであるNucleusを運用することができません。
 		</div>
 
-		<h2>4. 完了</h2>
+		<h2>5. 完了</h2>
 
 		<p>
 			インストールが完了したらすぐにトップページにアクセスすることができます。インストール完了画面の一番下にリンクが自動表示されていますのでジャンプして確認してみてください。

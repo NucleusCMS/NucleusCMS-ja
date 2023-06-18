@@ -15,6 +15,10 @@ $CONF['UsingAdminArea']      = 1;
 $CONF['alertOnSecurityRisk'] = 1;
 
 // include the admin code
+if (!@is_file('../config.php')) {
+    header('Location: ../');
+    exit;
+}
 require_once('../config.php');
 
 $bNeedsLogin   = false;

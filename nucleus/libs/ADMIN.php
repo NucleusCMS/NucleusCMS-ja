@@ -2094,7 +2094,7 @@ class ADMIN
 		</tr>
 		<?php if ($CONF['AllowLoginEdit'] || $member->isAdmin()) { ?>
 		<tr>
-			<td><?php echo _MEMBERS_PWD?></td>
+			<td><?php echo _MEMBERS_PWD?> <?php help('password');?></td>
 			<td><input type="password" tabindex="30" maxlength="40" size="16" name="password" autocomplete="off" /></td>
 		</tr>
 		<tr>
@@ -2435,7 +2435,7 @@ class ADMIN
 						<input type="hidden" name="key" value="<?php echo hsc($key) ?>" />
 
 						<table><tr>
-							<td><?php echo _MEMBERS_PWD?></td>
+							<td><?php echo _MEMBERS_PWD?> <?php help('password');?></td>
 							<td><input type="password" maxlength="40" size="16" name="password" autocomplete="off" /></td>
 						</tr><tr>
 							<td><?php echo _MEMBERS_REPPWD?></td>
@@ -2493,7 +2493,7 @@ class ADMIN
         $password       = postVar('password');
         $repeatpassword = postVar('repeatpassword');
 
-        if (!$password) {
+        if (!trim($password) || (trim($password) != $password)) {
             return $this->_showActivationPage($key, _ERROR_PASSWORDMISSING);
         }
 
@@ -2501,23 +2501,25 @@ class ADMIN
             return $this->_showActivationPage($key, _ERROR_PASSWORDMISMATCH);
         }
 
-        if (strlen($password) < 6) {
+        if ($password && (strlen($password) < 6)) {
             return $this->_showActivationPage($key, _ERROR_PASSWORDTOOSHORT);
         }
 
-        $pwdvalid = true;
-        $pwderror = '';
+        if ($password) {
+            $pwdvalid = true;
+            $pwderror = '';
 
-        global $manager;
-        $param = array(
-            'password'     => $password,
-            'errormessage' => &$pwderror,
-            'valid'        => &$pwdvalid
-        );
-        $manager->notify('PrePasswordSet', $param);
+            global $manager;
+            $param = array(
+                'password'     => $password,
+                'errormessage' => &$pwderror,
+                'valid'        => &$pwdvalid
+            );
+            $manager->notify('PrePasswordSet', $param);
 
-        if (!$pwdvalid) {
-            return $this->_showActivationPage($key, $pwderror);
+            if (!$pwdvalid) {
+                return $this->_showActivationPage($key, $pwderror);
+            }
         }
 
         $error = '';
@@ -2725,9 +2727,9 @@ class ADMIN
         if ($tmem->isBlogAdmin($blogid)) {
             // check if there are more blog members left and at least one admin
             // (check for at least two admins before deletion)
-            $query = 'SELECT * FROM '.sql_table('team') . ' WHERE tblog='.$blogid.' and tadmin=1';
+            $query = 'SELECT count(*) FROM '.sql_table('team') . ' WHERE tblog='.$blogid.' and tadmin=1';
             $r     = sql_query($query);
-            if (sql_num_rows($r) < 2) {
+            if ($r && intval(sql_result($r)) < 2) {
                 return _ERROR_ATLEASTONEBLOGADMIN;
             }
         }
@@ -2761,8 +2763,8 @@ class ADMIN
 
         // don't allow when there is only one admin at this moment
         if ($mem->isBlogAdmin($blogid)) {
-            $r = sql_query('SELECT * FROM '.sql_table('team') . " WHERE tblog={$blogid} and tadmin=1");
-            if (sql_num_rows($r) == 1) {
+            $r = sql_query('SELECT count(*) FROM '.sql_table('team') . " WHERE tblog={$blogid} and tadmin=1");
+            if (intval(sql_result($r)) == 1) {
                 $this->error(_ERROR_ATLEASTONEBLOGADMIN);
             }
         }
@@ -2814,8 +2816,10 @@ class ADMIN
 		<?php
 		    $res            = sql_query('SELECT mname, mrealname FROM ' . sql_table('member') . ',' . sql_table('team') . ' WHERE mnumber=tmember AND tblog=' . intval($blogid));
         $aMemberNames = array();
-        while ($o = sql_fetch_object($res)) {
-            array_push($aMemberNames, hsc($o->mname) . ' (' . hsc($o->mrealname). ')');
+        if ($res) {
+            while ($o = sql_fetch_object($res)) {
+                array_push($aMemberNames, hsc($o->mname) . ' (' . hsc($o->mrealname). ')');
+            }
         }
         echo implode(',', $aMemberNames);
         ?>
@@ -5737,20 +5741,63 @@ selector();
             echo "\t\t" . '<td width="50%">' . _ADMIN_SYSTEMOVERVIEW_NUCLEUSPATCHLEVEL . "</td>\n";
             echo "\t\t" . '<td>' . $np . "</td>\n";
             echo "\t</tr>\n";
+            echo "\t<tr>\n";
+            echo "\t\t" . '<td width="50%">' . 'Nucleus CMS database version' . "</td>\n";
+            echo "\t\t" . '<td>' . $CONF['DatabaseVersion'] . "</td>\n";
+            echo "\t</tr>\n";
             echo "</table>\n";
 
             // Important settings of the installation
+            $btn = sprintf("<span onclick='%s'> [+]</span>", 'this.style.display = "none";  document.getElementById("div_imp1").style.height = "auto";');
+            echo "<div style='height: 15.5em; overflow: auto' id='div_imp1'>\n";
             echo "<table>\n";
             echo "\t<tr>";
-            echo "\t\t" . '<th colspan="2">$CONF</th>'."\n";
+            echo "\t\t" . '<th colspan="2">' . _ADMIN_SYSTEMOVERVIEW_NUCLEUSSETTINGS . $btn."</th>\n";
             echo "\t</tr>\n";
-            $tpl = '<tr><td width="50%"><%name%></td><td><%value%></td></tr>';
-            $s   = array('<%name%>','<%value%>');
+
+            $items   = array(); // name , value[, style sheet]
+            $items[] = array("\$CONF['Self']", $CONF['Self']);
+            $items[] = array("\$CONF['ItemURL']", $CONF['ItemURL']);
+            $items[] = array("\$CONF['alertOnHeadersSent']", ($CONF['alertOnHeadersSent'] ? _ADMIN_SYSTEMOVERVIEW_ENABLE : _ADMIN_SYSTEMOVERVIEW_DISABLE));
+            $items[] = array("\$CONF['debug']", ($CONF['debug'] ? _ADMIN_SYSTEMOVERVIEW_ENABLE : _ADMIN_SYSTEMOVERVIEW_DISABLE),
+                                                ($CONF['debug'] ? 'color:red' : ''));
+
+            foreach ($items as $item) {
+                echo "\t<tr>\n";
+                echo "\t\t" . '<td width="50%">' . $item[0] . "</td>\n";
+                $style = (isset($item[2]) && strlen($item[2]) > 0) ? " style='{$item[2]}'" : '';
+                echo "\t\t" . "<td{$style}>" . hsc($item[1]) . "</td>\n";
+                echo "\t</tr>\n";
+            }
+            //  echo "</table>\n";
+
+            // Other settings of the installation
+            ksort($CONF);
+            $items = array('Self', 'ItemURL', 'alertOnHeadersSent', 'debug',
+                           'AdminEmail');
+            $items_warn_false = array('alertOnSecurityRisk');
+            $items_warn_true  = array();
+            //  echo "<table>\n";
+            //  echo "\t<tr>";
+            //  echo "\t\t" . '<th colspan="2">' . _ADMIN_SYSTEMOVERVIEW_CORESETTINGS_OTHER . "</th>\n";
+            //  echo "\t</tr>\n";
             foreach ($CONF as $k => $v) {
-                $k = '$' . "CONF[{$k}]";
-                echo str_replace($s, array($k,$v), $tpl);
+                if (!in_array($k, $items)) {
+                    $style = '';
+                    if ((in_array($k, $items_warn_true) && $v)
+                        ||
+                        (in_array($k, $items_warn_false) && !$v)
+                    ) {
+                        $style = " style='color:red'";
+                    }
+                    echo "\t<tr>\n";
+                    echo "\t\t" . '<td width="50%">'. $k . "</td>\n";
+                    echo "\t\t" . "<td{$style}>" . hsc($v) . "</td>\n";
+                    echo "\t</tr>\n";
+                }
             }
             echo "</table>\n";
+            echo "</div>\n";
 
             // Mysql Emulate Functions
             echo $this->getMysqlEmulateInfo();
@@ -5954,23 +6001,31 @@ selector();
 
         echo '<br />(';
 
-        $codenamestring = ($nucleus['codename'] != '')? ' &quot;'.$nucleus['codename'].'&quot;':'';
+        $revision       = ((strlen(trim($nucleus['revision'])) > 0) ? ' '.$nucleus['revision'] : '');
+        $codenamestring = ($nucleus['codename'] != '') ? ' &quot;'.$nucleus['codename'].'&quot;' : '';
 
         if ($member->isLoggedIn() && $member->isAdmin()) {
-            $checkURL = sprintf(_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_URL, getNucleusVersion(), getNucleusPatchLevel());
-            echo '<a href="' . $checkURL . '" title="' . _ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_TITLE . '">Nucleus CMS ' . $nucleus['version'] . $codenamestring . '</a>';
-            $newestVersion  = getLatestVersion();
-            $newestCompare  = str_replace('/', '.', $newestVersion);
-            $newestCompare  = floatval($newestCompare);
-            $newestCompare  = sprintf('%04.2f', $newestCompare);
-            $currentVersion = str_replace(array('/','v'), array('.',''), $nucleus['version']);
-            $currentVersion = floatval($currentVersion);
-            $currentVersion = sprintf('%04.2f', $currentVersion);
-            if ($newestVersion && version_compare($newestCompare, $currentVersion) > 0) {
-                echo '<br /><a style="color:red" href="'._ADMINPAGEFOOT_OFFICIALURL.'upgrade.php" title="'._ADMIN_SYSTEMOVERVIEW_LATESTVERSION_TITLE.'">'._ADMIN_SYSTEMOVERVIEW_LATESTVERSION_TEXT.$newestVersion.'</a>';
+            $checkURL     = sprintf(_ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_URL, getNucleusVersion(), getNucleusPatchLevel());
+            $version_text = $nucleus['version'] . $revision . $codenamestring;
+            if (NUCLEUS_RELEASE_IDENTIFIER !== '') {
+                $version_text .= ' ' . NUCLEUS_RELEASE_IDENTIFIER;
+            }
+            echo '<a href="' . $checkURL . '" title="' . _ADMIN_SYSTEMOVERVIEW_VERSIONCHECK_TITLE . '">Nucleus CMS ' . $version_text . '</a>';
+            $newestVersion = getLatestVersion();
+            if ($newestVersion && nucleus_version_compare($newestVersion, NUCLEUS_VERSION, '>')) {
+                echo '<br /><a style="color:red" href="http://nucleuscms.org/upgrade.php" title="'._ADMIN_SYSTEMOVERVIEW_LATESTVERSION_TITLE.'">'._ADMIN_SYSTEMOVERVIEW_LATESTVERSION_TEXT.$newestVersion.'</a>';
+            }
+
+            if (intval($CONF['DatabaseVersion']) < NUCLEUS_DATABASE_VERSION_ID) {
+                printf(
+                    ')<br />(<a style="color:red" href="%s">Current Database is old(%d). Upgrade Nucleus Database</a>',
+                    $CONF['AdminURL'] . 'upgrades/',
+                    $CONF['DatabaseVersion']
+                );
             }
         } else {
-            echo 'Nucleus CMS ' . $nucleus['version'] . $codenamestring;
+            $revision = (isDebugMode() && (strlen(trim($nucleus['revision'])) > 0) ? $nucleus['revision'].' ' : '');
+            echo 'Nucleus CMS ' . $revision . $codenamestring;
         }
         echo ')';
         echo '</div>';

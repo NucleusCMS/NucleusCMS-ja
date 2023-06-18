@@ -58,15 +58,10 @@ class SEARCH
 
     public function boolean_sql_select($match)
     {
-        if (!isset($stringsum)) {
-            $stringsum = '';
-        }
+        $stringsum = $stringsum_long = '';
         if (strlen($this->inclusive) > 0) {
             /* build sql for determining score for each record */
             $result = explode(" ", $this->inclusive);
-            if (!isset($stringsum_long)) {
-                $stringsum_long = '';
-            }
             for ($cth = 0; $cth < count($result); $cth++) {
                 if (strlen($result[$cth]) >= 4) {
                     $stringsum_long .= " {$result[$cth]} ";

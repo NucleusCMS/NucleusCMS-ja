@@ -11,6 +11,14 @@
  * (see nucleus/documentation/index.html#license for more info)
  */
 
+
+/*  New for 3.71-fix */
+define('_INSTALL_TEXT_ERROR_CONFIG_EXIST',                 'The config.php file already exists. To reinstall, you need to delete ../config.php.');
+define('_INSTALL_TEXT_ERROR_INSTALLATION_AUTH_FAILED',     'Certification failed. You do not have permission to install. Check your username and password in the installation configuration file');
+define('_INSTALL_TEXT_ERROR_INSTALLATION_NO_CONFIG_FILE',  'To install, first enable install/install-config.php. If you do not have it, copy install-config.sample.php and edit it.');
+define('_INSTALL_TEXT_ERROR_INSTALLATION_EXPIRED',         'Your installation has expired. Please re-upload install/install-config.php with a current timestamp.');
+define('_INSTALL_TEXTCOMFIRM_RETRY_SEND',                  '_INSTALL_TEXTCOMFIRM_RETRY_SEND');
+
 /*  New for 3.71 */
 define('_HEADER_LANG_SELECT',			 'Language');
 define('_TEXT_LANG_SELECT1_1_TAB_HEAD',	 'Choose language');
@@ -157,6 +165,10 @@ define('_TEXT16_L2',	'Visit your site now');
 define('_TEXT17',	'Go Back');
 
 define('_BUTTON1',	'Install Nucleus');
+
+define('_HEADER_FROM_RESET',	'Reset input data');
+define('_TEXT_ALL_RESET',		'Reset all input data.');
+define('_BUTTON_ALL_RESET',		'RESET');
 
 define('_GENERALCAT_NAME',		'general');
 

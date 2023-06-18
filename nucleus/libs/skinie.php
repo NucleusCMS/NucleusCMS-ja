@@ -609,8 +609,13 @@ class SKINIMPORT
             $this->skins     = & $data['skin'];
             $this->templates = & $data['template'];
         }
-        ksort($this->skins);
-        ksort($this->templates);
+        
+        if (property_exists($this, 'skins') && is_array($this->skins)) {
+            ksort($this->skins);
+        }
+        if (property_exists($this, 'templates') && is_array($this->templates)) {
+            ksort($this->templates);
+        }
     }
 }
 

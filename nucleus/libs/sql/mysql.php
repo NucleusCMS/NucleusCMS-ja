@@ -18,6 +18,8 @@
 $MYSQL_CONN = 0;
 
 if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc')) {
+    include dirname(__FILE__) . '/sql_common_functions.php';
+
     /**
      * Errors before the database connection has been made
      */
@@ -94,6 +96,7 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc')) {
             }
         }
         sql_set_charset($charset);
+        fix_mysql_sqlmode($MYSQL_CONN);
 
         return $MYSQL_CONN;
     }
@@ -153,6 +156,9 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc')) {
     {
         global $MYSQL_CONN;
         if (!$conn) {
+            if (empty($MYSQL_CONN)) {
+                return mysql_error();
+            }
             $conn = $MYSQL_CONN;
         }
         return mysql_error($conn);
@@ -322,6 +328,13 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc')) {
         return mysql_get_client_info();
     }
 
+    function sql_get_db()
+    {
+        global $MYSQL_CONN;
+
+        return $MYSQL_CONN;
+    }
+
     /**
       * Get SQL server version
       */
@@ -472,7 +485,7 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc')) {
     {
         $language_name = strtolower($language_name);
 
-        if (strpos($language_name, 'utf8') !== false) {
+        if (str_contains($language_name, 'utf8')) {
             return 'utf8';
         }
 
@@ -530,7 +543,7 @@ if (function_exists('mysql_query') && !function_exists('sql_fetch_assoc')) {
     function getCharSetFromDB($tableName, $columnName)
     {
         $collation = getCollationFromDB($tableName, $columnName);
-        if (strpos($collation, '_') === false) {
+        if (!str_contains($collation, '_')) {
             $charset = $collation;
         } else {
             list($charset, $dummy) = explode('_', $collation, 2);

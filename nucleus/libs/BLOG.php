@@ -96,7 +96,9 @@ class BLOG
         $this->readLogAmount($templatename, 0, $extra_query, '', 1, 1);
     }
 
-    // sets/gets current category (only when category exists)
+    /**
+     * Sets the selected category by id (only when category exists)
+     */
     public function setSelectedCategory($catid)
     {
         if ($this->isValidCategory($catid) || (intval($catid) == 0)) {
@@ -104,11 +106,17 @@ class BLOG
         }
     }
 
+    /**
+     * Sets the selected category by name
+     */
     public function setSelectedCategoryByName($catname)
     {
         $this->setSelectedCategory($this->getCategoryIdFromName($catname));
     }
 
+    /**
+     * Returns the selected category
+     */
     public function getSelectedCategory()
     {
         return $this->selectedcatid;
@@ -131,6 +139,7 @@ class BLOG
      *                        1=show dateheads 0=don't show dateheads
      * @param $offset
      *                        offset
+     *
      * @returns int
      *	  amount of items shown
      */
@@ -146,6 +155,9 @@ class BLOG
         return $this->showUsingQuery($template, $query, $highlight, $comments, $dateheads);
     }
 
+    /**
+     * Do the job for readLogAmmount
+     */
     public function showUsingQuery($templateName, $query, $highlight = '', $comments = 0, $dateheads = 1)
     {
         global $CONF, $manager;
@@ -173,9 +185,11 @@ class BLOG
         // execute query
         $items = sql_query($query);
 
+        $numrows = 0;
         // loop over all items
         $old_date = 0;
         while ($item = sql_fetch_object($items)) {
+            $numrows ++;
             $item->timestamp = strtotime($item->itime); // string timestamp -> unix timestamp
 
             // action handler needs to know the item we're handling
@@ -218,6 +232,11 @@ class BLOG
                     $manager->notify('PostDateHead', $param);
                 }
                 $old_date = $new_date;
+            }
+
+            if (!defined('DISABLED_BLOG_CLEANITEMS') || (bool) constant('DISABLED_BLOG_CLEANITEMS') === false) {
+                // cleaning item
+                $this->cleanItem($item);
             }
 
             // parse item
@@ -349,6 +368,16 @@ class BLOG
         return $itemid;
     }
 
+    /**
+     * Send a new item notification to the notification list
+     *
+     * @param $itemid
+     *                 ID of the item
+     * @param $title
+     *                 title of the item
+     * @param $body
+     *                 body of the item
+     */
     public function sendNewItemNotification($itemid, $title, $body)
     {
         global $CONF, $member;
@@ -511,7 +540,7 @@ class BLOG
      * @note
      *	  No LIMIT clause is added. (caller should add this if multiple pages are requested)
      */
-    public function getSqlSearch($query, $amountMonths = 0, &$highlight, $mode = '')
+    public function getSqlSearch($query, $amountMonths = 0, &$highlight = null, $mode = '')
     {
         $searchclass = new SEARCH($query);
 
@@ -900,9 +929,8 @@ class BLOG
     }
 
     /**
-      * Blogsettings functions
+      * Read the blog settings
       */
-
     public function readSettings()
     {
         $query = 'SELECT *'
@@ -912,12 +940,16 @@ class BLOG
 
         $this->isValid = (sql_num_rows($res) > 0);
         if (!$this->isValid) {
+            $this->settings = array();
             return;
         }
 
         $this->settings = sql_fetch_assoc($res);
     }
 
+    /**
+      * Write the blog settings
+      */
     public function writeSettings()
     {
         // (can't use floatval since not available prior to PHP 4.2)
@@ -948,7 +980,9 @@ class BLOG
         sql_query($query);
     }
 
-    // update update file if requested
+    /**
+      * Update the update file if requested
+      */
     public function updateUpdatefile()
     {
         if ($this->getUpdateFile()) {
@@ -958,6 +992,12 @@ class BLOG
         }
     }
 
+    /**
+      * Check if a category with a given catid is valid
+      *
+      * @param $catid
+      *     category id
+      */
     public function isValidCategory($catid)
     {
         global $manager;
@@ -968,13 +1008,27 @@ class BLOG
         return ($count != 0);
     }
 
+    /**
+     * Get the category name for a given catid
+     *
+     * @param $catid
+     *                category id
+     */
     public function getCategoryName($catid)
     {
         $res = sql_query('SELECT cname FROM '.sql_table('category').' WHERE cblog='.$this->getID().' and catid=' . intval($catid));
         $o   = sql_fetch_object($res);
-        return $o->cname;
+        if (is_object($o)) {
+            return $o->cname;
+        }
     }
 
+    /**
+     * Get the category description for a given catid
+     *
+     * @param $catid
+     *                category id
+     */
     public function getCategoryDesc($catid)
     {
         $res = sql_query('SELECT cdesc FROM '.sql_table('category').' WHERE cblog='.$this->getID().' and catid=' . intval($catid));
@@ -986,26 +1040,56 @@ class BLOG
     {
         $res = sql_query('SELECT corder FROM '.sql_table('category')
                        . ' WHERE cblog='.$this->getID().' and catid=' . intval($catid));
+        if (!$res) {
+            return null;
+        }
         $o = sql_fetch_object($res);
-        return $o->corder;
+        return intval($o->corder);
     }
 
+    /**
+      * Get the category id for a given category name
+      *
+      * @param $name
+      *     category name
+      */
     public function getCategoryIdFromName($name)
     {
         $res = sql_query('SELECT catid FROM '.sql_table('category').' WHERE cblog='.$this->getID().' and cname="' . sql_real_escape_string($name) . '"');
-        if (sql_num_rows($res) > 0) {
-            $o = sql_fetch_object($res);
+        if ($res && ($o = sql_fetch_object($res))) {
             return $o->catid;
         } else {
             return $this->getDefaultCategory();
         }
     }
 
+    /**
+      * Get the the setting for the line break handling
+      * [should be named as getConvertBreaks()]
+      */
     public function convertBreaks()
     {
         return $this->getSetting('bconvertbreaks');
     }
 
+    /**
+      * Set the the setting for the line break handling
+      *
+      * @param $val
+      *     new value for bconvertbreaks
+      */
+    public function setConvertBreaks($val)
+    {
+        $this->setSetting('bconvertbreaks', $val);
+    }
+
+    /**
+      * Insert a javascript that includes information about the settings
+      * of an author:  ConvertBreaks, MediaUrl and AuthorId
+      *
+      * @param $authorid
+      *     id of the author
+      */
     public function insertJavaScriptInfo($authorid = '')
     {
         global $member, $CONF;
@@ -1019,19 +1103,38 @@ class BLOG
 			setConvertBreaks(<?php echo  $this->convertBreaks() ? 'true' : 'false' ?>);
 			setMediaUrl("<?php echo $CONF['MediaURL']?>");
 			setAuthorId(<?php echo $authorid?>);
-		</script><?php  }
-
-    public function setConvertBreaks($val)
-    {
-        $this->setSetting('bconvertbreaks', $val);
+        </script>
+<?php
     }
+
+    /**
+      * Set the the setting for allowing to publish postings in the past
+      *
+      * @param $val
+      *     new value for ballowpast
+      */
     public function setAllowPastPosting($val)
     {
         $this->setSetting('ballowpast', $val);
     }
+
+    /**
+      * Get the the setting if it is allowed to publish postings in the past
+      * [should be named as getAllowPastPosting()]
+      */
     public function allowPastPosting()
     {
         return $this->getSetting('ballowpast');
+    }
+
+    public function allowScriptTagInItem()
+    {
+        return false; // not implemented yet
+    }
+
+    public function allowScriptEventAttributeInItem()
+    {
+        return false; // not implemented yet
     }
 
     public function getCorrectTime($t = 0)
@@ -1222,7 +1325,10 @@ class BLOG
 
     public function getSetting($key)
     {
-        return $this->settings[$key];
+        if (isset($this->settings) && isset($this->settings[$key])) {
+            return $this->settings[$key];
+        }
+        return null;
     }
 
     public function setSetting($key, $value)
@@ -1230,8 +1336,10 @@ class BLOG
         $this->settings[$key] = $value;
     }
 
-    // tries to add a member to the team. Returns false if the member was already on
-    // the team
+    /**
+      * Tries to add a member to the team.
+      * Returns false if the member was already on the team
+      */
     public function addTeamMember($memberid, $admin)
     {
         global $manager;
@@ -1276,21 +1384,43 @@ class BLOG
         return intVal($this->blogid);
     }
 
-    // returns true if there is a blog with the given shortname (static)
+    /**
+      * Checks if a blog with a given shortname exists
+      * Returns true if there is a blog with the given shortname (static)
+      *
+      * @param $name
+      *     blog shortname
+      */
     public static function exists($name)
     {
-        $r = sql_query('select * FROM '.sql_table('blog').' WHERE bshortname="'.sql_real_escape_string($name).'"');
-        return (sql_num_rows($r) != 0);
+        $sql = sprintf(
+            "SELECT count(*) AS result FROM %s WHERE bshortname='%s' LIMIT 1",
+            sql_table('blog'),
+            sql_real_escape_string($name)
+        );
+        return intval(quickQuery($sql)) > 0;
     }
 
-    // returns true if there is a blog with the given ID (static)
+    /**
+      * Checks if a blog with a given id exists
+      * Returns true if there is a blog with the given ID (static)
+      *
+      * @param $id
+      *     blog id
+      */
     public static function existsID($id)
     {
-        $r = sql_query('select * FROM '.sql_table('blog').' WHERE bnumber='.intval($id));
-        return (sql_num_rows($r) != 0);
+        $sql = sprintf(
+            "SELECT count(*) AS result FROM %s WHERE bnumber=%d LIMIT 1",
+            sql_table('blog'),
+            intval($id)
+        );
+        return intval(quickQuery($sql)) > 0;
     }
 
-        // flag there is a future post pending
+    /**
+      * flag there is a future post pending
+      */
         public function setFuturePost()
         {
             $query = 'UPDATE '.sql_table('blog')
@@ -1298,7 +1428,9 @@ class BLOG
             sql_query($query);
         }
 
-    // clear there is a future post pending
+    /**
+      * clear there is a future post pending
+      */
     public function clearFuturePost()
     {
         $query = 'UPDATE '.sql_table('blog')
@@ -1306,7 +1438,9 @@ class BLOG
         sql_query($query);
     }
 
-    // check if we should throw justPosted event
+    /**
+      * check if we should throw justPosted event
+      */
     public function checkJustPosted()
     {
         global $manager;
@@ -1442,6 +1576,231 @@ class BLOG
 
         return $query;
     }
-}
 
-?>
+    private function getAllowdTagClean()
+    {
+        return array(
+            'a',
+            'b', 'big', 'blockquote', 'br',
+            'caption', 'center', 'cite', 'code', 'col', 'colgroup',
+            'dd', 'div', 'dl', 'dt',  'del', 'details', 'datalist ',
+            'font', 'figure',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr',
+            'i', 'img', 'ins',
+            'label', 'li',
+            'nav',
+            'p', 'pre',
+            'ol', 'option', 'optgroup',
+            'progress',
+            'q',
+            's', 'span', 'summary', 'select', 'section', 'small', 'strong', 'sub', 'sup',
+            'ruby', 'rp', 'rt', 'rtc',
+            'table', 'tbody', 'td', 'tr', 'textarea', 'tfoot', 'th', 'thead', 'time',
+            'u', 'ul',
+            'picture', 'source',
+            'wbr',
+            //
+            'strike',
+        );
+        // https://developer.mozilla.org/ja/docs/Web/HTML/Element/source
+    }
+
+    public function cleanItem(&$item, $names = array())
+    {
+        // $item : object
+        $alowed_tags = $this->getAllowdTagClean();
+        if ($this->allowScriptTagInItem()) {
+            $alowed_tags[] = 'script';
+        }
+        $list1 = array(
+                'mrealname', 'authorname', 'memail', 'authormail',
+                'murl', 'authorurl', 'memail', 'authormail'
+        );
+        $lists = array('ititle', 'title', 'body', 'ibody', 'more', 'imore', 'cname', 'category');
+        if (!empty($names) && is_array($names)) {
+            $lists = array_merge($lists, $names);
+        }
+        $lists = array_merge($lists, $list1);
+
+        foreach ($lists as $name) {
+            if (!property_exists($item, $name) // property_exists : (PHP 5 >= 5.1.0, PHP 7, PHP 8)
+                || null === $item->$name
+                || 0 === strlen($item->$name)) {
+                continue;
+            }
+            // no tag
+            $no_tags = !str_contains($item->$name, '<') && !str_contains($item->$name, '>');
+            if ($no_tags || str_contains($item->$name, chr(0))) {
+                $item->$name = strip_tags($item->$name); // strip null byte etc.
+                continue;
+            }
+
+            if (!in_array($name, array('body', 'ibody', 'more', 'imore'))) {
+                $item->$name = hsc($item->$name);
+                continue;
+            }
+
+            // ibody, imore
+
+            libxml_use_internal_errors(true);
+            $xml        = new DOMDocument();
+            $xml_dec    = '<'.'?xml version="1.0" encoding="UTF-8" ?'.'>';
+            $mark_start = sprintf('@-%s-@', md5('start'.((string)time())));
+            $mark_end   = sprintf('@-%s-@', md5('end'.((string)time())));
+            if (_CHARSET !== 'UTF-8') {
+                // PHP[8.2] Deprecated: mb_convert_encoding(): Handling HTML entities via mbstring
+                $src = $xml_dec . mb_convert_encoding(strtr($item->$name, array('<%' => $mark_start, '%>' => $mark_end)), 'HTML-ENTITIES', _CHARSET);
+            } else {
+                $src = $xml_dec . strtr($item->$name, array('<%' => $mark_start, '%>' => $mark_end));
+            }
+
+            if (PHP_VERSION_ID > 50400) {
+                // options : PHP5.4 -
+                $xml_options = LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET | LIBXML_NOWARNING;
+                // Libxml >= 2.7.7 (PHP >= 5.4.0)
+                // LIBXML_HTML_NOIMPLIED : 1 << 13 : disabled auto insert html/body tags
+                // LIBXML_HTML_NODEFDTD  : 4 : disabled auto insert doctype tags
+                $success = @$xml->loadHTML($src, $xml_options);
+            } else {
+                if (PHP_VERSION_ID < 50200) {
+                    // PHP5.1 Character garbled, so excluded from operation target
+                    $item->$name = hsc($item->$name);
+                    $item->$name = strtr($item->$name, array('&lt;br /&gt;' => '<br />'));
+                    continue;
+                }
+                // Warning: DOMDocument::loadHTML() expects exactly 1 parameter, 2 given
+                $success = @$xml->loadHTML($src);
+            }
+            if ($success) {
+                $errors   = libxml_get_errors();
+                $modified = (count($errors) > 0) || (preg_match('/[<>]/i', $item->$name));
+
+                // DOCTYPE PHP [-5.3]
+                // xml PHP [5.4-8]
+                if ($xml->firstChild->nodeName == 'xml') {
+                    $xml->removeChild($xml->firstChild);
+                }
+                if (PHP_VERSION_ID < 50400) {
+                    if ($xml->firstChild->nodeName == 'html' && !$xml->firstChild->hasChildNodes()) {
+                        $xml->removeChild($xml->firstChild);
+                    }
+                }
+
+                if (PHP_VERSION_ID < 70000) {
+                    // php 5.x problem : LIBXML HTML IMPLIED
+                    //  <html><body></body></html>
+                    //  <html><body><p></p></body></html>
+                    $parent = $xml->firstChild;
+                    if ($parent && $parent->nodeName == 'xml') {
+                        $parent = $parent->nextSibling;
+                    }
+                    if (!empty($parent) && ($parent->nodeName == 'html') && $parent->hasChildNodes()) {
+                        foreach ($parent->childNodes as $child) {
+                            if (empty($child->childNodes) || $child->nodeName != 'body') {
+                                continue;
+                            }
+                            foreach ($child->childNodes as $current) {
+                                $new_node = $current->cloneNode(true); // full clone
+                                $xml->insertBefore($new_node, $parent);
+                            }
+                        }
+                        $xml->removeChild($parent);
+                    }
+                }
+
+                foreach ($xml->getElementsByTagName("*") as $tag) {
+                    if (!in_array($tag->tagName, $alowed_tags)) {
+                        $modified = true;
+                        //  $tag->parentNode->removeChild($tag);
+                        // escape text
+                        $replacement = $xml->createTextNode($xml->saveHTML($tag));
+                        $tag->parentNode->replaceChild($replacement, $tag);
+                        continue;
+                    }
+                    if (!$this->allowScriptEventAttributeInItem()) {
+                        foreach ($tag->attributes as $attr) {
+                            // remove tags attribute
+                            if (preg_match('/^on/i', strtolower($attr->nodeName))) {
+                                $modified = true;
+                                $tag->removeAttribute($attr->nodeName);
+                            }
+                        }
+                    }
+                }
+
+                if ($modified) {
+                    $new_value = strtr($xml->saveHTML(), array($mark_start => '<%', $mark_end => '%>'));
+
+                    $m = array();
+                    // remove XML Declaration tag
+                    if (preg_match('/^<\\?xml\s[^>]+>(.*)$/is', $new_value, $m)) {
+                        $new_value = (string)$m[1];
+                    } elseif (str_starts_with($new_value, $xml_dec)) {
+                        // preg_match bug? sometimes no hit
+                        // retry remove
+                        $new_value = substr($new_value, strlen($xml_dec));
+                    }
+
+                    $callback  = 'callback_cleanItem' . (PHP_VERSION_ID > 50400 ? '' : '_53');
+                    $new_value = preg_replace_callback(
+                        '|&#([0-9]+);|',
+                        array($this, $callback),
+                        $new_value
+                    );
+                    $item->$name = $new_value;
+
+                    if (isDebugMode() && ! $this->allowScriptTagInItem() && preg_match('/<\\?xml\s|<script\s/i', $new_value, $m)) {
+                        $msg = sprintf("%s:Line:%d : %s<br />%s\n", basename(__FILE__), __LINE__, $name, hsc($new_value));
+                        trigger_error($msg, E_USER_ERROR);
+                    }
+                } // if ($modified)
+            } else {
+                $item->$name = strip_tags(strtr($item->$name, array('<' => '&lt;', '>' => '&gt;')));
+            }
+        }
+    }
+
+    public function callback_cleanItem_53($m)
+    {
+        // Warning: html_entity_decode() expects parameter 2 to be long,
+        // Notice: Use of undefined constant ENT_SUBSTITUTE
+        $i = (int)$m[1];
+        if ($i === 0) {
+            return '';
+        }
+        if ($i <= 255) {  // < > &
+            return $m[0]; // do nothing
+        }
+        // convert encording and decode htmlentity
+        //ini_set('default_charset', _CHARSET); // for debug
+        $ch = html_entity_decode($m[0], ENT_COMPAT, _CHARSET); //mb_chr($i, 'UTF-8');
+        if ((false === $ch)
+            || ($ch === '?' && $i !== ord('?'))
+            || ($ch === 'U+FFFD' || $ch === ord('&#FFFD;')) // ENT_SUBSTITUTE
+        ) {
+            return $m[0]; // do nothing
+        }
+        return $ch;
+    }
+
+    public function callback_cleanItem($m)
+    {
+        $i     = (int)$m[1];
+        $flags = ENT_SUBSTITUTE;
+        if ($i === 0) {
+            return '';
+        }
+        if ($i <= 255) {  // < > &
+            return $m[0]; // do nothing
+        }
+        // convert encording and decode htmlentity
+        $ch = html_entity_decode($m[0], $flags, _CHARSET); //mb_chr($i, 'UTF-8');
+        if ((false === $ch)
+            || ($ch === '?' && $i !== ord('?'))
+            || ($ch === 'U+FFFD' || $ch === ord('&#FFFD;')) // ENT_SUBSTITUTE
+        ) {
+            return $m[0]; // do nothing
+        }
+        return $ch;
+    }
+}

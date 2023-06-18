@@ -10,6 +10,16 @@
  * (see nucleus/documentation/index.html#license for more info)
  */
 
+
+
+/*  New for 3.71-fix */
+
+define('_INSTALL_TEXT_ERROR_CONFIG_EXIST',                 'config.phpファイルはすでにあります。再インストールするには、../config.phpを削除する必要があります');
+define('_INSTALL_TEXT_ERROR_INSTALLATION_AUTH_FAILED',     '認証に失敗しました。インストールする権限がありません。インストール設定ファイルのユーザー名とパスワードを確認してください');
+define('_INSTALL_TEXT_ERROR_INSTALLATION_NO_CONFIG_FILE',  'インストールをするには、まず install/install-config.php を有効にしてください。ない場合は、install-config.sample.phpをコピーして編集して使ってください。');
+define('_INSTALL_TEXT_ERROR_INSTALLATION_EXPIRED',         'インストール有効期限を経過しました。インストールするには、install/install-config.phpを現在のタイムスタンプでアップロードし直してください。');
+define('_INSTALL_TEXTCOMFIRM_RETRY_SEND',  '送信は、１回だけにしてください。本当に、この内容でもう一度送信していいですか？');
+
 /*  New for 3.71 */
 define('_HEADER_LANG_SELECT',			 '表示言語');
 define('_TEXT_LANG_SELECT1_1_TAB_HEAD',	 '表示言語の選択');
@@ -160,6 +170,10 @@ define('_TEXT17',				'戻る');
 
 define('_BUTTON1',				'インストールを実行する');
 
+define('_HEADER_FROM_RESET',	'フォームのリセット');
+define('_TEXT_ALL_RESET',		'フォームの入力データをすべてリセットします.');
+define('_BUTTON_ALL_RESET',		'すべてリセットする');
+
 // General category
 define('_GENERALCAT_NAME',		'総合');
 define('_GENERALCAT_DESC',		'投稿した記事に合うカテゴリが無い時にこのカテゴリを使用すると良いでしょう');
@@ -172,9 +186,9 @@ define('_1ST_POST2',			'これはサイトにおける最初のエントリー�
 <br />
 <b>リンク</b><br />
 <br />
-Nucleus CMSの<a href="http://japan.nucleuscms.org">日本語ページ japan.nucleuscms.org</a>
+Nucleus CMSの<a href="http://japan.nucleuscms.org/">日本語ページ japan.nucleuscms.org</a>
 <br />
-Nucleus CMSの<a href="http://nucleuscms.org">本家</a> ページ。<br />
+Nucleus CMSの<a href="http://nucleuscms.org/">本家</a> ページ。<br />
 <br />
 Nucleus CMSのSourceForge<a href="http://sourceforge.net/projects/nucleuscms/">プロジェクト</a>（<a href="http://sourceforge.jp/projects/nucleus-jp/">日本版</a>）ページ。<br />
 <br />

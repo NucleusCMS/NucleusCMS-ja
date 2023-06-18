@@ -1,7 +1,7 @@
 <?php
 /*
  * Nucleus: PHP/MySQL Weblog CMS (http://nucleuscms.org/)
- * Copyright (C) 2002-2013 The Nucleus Group
+ * Copyright (C) 2002 The Nucleus Group
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,6 +23,22 @@
 
     -- Start Of Configurable Part --
 */
+
+if (version_compare('9.0.0', phpversion(), '<=')) {
+    exit('<h1>Error</h1><div>PHP '. phpversion() .' does not support.</div>');
+}
+
+define('INSTALL_EXPIRE_SEC', 30 * 60); // 30 minutes
+
+$path = @preg_split('/[\?#]/', $_SERVER["REQUEST_URI"]);
+$path = $path[0];
+if (preg_match('#/install$#', $path)) {
+    header("Location: " . $path . "/");
+    exit;
+}
+
+include_once('../nucleus/libs/version.php');
+include_once('../nucleus/libs/phpfunctions.php');
 
 global $lang;
 if (isset($_POST['lang'])) {
@@ -52,10 +68,12 @@ if (file_exists('install_lang_english.php') &&
 // directory.
 //
 // example:
-//	 array('NP_TrackBack', 'NP_MemberGoodies')
+//     array('NP_SkinFiles', 'NP_Text')
 $aConfPlugsToInstall = array(
-    'NP_SkinFiles',
-);
+//        'NP_SkinFiles',
+//        'NP_SecurityEnforcer',
+//        'NP_Text'
+    );
 
 // array with skins to install. skins must be present under the skins/ directory with
 // a subdirectory having the same name that contains a skinbackup.xml file
@@ -74,7 +92,7 @@ $aConfSkinsToImport = array(
 */
 
 // don't give warnings for uninitialized vars
-error_reporting(E_ALL);
+error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 // make sure there's no unnecessary escaping:
 if (version_compare(PHP_VERSION, '5.3.0', '<')) {
@@ -135,6 +153,33 @@ if (!function_exists('mysql_query')) {
     _doError(_ERROR1);
 }
 
+check_installed();
+
+$filename_install_config = dirname(__FILE__) . '/install-config.php';
+if (! @file_exists($filename_install_config)) {
+    _doError(_INSTALL_TEXT_ERROR_INSTALLATION_NO_CONFIG_FILE);
+} else {
+    // basic auth
+    //   install-config.php : $INSTALL_AUTH_USER, $INSTALL_AUTH_PW
+    include_once($filename_install_config);
+    if ((!isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']))
+        || (!isset($INSTALL_AUTH_USER, $INSTALL_AUTH_PW))
+        || (empty($INSTALL_AUTH_USER) || empty($INSTALL_AUTH_PW))
+        || ($_SERVER['PHP_AUTH_USER'] !== $INSTALL_AUTH_USER)
+        || ($_SERVER['PHP_AUTH_PW'] !== $INSTALL_AUTH_PW)
+    ) {
+        header('WWW-Authenticate: Basic realm="Enter username and password."');
+        header('HTTP/1.0 401 Unauthorized');
+        _doError(_INSTALL_TEXT_ERROR_INSTALLATION_AUTH_FAILED);
+        // if the input prompt loops : check httpd.conf : SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+    }
+}
+
+$mtime = @filemtime($filename_install_config);
+if (!$mtime || ($mtime + INSTALL_EXPIRE_SEC < time())) {
+    _doError(_INSTALL_TEXT_ERROR_INSTALLATION_EXPIRED);
+}
+
 if (postVar('action') == 'go') {
     doInstall();
 } else {
@@ -164,6 +209,7 @@ function showInstallForm()
 			@import url('../nucleus/documentation/styles/manual.css');
 		--></style>
 		<script type="text/javascript"><!--
+			onload = function() { /* document.forms[0].reset(); */ }
 			var submitcount = 0;
 
 			// function to make sure the submit button only gets pressed once
@@ -172,7 +218,13 @@ function showInstallForm()
 					submitcount++;
 					return true;
 				} else {
-					return false;
+					return window.confirm("<?php
+                          if (defined('_INSTALL_TEXTCOMFIRM_RETRY_SEND')) {
+                              echo _INSTALL_TEXTCOMFIRM_RETRY_SEND;
+                          } else {
+                              echo 'Please send is only once. Do you actually send it again with this content?';
+                          }
+    ?>");
 				}
 			}
 		--></script>
@@ -274,7 +326,8 @@ function showInstallForm()
             $row   = sql_fetch_row($result);
             $match = explode('.', $row[1]);
         } else {
-            $output = (function_exists('shell_exec')) ? @shell_exec('mysql -V') : '0.0.0';
+            $output  = (function_exists('shell_exec')) ? @shell_exec('mysql -V') : '0.0.0';
+            $version = array();
             preg_match('#[0-9]+\.[0-9]+\.[0-9]+#', $output, $version);
             $match = explode('.', $version[0]);
 
@@ -527,10 +580,17 @@ function showInstallForm()
 		
 		<?php echo _TEXT9; ?>
 		
-		<p>
+        <div style="width: 80%; text-align: center; margin:auto">
 		<input name="action" value="go" type="hidden" />
-		<input type="submit" value="<?php echo _BUTTON1; ?>" onclick="return checkSubmit();" tabindex="10250" />
-		</p>
+		<input style="width: 100%" type="submit" value="<?php echo _BUTTON1; ?>" onclick="return checkSubmit();" tabindex="10250" />
+        </div>
+
+        <br><br>
+		<h1><?php echo _HEADER_FROM_RESET; ?></h1>
+		<?php echo _TEXT_ALL_RESET; ?>
+        <div style="width: 80%; text-align: center; margin:auto">
+		<input style="width: 100%" type="button" value="<?php echo _BUTTON_ALL_RESET; ?>" onclick="document.forms[0].reset(); return false;" tabindex="10250" />
+        </div>
 		
 		</form>
 	</body>
@@ -708,7 +768,7 @@ function doInstall()
     // this will need to be changed if we ever allow
     $MYSQL_CONN = @sql_connect_args($mysql_host, $mysql_user, $mysql_password);
 
-    if ($MYSQL_CONN == false) {
+    if ($MYSQL_CONN === false) {
         _doError(_ERROR15 . ': ' . sql_error());
     }
 
@@ -718,7 +778,8 @@ function doInstall()
     }
 
     // 3. try to create database (if needed)
-    $mySqlVer = implode('.', array_map('intval', explode('.', sql_get_server_info())));
+    $mySqlVer   = implode('.', array_map('intval', explode('.', sql_get_server_info())));
+    $db_charset = $charset;
     switch(strtolower($charset)) {
         case 'ujis':
             $collation = 'ujis_japanese_ci';
@@ -728,7 +789,8 @@ function doInstall()
             break;
         case 'utf8':
         default:
-            $collation = 'utf8_general_ci';
+            $db_charset = 'utf8mb4';
+            $collation  = 'utf8mb4_general_ci';
     }
 
     if ($mysql_create == 1) {
@@ -737,12 +799,16 @@ function doInstall()
         // <add for garble measure>
         if (version_compare($mySqlVer, '4.1.0', '>=')) {
             $sql .= ' DEFAULT CHARACTER SET '
-                  .	 $charset
+                  .	 $db_charset
                   . ' COLLATE '
                   .	 $collation;
         }
         // </add for garble measure>*/
         sql_query($sql, $MYSQL_CONN) or _doError(_ERROR16 . ': ' . sql_error($MYSQL_CONN));
+    }
+    
+    if (version_compare($mySqlVer, '5.6.0', '>=')) {
+        sql_query("SET SESSION sql_mode = '';", $MYSQL_CONN);
     }
 
     // 4. try to select database
@@ -752,12 +818,12 @@ function doInstall()
      * 4.5. set character set to this database in MySQL server
      * This processing is added by Nucleus CMS Japanese Package Release Team as of Mar.30, 2011
     */
-    sql_set_charset($charset);
+    sql_set_charset($db_charset);
 
     // 5. execute queries
     $queries = file_get_contents('install.sql');
 
-    if (strpos($queries, ";\r") !== false) {
+    if (str_contains($queries, ";\r")) {
         $queries = str_replace(";\r", ";\n", $queries);
     }
     $queries = explode(";\n", $queries);
@@ -821,8 +887,8 @@ function doInstall()
                 $query = str_replace($aTableNames, $aTableNamesPrefixed, $query);
             }
             // <add for garble measure>
-            if ($mysql_create != 1 && strpos($query, 'CREATE TABLE') === 0 && version_compare($mySqlVer, '4.1.0', '>=')) {
-                $query .= ' DEFAULT CHARACTER SET ' . $charset . ' COLLATE ' . $collation;
+            if ($mysql_create != 1 && str_starts_with($query, 'CREATE TABLE') && version_compare($mySqlVer, '4.1.0', '>=')) {
+                $query .= ' DEFAULT CHARACTER SET ' . $db_charset . ' COLLATE ' . $collation;
             }
             // </add for garble measure>*/
 
@@ -871,25 +937,23 @@ function doInstall()
 
     // 7. update GOD member
     $query = 'UPDATE ' . tableName('nucleus_member')
-           . " SET mname	 = '" . addslashes($user_name) . "',"
-           . " mrealname	 = '" . addslashes($user_realname) . "',"
-           . " mpassword	 = '" . md5(addslashes($user_password)) . "',"
-           . " murl		  = '" . addslashes($config_indexurl) . "',"
-           . " memail		= '" . addslashes($user_email) . "',"
-           . " madmin		= 1,"
-           . " mcanlogin	 = 1"
-           . " WHERE"
-           . " mnumber	   = 1";
+            . " SET mname='" . sql_real_escape_string($user_name) . "',"
+            . " mrealname='" . sql_real_escape_string($user_realname) . "',"
+            . " mpassword='" . md5(addslashes($user_password)) . "',"
+            . " murl='" . sql_real_escape_string($config_indexurl) . "',"
+            . " memail='" . sql_real_escape_string($user_email) . "',"
+            . " madmin=1,"
+            . " mcanlogin=1"
+            . " WHERE mnumber=1";
 
     sql_query($query, $MYSQL_CONN) or _doError(_ERROR19 . ': ' . sql_error($MYSQL_CONN));
 
     // 8. update weblog settings
     $query = 'UPDATE ' . tableName('nucleus_blog')
-           . " SET bname  = '" . addslashes($blog_name) . "',"
-           . " bshortname = '" . addslashes($blog_shortname) . "',"
-           . " burl	   = '" . addslashes($config_indexurl) . "'"
-           . " WHERE"
-           . " bnumber	= 1";
+            . " SET bname='" . sql_real_escape_string($blog_name) . "',"
+            . " bshortname='" . sql_real_escape_string($blog_shortname) . "',"
+            . " burl='" . sql_real_escape_string($config_indexurl) . "'"
+            . " WHERE bnumber=1";
 
     sql_query($query, $MYSQL_CONN) or _doError(_ERROR20 . ': ' . sql_error($MYSQL_CONN));
 
@@ -961,7 +1025,8 @@ function doInstall()
     // 14. Write config file ourselves (if possible)
     $bConfigWritten = 0;
 
-    if (@is_file('../config.php') && is_writable('../config.php') && $fp = @fopen('../config.php', 'w')) {
+    $configFilename = dirname(dirname(__FILE__)) .DIRECTORY_SEPARATOR. 'config.php';
+    if (!@is_file($configFilename)) {
         $config_data = '<' . '?php' . "\n\n";
         //$config_data .= "\n"; (extraneous, just added extra \n to previous line
         $config_data .= "   // mySQL connection information\n";
@@ -994,15 +1059,17 @@ function doInstall()
         $config_data .= "   // include libs\n";
         $config_data .= "   include(\$DIR_LIBS . 'globalfunctions.php');\n";
 
-        $result = @fwrite($fp, $config_data, strlen($config_data));
-        fclose($fp);
-
+        $result = @file_put_contents($configFilename, $config_data);
         if ($result) {
-            if (is_file('../config.php')) {
-                @chmod('../config.php', 0444);
+            if (is_file($configFilename)) {
+                @chmod($configFilename, 0444);
             }
             $bConfigWritten = 1;
         }
+        // if you fail to write on Windows, you check this.
+        //   check folder permission : open folder property and special permissions, click Properties, and then click the Security tab
+        //                             SYSTEM
+        //   apache config : DocumentRoot
     }
 
     ?>
@@ -1130,7 +1197,7 @@ function installCustomPlugs(&$manager)
 
     foreach ($aConfPlugsToInstall as $plugName) {
         // do this before calling getPlugin (in case the plugin id is used there)
-        $query = 'INSERT INTO ' . sql_table('plugin') . ' (porder, pfile) VALUES (' . (++$numCurrent) . ', "' . addslashes($plugName) . '")';
+        $query = 'INSERT INTO ' . sql_table('plugin') . ' (porder, pfile) VALUES (' . (++$numCurrent) . ', "' . sql_real_escape_string($plugName) . '")';
         sql_query($query);
 
         // get and install the plugin
@@ -1139,7 +1206,7 @@ function installCustomPlugs(&$manager)
         $plugin->plugid = $numCurrent;
 
         if (!$plugin) {
-            sql_query('DELETE FROM ' . sql_table('plugin') . ' WHERE pfile=\'' . addslashes($plugName) . '\'');
+            sql_query('DELETE FROM ' . sql_table('plugin') . ' WHERE pfile=\'' . sql_real_escape_string($plugName) . '\'');
             $numCurrent--;
             array_push($aErrors, _ERROR22 . $plugName);
             continue;
@@ -1181,7 +1248,7 @@ function installCustomSkins(&$manager)
     $aErrors = array();
     global $manager;
     if (empty($manager)) {
-        $manager = new MANAGER;
+        $manager = new MANAGER();
     }
 
     if (count($aConfSkinsToImport) == 0) {
@@ -1274,12 +1341,13 @@ function doCheckFiles()
 function updateConfig($name, $val)
 {
     global $MYSQL_CONN;
-    $name = addslashes($name);
-    $val  = trim(addslashes($val));
 
-    $query = 'UPDATE ' . tableName('nucleus_config')
-           . " SET   value = '{$val}'"
-           . " WHERE name  = '{$name}'";
+    $query = sprintf(
+        "UPDATE %s SET value='%s' WHERE name='%s'",
+        tableName('nucleus_config'),
+        sql_real_escape_string(trim($val)),
+        sql_real_escape_string($name)
+    );
 
     sql_query($query, $MYSQL_CONN) or _doError(_ERROR26 . ': ' . sql_error($MYSQL_CONN));
     return sql_insert_id($MYSQL_CONN);
@@ -1427,7 +1495,14 @@ function showErrorMessages($errors)
         exit;
 }
 
-/* for the non-php systems that decide to show the contents:
-?></div><?php	*/
-
-?>
+function check_installed()
+{
+    $filename = dirname(dirname(__FILE__)) .DIRECTORY_SEPARATOR. 'config.php';
+    if (@file_exists($filename)) {
+        if (!headers_sent()) {
+            header('Location: ../index.php');
+            exit;
+        }
+        _doError(_INSTALL_TEXT_ERROR_CONFIG_EXIST);
+    }
+}

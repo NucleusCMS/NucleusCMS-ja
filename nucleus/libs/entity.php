@@ -12,7 +12,7 @@ class entity
     private static function named_to_numeric_callback($matches)
     {
         //		"entity::_named('\\1', '\\2') . '\\3'"
-        return self::_named($matches[1], $matches[2]) . $matches[3];
+        return self::_named($matches[1], $matches[2]) . (isset($matches[3]) ? $matches[3] : '');
     }
 
     public static function normalize_numeric($string)
@@ -36,7 +36,7 @@ class entity
     private static function normalize_numeric_callback2($matches)
     {
         //		"'&#x' . strtoupper('\\2') . ';\\4'"
-        return '&#x' . strtoupper($matches[2]) . ';' . $matches[4];
+        return '&#x' . strtoupper($matches[2]) . ';' . (isset($matches[4]) ? $matches[4] : '');
     }
 
     public static function numeric_to_utf8($string)
@@ -61,7 +61,7 @@ class entity
     private static function numeric_to_utf8_callback2($matches)
     {
         //		"'&#x' . strtoupper('\\2') . ';\\4'"
-        return '&#x' . strtoupper($matches[2]) . ';' . $matches[4];
+        return '&#x' . strtoupper($matches[2]) . ';' . (isset($matches[4]) ? $matches[4] : '');
     }
     private static function numeric_to_utf8_callback3($matches)
     {

@@ -11,6 +11,12 @@
  * (see nucleus/documentation/index.html#license for more info)
  */
 
+if (version_compare('9.0.0', phpversion(), '<=')) {
+    exit('<h1>Error</h1><div>PHP '. phpversion() .' does not support.</div>');
+}
+
+define('NUCLEUS_UPGRADE_VERSION_ID', 371);
+
 include('upgrade.functions.php');
 
 load_upgrade_lang();
@@ -72,7 +78,7 @@ if (!$from) {
     $from = $current;
 }
 
-if (version_compare('5.0.0', phpversion(), '<=') && $from < 371) {
+if (version_compare('5.0.0', phpversion(), '<=') && $from < NUCLEUS_UPGRADE_VERSION_ID) {
     $sth = array();
     if ($from < 330) {
         $sth[] = upgrade_manual_atom1_0();
@@ -154,7 +160,7 @@ function upgrade_manual_340()
 function upgrade_manual_366()
 {
     $content = @file_get_contents('../../action.php');
-    if (strpos($content, '=&') === false) {
+    if (!str_contains($content, '=&')) {
         return '';
     }
     $echo[] = '<h2>' . _UPG_TEXT_V366_01 . '</h2>';

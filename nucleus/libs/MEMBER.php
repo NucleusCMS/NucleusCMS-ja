@@ -32,6 +32,8 @@ class MEMBER
     public $notes;
     public $autosave = 1;		// if the member use the autosave draft function
 
+    private $hasher;
+
     /**
      * Constructor for a member object
      */
@@ -97,9 +99,18 @@ class MEMBER
         );
         $manager->notify('CustomLogin', $param);
 
+        if ('' === $formv_username || 32 < strlen($formv_username)) { // mname varchar(32)
+            $this->loggedin = 0;
+            return 0;
+        }
+
         if ($success && $this->readFromName($formv_username)) {
             $this->loggedin = 1;
         } elseif (!$success && $allowlocal) {
+            if ('' === $formv_password || 40 < strlen($formv_password)) { // avoid md5 collision by using a long key
+                $this->loggedin = 0;
+                return 0;
+            }
             $userInfo     = $this->readFromName($formv_username);
             $dbv_password = $this->getPassword();
 
@@ -544,7 +555,7 @@ class MEMBER
     {
         global $CONF;
 
-        if (strpos($hash, '$') !== false) {
+        if (str_contains($hash, '$')) {
             $rs = $this->hasher->CheckPassword($formv_password, $hash);
         } else {
             $rs = (md5($formv_password) === $hash);
@@ -605,7 +616,12 @@ class MEMBER
 
     public function setPassword($pwd)
     {
+        if (! self::checkIfValidPasswordCharacters($pwd)) {
+            return false;
+        }
         $this->password = $this->hasher->HashPassword($pwd);
+
+        return true;
     }
 
     public function getCookieKey()
@@ -760,6 +776,12 @@ class MEMBER
         }
         if (!$password) {
             return _ERROR_PASSWORDMISSING;
+        }
+        if (strlen($password) < 6) {
+            return _ERROR_PASSWORDTOOSHORT;
+        }
+        if (! self::checkIfValidPasswordCharacters($password)) {
+            return ERROR_PASSWORD_INVALID_CHARACTERS;
         }
 
         $obj = new MEMBER();
@@ -926,27 +948,36 @@ class MEMBER
         // 1. walk over all entries, and see if special actions need to be performed
         $res = sql_query('SELECT * FROM ' . sql_table('activation') . ' WHERE vtime < \'' . date('Y-m-d H:i:s', $boundary) . '\'');
 
-        while ($o = sql_fetch_object($res)) {
-            switch ($o->vtype) {
-                case 'register':
-                    // delete all information about this site member. registration is undone because there was
-                    // no timely activation
-                    include_once($DIR_LIBS . 'ADMIN.php');
-                    ADMIN::deleteOneMember(intval($o->vmember));
-                    break;
-                case 'addresschange':
-                    // revert the e-mail address of the member back to old address
-                    list($oldEmail, $oldCanLogin) = explode('/', $o->vextra);
-                    sql_query('UPDATE ' . sql_table('member') . ' SET mcanlogin=' . intval($oldCanLogin). ', memail=\'' . sql_real_escape_string($oldEmail). '\' WHERE mnumber=' . intval($o->vmember));
-                    break;
-                case 'forgot':
-                    // delete the activation link and ignore. member can request a new password using the
-                    // forgot password link
-                    break;
+        if ($res) {
+            while ($o = sql_fetch_object($res)) {
+                switch ($o->vtype) {
+                    case 'register':
+                        // delete all information about this site member. registration is undone because there was
+                        // no timely activation
+                        include_once($DIR_LIBS . 'ADMIN.php');
+                        ADMIN::deleteOneMember(intval($o->vmember));
+                        break;
+                    case 'addresschange':
+                        // revert the e-mail address of the member back to old address
+                        list($oldEmail, $oldCanLogin) = explode('/', $o->vextra);
+                        sql_query('UPDATE ' . sql_table('member') . ' SET mcanlogin=' . intval($oldCanLogin). ', memail=\'' . sql_real_escape_string($oldEmail). '\' WHERE mnumber=' . intval($o->vmember));
+                        break;
+                    case 'forgot':
+                        // delete the activation link and ignore. member can request a new password using the
+                        // forgot password link
+                        break;
+                }
             }
         }
 
         // 2. delete activation entries for real
         sql_query('DELETE FROM ' . sql_table('activation') . ' WHERE vtime < \'' . date('Y-m-d H:i:s', $boundary) . '\'');
+    }
+
+    public static function checkIfValidPasswordCharacters($password)
+    {
+        // check Characters
+        // 0x21-0x7e : 0-9 a-z A-Z ! " # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
+        return preg_match('/^[\x21-\x7e]{6,}$/', $password);
     }
 }

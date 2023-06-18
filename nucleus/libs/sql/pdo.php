@@ -20,6 +20,8 @@ global $SQL_DBH;
 $SQL_DBH = null;
 
 if (!function_exists('sql_fetch_assoc')) {
+    include(dirname(__FILE__) . '/sql_common_functions.php');
+
     /**
      * Errors before the database connection has been made
      */
@@ -53,7 +55,7 @@ if (!function_exists('sql_fetch_assoc')) {
         global $CONF, $MYSQL_HANDLER;
 
         try {
-            if (strpos($mysql_host, ':') === false) {
+            if (!str_contains($mysql_host, ':')) {
                 $host    = $mysql_host;
                 $port    = '';
                 $portnum = '';
@@ -156,7 +158,8 @@ if (!function_exists('sql_fetch_assoc')) {
         global $CONF;
         $SQL_DBH = null;
         try {
-            if (strpos($MYSQL_HOST, ':') === false) {
+            $port = $portnum = '';
+            if (!str_contains($MYSQL_HOST, ':')) {
                 $host = $MYSQL_HOST;
                 $port = '';
             } else {
@@ -231,7 +234,7 @@ if (!function_exists('sql_fetch_assoc')) {
             //$SQL_DBH = new PDO($MYSQL_HANDLER[1].':host='.$host.$port.';dbname='.$MYSQL_DATABASE, $MYSQL_USER, $MYSQL_PASSWORD);
 
             // <add for garble measure>
-            if (strpos($MYSQL_HANDLER[1], 'mysql') === 0) {
+            if (str_starts_with($MYSQL_HANDLER[1], 'mysql')) {
                 if ($SQL_DBH && version_compare('5.2.0', PHP_VERSION, '>')) {
                     // HY000-2014 Cannot execute queries while other unbuffered queries are active.
                     $SQL_DBH->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
@@ -257,6 +260,7 @@ if (!function_exists('sql_fetch_assoc')) {
                     }
                 }
                 sql_set_charset($charset);
+                fix_mysql_sqlmode($SQL_DBH);
             }
             // </add for garble measure>*/
         } catch (PDOException $e) {
@@ -466,7 +470,8 @@ if (!function_exists('sql_fetch_assoc')) {
      */
     function sql_real_escape_string($val, $dbh = null)
     {
-        return addslashes($val);
+        $s = sql_quote_string($val, $dbh);
+        return (string) substr($s, 1, strlen($s) - 2);
     }
 
     /**
@@ -518,8 +523,12 @@ if (!function_exists('sql_fetch_assoc')) {
      */
     function sql_free_result($res)
     {
-        $res = null;
-        return true;
+        if (is_object($res) && ($res instanceof PDOStatement)) {
+            return $res->closeCursor();
+        }
+        trigger_error('argument is not instanceof PDOStatement', E_USER_NOTICE);
+
+        return false;
     }
 
     /**
@@ -527,7 +536,13 @@ if (!function_exists('sql_fetch_assoc')) {
      */
     function sql_num_rows($res)
     {
-        return $res->rowCount();
+        // DELETE, INSERT, UPDATE
+        // do not use : SELECT
+        if (is_object($res)) {
+            return $res->rowCount();
+        }
+
+        return 0;
     }
 
     /**
@@ -548,12 +563,15 @@ if (!function_exists('sql_fetch_assoc')) {
 
     /**
      * fetches next row of SQL result as an associative array
+     *
+     * @return array / false : if there are no more rows.
      */
     function sql_fetch_assoc($res)
     {
-        $results = array();
-        $results = $res->fetch(PDO::FETCH_ASSOC);
-        return $results;
+        if ($res && is_object($res)) {
+            return $res->fetch(PDO::FETCH_ASSOC);
+        }
+        return false;
     }
 
     /**
@@ -561,43 +579,66 @@ if (!function_exists('sql_fetch_assoc')) {
      */
     function sql_fetch_array($res)
     {
-        $results = array();
-        $results = $res->fetch(PDO::FETCH_BOTH);
-        return $results;
+        if ($res && is_object($res)) {
+            return $res->fetch(PDO::FETCH_BOTH);
+        }
+        return false;
     }
 
     /**
      * fetches next row of SQL result as an object
+     *
+     * @return object / false
      */
     function sql_fetch_object($res)
     {
-        $results = null;
-        $results = $res->fetchObject();
-        return $results;
+        if ($res && is_object($res)) {
+            $result = $res->fetchObject();
+            if (is_object($result)) {
+                return $result;
+            }
+        }
+        return false;
     }
 
     /**
      * Get a result row as an enumerated array
+     *
+     * @return array / false : if there are no more rows.
      */
     function sql_fetch_row($res)
     {
-        $results = array();
-        $results = $res->fetch(PDO::FETCH_NUM);
-        return $results;
+        if ($res && is_object($res)) {
+            return $res->fetch(PDO::FETCH_NUM);
+        }
+        return false;
+    }
+
+    /**
+     * @return array / false : if there are no more rows.
+     */
+    function sql_fetch_column($res, $column_number = 0)
+    {
+        if ($res && is_object($res)) {
+            return $res->fetchColumn($column_number);
+        }
+        return false;
     }
 
     /**
      * Get column information from a result and return as an object
+     *
+     * @return object / false
      */
     function sql_fetch_field($res, $offset = 0)
     {
-        $results = array();
-        $obj     = null;
-        $results = $res->getColumnMeta($offset);
-        foreach ($results as $key => $value) {
-            $obj->$key = $value;
+        if ($res && is_object($res)) {
+            $results = $res->getColumnMeta($offset);
+            if (!empty($results)) {
+                return (object) $results;
+            }
         }
-        return $obj;
+        return false;
     }
 
     /**
@@ -629,12 +670,109 @@ if (!function_exists('sql_fetch_assoc')) {
     }
 
     /**
+     * Returns the array that column names of the table
+     */
+    function sql_getTableColumnNames($tablename)
+    {
+        global $SQL_DBH;
+        if (!$SQL_DBH) {
+            return array();
+        }
+
+        $drivername = $SQL_DBH->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($drivername == 'sqlite') {
+            $sql    = sprintf('PRAGMA TABLE_INFO(`%s`)', $tablename);
+            $target = 'name';
+        } else {
+            // mysql
+            $sql    = sprintf('SHOW COLUMNS FROM `%s` ', $tablename);
+            $target = 'Field';
+        }
+
+        $items = array();
+        $res   = array();
+        $stmt  = $SQL_DBH->prepare($sql);
+        if ($stmt && $stmt->execute()) {
+            $res = $stmt->fetchAll();
+        }
+
+        foreach ($res as $row) {
+            if (isset($row[$target])) {
+                $items[] = $row[$target];
+            }
+        }
+        if (count($items) > 0) {
+            sort($items);
+        }
+        return $items;
+    }
+
+    /**
+     * Returns the boolean value that column name of the table exist or not
+     */
+    function sql_existTableColumnName($tablename, $ColumnName, $casesensitive = false)
+    {
+        $names = sql_getTableColumnNames($tablename);
+
+        if (empty($names)) {
+            return false;
+        }
+
+        if ($casesensitive) {
+            return in_array($ColumnName, $names);
+        }
+
+        foreach ($names as $v) {
+            if (strcasecmp($ColumnName, $v) == 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the boolean value that column name of the table exist or not
+     */
+    function sql_existTableName($tablename)
+    {
+        global $SQL_DBH;
+        if (!$SQL_DBH) {
+            return false;
+        }
+
+        $drivername       = $SQL_DBH->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $input_parameters = array(':name' => $tablename);
+        if ($drivername == 'sqlite') {
+            $sql = "SELECT name FROM sqlite_master WHERE type='table' AND name = :name";
+        } else {
+            // mysql
+            $sql = 'SHOW TABLES LIKE :name ';
+        }
+        $res  = array();
+        $stmt = $SQL_DBH->prepare($sql);
+        if ($stmt && $stmt->execute($input_parameters)) {
+            $res = $stmt->fetch();
+        }
+        if ($res && count($res) > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Get SQL client version
      */
     function sql_get_client_info()
     {
         global $SQL_DBH;
         return $SQL_DBH->getAttribute(constant("PDO::ATTR_CLIENT_VERSION"));
+    }
+
+    function sql_get_db()
+    {
+        global $SQL_DBH;
+        return $SQL_DBH;
     }
 
     /**
@@ -734,10 +872,10 @@ if (!function_exists('sql_fetch_assoc')) {
      * NOTE: 	shift_jis is only supported for output. Using shift_jis in DB is prohibited.
      * NOTE:	iso-8859-x,windows-125x if _CHARSET is unset.
      */
-    function sql_set_charset($charset)
+    function sql_set_charset($charset, $dbh = null)
     {
         global $MYSQL_HANDLER,$SQL_DBH;
-        if (strpos($MYSQL_HANDLER[1], 'mysql') === 0) {
+        if (str_starts_with($MYSQL_HANDLER[1], 'mysql')) {
             switch(strtolower($charset)) {
                 case 'utf-8':
                 case 'utf8':
@@ -763,9 +901,11 @@ if (!function_exists('sql_fetch_assoc')) {
                     $charset = 'latin1';
                     break;
             }
-            $mySqlVer = implode('.', array_map('intval', explode('.', sql_get_server_info())));
+
+            $db       = ($dbh ? $dbh : sql_get_db());
+            $mySqlVer = implode('.', array_map('intval', explode('.', sql_get_server_info($db))));
             if (version_compare($mySqlVer, '4.1.0', '>=')) {
-                $res = $SQL_DBH->exec("SET CHARACTER SET " . $charset);
+                $res = $db->exec("SET CHARACTER SET " . $charset);
             }
         }
         return isset($res) ? $res : false;
@@ -790,7 +930,7 @@ if (!function_exists('sql_fetch_assoc')) {
     {
         $language_name = strtolower($language_name);
 
-        if (strpos($language_name, 'utf8') !== false) {
+        if (str_contains($language_name, 'utf8')) {
             return 'utf8';
         }
 
@@ -845,10 +985,10 @@ if (!function_exists('sql_fetch_assoc')) {
         return $charset_name;
     }
 
-    function getCharSetFromDB($tableName, $columnName)
+    function getCharSetFromDB($tableName, $columnName, $dbh = null)
     {
-        $collation = getCollationFromDB($tableName, $columnName);
-        if (strpos($collation, '_') === false) {
+        $collation = getCollationFromDB($tableName, $columnName, $dbh);
+        if (!str_contains($collation, '_')) {
             $charset = $collation;
         } else {
             list($charset, $dummy) = explode('_', $collation, 2);
@@ -856,9 +996,9 @@ if (!function_exists('sql_fetch_assoc')) {
         return $charset;
     }
 
-    function getCollationFromDB($tableName, $columnName)
+    function getCollationFromDB($tableName, $columnName, $dbh = null)
     {
-        $columns = sql_query("SHOW FULL COLUMNS FROM `{$tableName}` LIKE '{$columnName}'");
+        $columns = sql_query("SHOW FULL COLUMNS FROM `{$tableName}` LIKE '{$columnName}'", $dbh);
         $column  = sql_fetch_object($columns);
         return isset($column->Collation) ? $column->Collation : false;
     }

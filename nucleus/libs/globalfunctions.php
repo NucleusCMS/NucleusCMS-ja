@@ -14,11 +14,15 @@
 // needed if we include globalfunctions from install.php
 global $nucleus, $CONF, $DIR_LIBS, $DIR_LANG, $manager, $member;
 
-define('NUCLEUS_VERSION', '3.71');
-define('NUCLEUS_VERSION_ID', 371);
-define('NUCLEUS_DATABASE_VERSION_ID', 371);
+include_once($DIR_LIBS. 'version.php');
+include_once($DIR_LIBS. 'phpfunctions.php');
 
-$nucleus['version']  = 'v' . NUCLEUS_VERSION;
+if (PHP_VERSION_ID >= 90000 || PHP_VERSION_ID < 50100) {
+    exit('<h1>Error</h1><div>PHP '. phpversion() .' does not support.</div>');
+}
+
+$nucleus['version']  = 'v'.NUCLEUS_VERSION;
+$nucleus['revision'] = '';
 $nucleus['codename'] = '';
 
 if (!isset($_SERVER['REQUEST_TIME_FLOAT'])) {
@@ -32,7 +36,11 @@ if (ini_get('register_globals')) {
 }
 
 if (isset($CONF['debug']) && !empty($CONF['debug'])) {
-    error_reporting(E_ALL); // report all errors!
+    if (70400 <= PHP_VERSION_ID) {
+        error_reporting(E_ALL & ~ E_DEPRECATED);
+    } else {
+        error_reporting(E_ALL); // report all errors!
+    }
 } else {
     if (!isset($CONF['UsingAdminArea']) || empty($CONF['UsingAdminArea'])) {
         ini_set('display_errors', '0');
@@ -93,6 +101,10 @@ if (getNucleusPatchLevel() > 0) {
     $nucleus['version'] .= '/' . getNucleusPatchLevel();
 }
 
+if (!defined('DISABLED_BLOG_CLEANITEMS')) {
+    define('DISABLED_BLOG_CLEANITEMS', false);
+}
+
 // Avoid notices
 if (!isset($CONF['installscript'])) {
     $CONF['installscript'] = 0;
@@ -148,12 +160,45 @@ if (!headers_sent()) {
     header('Generator: Nucleus CMS ' . $nucleus['version']);
 }
 
+function ErrorResponse503($msg)
+{
+    if (!headers_sent()) {
+        header("HTTP/1.0 503 Service Unavailable");
+        header("Cache-Control: no-cache, must-revalidate");
+        header("Expires: Mon, 01 Jan 2018 00:00:00 GMT");
+    }
+    $title = 'Service Temporarily Unavailable';
+    $msg   = (isset($msg) ? (string) $msg : $title);
+    echo "<html><head><title>{$title}</title></head><body><h1>{$title}</h1>{$msg}</body></html>";
+    exit;
+}
+
 // include core classes that are needed for login & plugin handling
 if (!function_exists('mysql_query')) {
     include_once($DIR_LIBS . 'mysql.php');
 } // For PHP 7
 else {
     define('_EXT_MYSQL_EMULATE', 0);
+}
+
+// Compatibility: convert new configuration files
+if (!isset($MYSQL_HOST) and isset($DB_HOST)) {
+    $MYSQL_HOST = $DB_HOST;
+}
+if (!isset($MYSQL_USER) and isset($DB_USER)) {
+    $MYSQL_USER = $DB_USER;
+}
+if (!isset($MYSQL_PASSWORD) and isset($DB_PASSWORD)) {
+    $MYSQL_PASSWORD = $DB_PASSWORD;
+}
+if (!isset($MYSQL_DATABASE) and isset($DB_DATABASE)) {
+    $MYSQL_DATABASE = $DB_DATABASE;
+}
+if (!isset($MYSQL_PREFIX) and isset($DB_PREFIX)) {
+    $MYSQL_PREFIX = $DB_PREFIX;
+}
+if (!isset($MYSQL_HANDLER) and isset($DB_DRIVER_NAME)) {
+    $MYSQL_HANDLER = array('pdo', $DB_DRIVER_NAME);
 }
 
 // added for 3.5 sql_* wrapper
@@ -177,6 +222,7 @@ $manager = & MANAGER::instance();
 //set_magic_quotes_runtime(0);
 if (version_compare(PHP_VERSION, '5.3.0', '<')) {
     ini_set('magic_quotes_runtime', '0');
+    set_magic_quotes_runtime(0);
 }
 
 // Avoid notices
@@ -270,6 +316,16 @@ if ($action == 'login') {
         header("HTTP/1.0 404 Not Found");
         exit;
     }
+
+    if (isset($_POST['login'])) {
+        // force trim login
+        $_POST['login'] = substr((string) $_POST['login'], 0, 32);
+    }
+    if (isset($_POST['password'])) {
+        // force trim password
+        $_POST['password'] = substr((string) $_POST['password'], 0, 40);
+    }
+
     // Form Authentication
     $login  = postVar('login');
     $pw     = postVar('password');
@@ -346,14 +402,7 @@ if ($CONF['DisableSite'] && !$member->isAdmin() && !$CONF['UsingAdminArea']) {
     if (strlen($url) > 0) {
         redirect($url);
     } else {
-        if (!headers_sent()) {
-            header("HTTP/1.0 503 Service Unavailable");
-            header("Cache-Control: no-cache, must-revalidate");
-            header("Expires: Mon, 01 Jan 2018 00:00:00 GMT");
-        }
-        $title = 'Service Unavailable';
-        $msg   = 'Service Unavailable.';
-        echo "<html><head><title>{$title}</title></head><body><h1>{$title}</h1>{$msg}</body></html>";
+        ErrorResponse503();
     }
     exit;
 }
@@ -790,6 +839,7 @@ function highlight($text, $expression, $highlight)
     // $matches[0][i] = HTML + text
     // $matches[1][i] = HTML
     // $matches[2][i] = text
+    $matches = array();
     preg_match_all('/(<[^>]+>)([^<>]*)/', $text, $matches);
 
     // throw it all together again while applying the highlight to the text pieces
@@ -1323,7 +1373,7 @@ function addBreaks($text)
 
 function removeBreaks($var)
 {
-    if (strpos($var, "\r") !== false) {
+    if (str_contains($var, "\r")) {
         $var = str_replace("\r", '', $var);
     }
     return preg_replace("@<br[ /]*>\n@i", "\n", $var);
@@ -1426,7 +1476,11 @@ function parseFile($filename, $includeMode = 'normal', $includePrefix = '')
     PARSER::setProperty('IncludePrefix', $includePrefix);
 
     if (!file_exists($filename)) {
-        doError(_GFUNCTIONS_PARSEFILE_FILEMISSING);
+        if (defined('_GFUNCTIONS_PARSEFILE_FILEMISSING')) {
+            doError(_GFUNCTIONS_PARSEFILE_FILEMISSING);
+        } else {
+            doError('A file is missing');
+        }
     }
 
     $fsize = filesize($filename);
@@ -1623,8 +1677,8 @@ function createLink($type, $params)
 {
     global $manager, $CONF;
 
-    $generatedURL = '';
-    $usePathInfo  = ($CONF['URLMode'] == 'pathinfo');
+    $url         = '';
+    $usePathInfo = ($CONF['URLMode'] == 'pathinfo');
 
     // ask plugins first
     $created = false;
@@ -1707,7 +1761,7 @@ function createBlogLink($url, $params)
 {
     global $CONF;
     if ($CONF['URLMode'] == 'normal') {
-        if (strpos($url, '?') === false && is_array($params)) {
+        if (!str_contains($url, '?') && is_array($params)) {
             $fParam = reset($params);
             $fKey   = key($params);
             array_shift($params);
@@ -2050,7 +2104,7 @@ function ticketForPlugin()
     $p_translated = str_replace('\\', '/', $p_translated);
     $d_plugins    = str_replace('\\', '/', $DIR_PLUGINS);
 
-    if (strpos($p_translated, $d_plugins) !== 0) {
+    if (!str_starts_with($p_translated, $d_plugins)) {
         return;// This isn't plugin php file.
     }
 
@@ -2530,13 +2584,12 @@ function cleanFileName($str)
  */
 function strftimejp($format, $timestamp = '')
 {
-    if (setlocale(LC_CTYPE, 0) == 'Japanese_Japan.932') {
-        $rs = iconv('CP932', _CHARSET, strftime(iconv(_CHARSET, 'CP932', $format), $timestamp));
-    } else {
-        $rs = strftime($format, $timestamp);
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        if (setlocale(LC_CTYPE, 0) == 'Japanese_Japan.932' || setlocale(LC_TIME, 0) == 'Japanese_Japan.932') {
+            return iconv('CP932', _CHARSET, strftime(iconv(_CHARSET, 'CP932', $format), $timestamp));
+        }
     }
-
-    return $rs;
+    return strftime($format, $timestamp);
 }
 
 function hsc($string, $flags = ENT_QUOTES, $encoding = '')
@@ -2584,6 +2637,28 @@ function coreSkinVar($key = '')
     return $rs;
 }
 
+function nucleus_version_compare($version1, $version2, $operator = '')
+{
+    // examples: 3.66  3.7  v3.7 v3.71
+    $args = func_get_args();
+    for ($i = 0; $i <= 1; $i++) {
+        $args[$i] = str_replace(array('_','-','+','/'), '.', $args[$i]);
+        $args[$i] = preg_replace('#^[^0-9]+#', '', $args[$i]);
+        $ver      = explode('.', $args[$i]);
+        $major    = intval($ver[0]);
+        if ($major <= 3) {   // minor version
+            $x = @intval($ver[1]);
+            if ($x >= 10) {
+                $ver[1] = sprintf('%d.%d', $x / 10, $x % 10);
+            } else {
+                $ver[1] = sprintf('%d.0', $x);
+            }
+        }
+        $args[$i] = implode('.', $ver);
+    }
+    return call_user_func_array('version_compare', $args);
+}
+
 function loadCoreClassFor_spl($classname)
 {
     if (@is_file(__DIR__ . "/{$classname}.php")) {
@@ -2597,4 +2672,13 @@ function loadCoreClassFor_spl_prephp53($classname) // for PHP 5.1.0 - 5.2
     if (@is_file("{$DIR_LIBS}/{$classname}.php")) {
         require_once "{$DIR_LIBS}/{$classname}.php";
     }
+}
+
+function isDebugMode()
+{
+    global $CONF;
+    if (!isset($CONF['debug'])) {
+        return false;
+    }
+    return !empty($CONF['debug']);
 }

@@ -62,8 +62,7 @@ class ITEM
 
         $res = sql_query($query);
 
-        if (sql_num_rows($res) == 1) {
-            $aItemInfo              = sql_fetch_assoc($res);
+        if ($res && ($aItemInfo = sql_fetch_assoc($res))) {
             $aItemInfo['timestamp'] = strtotime($aItemInfo['itime']);
             return $aItemInfo;
         } else {
@@ -133,7 +132,7 @@ class ITEM
 
             // show error when sth goes wrong
             if (!$i_catid) {
-                return array('status' => 'error','message' => 'Could not create new category');
+                return array('status' => 'error', 'message' => _ERROR_CATCREATEFAIL);
             }
         } else {
             // force blogid (must be same as category id)

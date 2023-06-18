@@ -233,12 +233,12 @@ class SKIN
         $output = ob_get_contents();
 
         $md5['<%BenchMark%>'] = md5('<%BenchMark%>');
-        if (strpos($output, $md5['<%BenchMark%>']) !== false) {
+        if (str_contains($output, $md5['<%BenchMark%>'])) {
             $output = str_replace($md5['<%BenchMark%>'], '<%BenchMark%>', $output);
         }
 
         $md5['<%DebugInfo%>'] = md5('<%DebugInfo%>');
-        if (strpos($output, $md5['<%DebugInfo%>']) !== false) {
+        if (str_contains($output, $md5['<%DebugInfo%>'])) {
             $output = str_replace($md5['<%DebugInfo%>'], '<%DebugInfo%>', $output);
         }
 
@@ -249,11 +249,11 @@ class SKIN
         );
         $manager->notify('PostSkinParse', $param);
 
-        if (strpos($output, '<%BenchMark%>') !== false) {
+        if (str_contains($output, '<%BenchMark%>')) {
             $rs     = coreSkinVar('<%BenchMark%>');
             $output = str_replace('<%BenchMark%>', $rs, $output);
         }
-        if (strpos($output, '<%DebugInfo%>') !== false) {
+        if (str_contains($output, '<%DebugInfo%>')) {
             $rs     = coreSkinVar('<%DebugInfo%>');
             $output = str_replace('<%DebugInfo%>', $rs, $output);
         }
@@ -265,7 +265,7 @@ class SKIN
 
     public function getContent($type)
     {
-        if (strpos($type, '/') !== false) {
+        if (str_contains($type, '/')) {
             return '';
         }
         $query = 'SELECT scontent FROM '.sql_table('skin')." WHERE sdesc={$this->id} and stype='". sql_real_escape_string($type) ."'";
