@@ -21,6 +21,119 @@ if (!isset($member)) {
     exit;
 }
 
+/**
+ * Name:validateIso8601 --- Validate $date as ISO 8601 format.
+ *                          datetime patterns of ISO 8601 standard
+ *                          basic datetime without utc symbol, time zone offset : YYYYmmdd\THHiiss
+ *                          extended datetime without utc symbol, time zone offset : YYYY-mm-dd\THH:ii:ss
+ *                          mixed datetime without utc symbol, time zone offset : YYYYmmdd\THH:ii:ss
+ *                          basic datetime with UTC : YYYYmmdd\THHiiss'\Z'
+ *                          extended datetime with UTC : YYYY-mm-dd\THH:ii:ss'\Z'
+ *                          mixed datetime with UTC : YYYYmmdd\THH:ii:ss'\Z'
+ *                          basic datetime with time zone offset : YYYYmmdd\THHiiss+0000
+ *                          extended datetime with time zone offset : YYYY-mm-dd\THH:ii:ss+00:00
+ *                          mixed datetime with time zone offset : YYYY-mm-dd\THH:ii:ss+00:00
+ *
+ * @param string $date : target string for ISO 8601 validation.
+ *
+ * @return boolean|string
+ *    success : 'basic'|'extended'|'mixed'|'basic utc'|'extended utc'|'mixed utc'|'basic tz'|'extended tz'
+ *    fail : false
+ */
+function validateIso8601($date)
+{
+	$r = false;
+	if (preg_match(
+		'/^(\d{1,4})(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])'
+		.'T'
+		.'([0-1][0-9]|2[0-4])[0-5][0-9][0-5][0-9]'
+		.'$/',
+		$date, $matches
+	) === 1) {
+		// Basic style datetime without utc symbol, time zone offset
+		$r = 'basic';
+	} elseif (preg_match(
+		'/^(\d{1,4})-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])'
+		.'T'
+		.'([0-1][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]'
+		.'$/',
+		$date, $matches
+	) === 1) {
+		// Extended style datetime without utc symbol, time zone offset
+		$r = 'extended';
+	} elseif (preg_match(
+		'/^(\d{1,4})(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])'
+		.'T'
+		.'([0-1][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]'
+		.'$/',
+		$date, $matches
+	) === 1) {
+		// Mixed style datetime without utc symbol, time zone offset
+		//(it violates ISO 8601 standard but Windows Live Writer sends createdDate with this style.)
+		$r = 'mixed';
+	} elseif (preg_match(
+		'/^(\d{1,4})(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])'
+		.'T'
+		.'([0-1][0-9]|2[0-4])[0-5][0-9][0-5][0-9]'
+		.'Z$/',
+		$date, $matches
+	) === 1) {
+		// Basic style datetime with utc symbol
+		$r = 'basic utc';
+	} elseif (preg_match(
+		'/^(\d{1,4})-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])'
+		.'T'
+		.'([0-1][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]'
+		.'Z$/',
+		$date, $matches
+	) === 1) {
+		// Extended style datetime with utc symbol
+		$r = 'extended utc';
+	} elseif (preg_match(
+		'/^(\d{1,4})(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])'
+		.'T'
+		.'([0-1][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]'
+		.'Z$/',
+		$date, $matches
+	) === 1) {
+		// Extended style datetime with utc symbol
+		$r = 'mixed utc';
+	} elseif (preg_match(
+		'/^(\d{1,4})(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])'
+		.'T'
+		.'([0-1][0-9]|2[0-4])[0-5][0-9][0-5][0-9]'
+		.'((\+|-)([01][0-9]|2[0-4])([0-5][0-9])?)$/',
+		$date, $matches
+	) === 1) {
+		// Basic style datetime with time zone offset
+		$r = 'basic tz';
+	} elseif (preg_match(
+		'/^(\d{1,4})-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])'
+		.'T'
+		.'([0-1][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]'
+		.'((\+|-)([01][0-9]|2[0-4]):?([0-5][0-9])?)$/',
+		$date, $matches
+	) === 1) {
+		// Extended style datetime with time zone offset
+		$r = 'extended tz';
+	} elseif (preg_match(
+		'/^(\d{1,4})(0[1-9]|1[012])(0[1-9]|[12][0-9]|3[01])'
+		.'T'
+		.'([0-1][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]'
+		.'((\+|-)([01][0-9]|2[0-4]):?([0-5][0-9])?)$/',
+		$date, $matches
+	) === 1) {
+		// Mixed style datetime with extended style time zone offset
+		//(it violates ISO 8601 standard but Windows Live Writer sends createdDate with this style.)
+		$r = 'mixed tz';
+	}
+	//check if $matches has valid date & time.
+	if ($r == false) {
+		return false;
+	}
+	return checkdate($matches[2], $matches[3], $matches[1]) ? $r : false;
+}
+
 // metaWeblog.newPost
 $f_metaWeblog_newPost_sig = array(array(
             // return type
@@ -65,7 +178,25 @@ function f_metaWeblog_newPost($m)
 
     // Add item
 //      $res = _addItem($blogid, $username, $password, $title, $content, $more, $publish, $comments, $category);
-    $res = _addItem($blogid, $username, $password, $title, $content, $more, $publish, $closed, $category);
+//    $res = _addItem($blogid, $username, $password, $title, $content, $more, $publish, $closed, $category);
+    $dateCreated = $struct->structmem('dateCreated');
+    if ($dateCreated) {
+        $dateCreated = _getStructVal($struct, 'dateCreated');
+        $v = validateIso8601($dateCreated);
+        if ($v == false) {
+            return _error(10, 'wrong format dateCreated');
+        }
+        if (($v == 'basic') || ($v == 'extended') || ($v == 'mixed')) {
+            // if dateCreated has no utc symbol and time offset, treat it as utc datetime.
+            // if dateCreated has utc symbol or time zone offset, convert to timestamp directly.
+            $dateCreated .= 'Z';
+        }
+        //Convert ISO 8601 string to unix time(time zone offset is counted.)
+        $timestamp = strtotime($dateCreated);
+        $res = _addDatedItem($blogid, $username, $password, $title, $content, $more, $publish, $closed, $timestamp, 1, $category);
+    } else {
+        $res = _addItem($blogid, $username, $password, $title, $content, $more, $publish, $closed, $category);
+    }
 
     // Handle trackbacks
     $trackbacks = array();
@@ -202,7 +333,23 @@ function f_metaWeblog_editPost($m)
     }
 
 //      $res = _edititem($itemid, $username, $password, $catid, $title, $content, $more, $wasdraft, $publish, $comments);
-    $res = _edititem($itemid, $username, $password, $catid, $title, $content, $more, $wasdraft, $publish, $closed);
+//    $res = _edititem($itemid, $username, $password, $catid, $title, $content, $more, $wasdraft, $publish, $closed);
+    $dateCreated = $struct->structmem('dateCreated');
+    if ($dateCreated) {
+        $dateCreated = _getStructVal($struct, 'dateCreated');
+        $v = validateIso8601($dateCreated);
+        if (($v == 'basic') || ($v == 'extended') || ($v == 'mixed')) {
+            // if dateCreated has no utc symbol and time zone offset, assume as utc.
+            // if dateCreated has utc symbol or time zone offset, convert to timestamp directly.
+            $dateCreated .= 'Z';
+        }
+        // ISO 8601 to unix time(time zone offset is counted.)
+        $timestamp = strtotime($dateCreated);
+        //$content .= "[dateCreated is ".$timestamp."]";
+        $res = _edititem($itemid, $username, $password, $catid, $title, $content, $more, $wasdraft, $publish, $closed, $timestamp);
+    } else {
+        $res = _edititem($itemid, $username, $password, $catid, $title, $content, $more, $wasdraft, $publish, $closed);
+    }
     // Handle trackbacks
     $trackbacks = array();
     $tblist     = $struct->structmem('mt_tb_ping_urls');
@@ -435,17 +582,21 @@ function _categoryList($blogid, $username, $password)
     $r = sql_query($query);
 
     while ($obj = sql_fetch_object($r)) {
-        $categorystruct[$obj->cname] = new xmlrpcval(
+        array_push($categorystruct, new xmlrpcval(
+        //$categorystruct[$obj->cname] = new xmlrpcval(
             array(
+                "title" => new xmlrpcval($obj->cname,"string"),
+                "categoryId" => new xmlrpcval($obj->catid,"string"),
                 "description" => new xmlrpcval($obj->cdesc, "string"),
                 "htmlUrl"     => new xmlrpcval($b->getURL() . "?catid=" . $obj->catid, "string"),
                 "rssUrl"      => new xmlrpcval("", "string")
             ),
             'struct'
-        );
+        ));
     }
 
-    return new xmlrpcresp(new xmlrpcval($categorystruct, "struct"));
+    //return new xmlrpcresp(new xmlrpcval($categorystruct, "struct"));
+    return new xmlrpcresp(new xmlrpcval( $categorystruct , "array"));
 }
 
 function _mw_getPost($itemid, $username, $password)
