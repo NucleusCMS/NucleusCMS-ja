@@ -27,6 +27,10 @@
 // Skin import/export
 define('_SKINIE_ERROR_FAILEDLOAD_XML',        'Failed to Load XML');
 
+define('_ADMIN_SYSTEMOVERVIEW_NUCLEUSSETTINGS',		'Important settings');
+define('ERROR_PASSWORD_INVALID_CHARACTERS',  'password contains invalid characters');
+
+
 /********************************************
  *        Start New for 3.71                *
  ********************************************/

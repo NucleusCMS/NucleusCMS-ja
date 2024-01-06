@@ -42,88 +42,117 @@
  *			Mocchi		- arrange codes for PHP5
  */
 
-class NP_SkinFiles extends NucleusPlugin {
-	public function getName() { return 'SkinFiles'; }
-	public function getAuthor() { return 'Misc authors'; }
-	public function getURL() { return 'http://wakka.xiffy.nl/skinfiles'; }
-	public function getVersion() { return '2.032'; }
-	public function getDescription() { return _SKINFILES_01; }
-	public function supportsFeature($feature)	{ return in_array ($feature, array ('SqlTablePrefix', 'SqlApi', 'HelpPage'));}
-	public function hasAdminArea() { return 1; }
-	
-	public function install() {
-		$this->createOption(
-			'generate_backup',
-			'_SKINFILES_OPT_GENBACKUP',
-			'yesno',
-			'no'
-		);
-		$this->createOption(
-			'backup_prefix',
-			'_SKINFILES_OPT_BACKUPPREFIX',
-			'text',
-			'bkup_'
-		);
-		return;
-	}
-	
-	public function unInstall() {
-		return;
-	}
-	
-	public function getEventList() {
-		return array(
-			'QuickMenu',
-			'AdminPrePageHead',
-			'PrePluginOptionsEdit'
-		);
-	}
-	
-	public function init() {
-		$language = preg_replace( '#\\\\|/#', '', getLanguageName());
-		if (file_exists($this->getDirectory().$language.'.php')) {
-			include_once($this->getDirectory().$language.'.php');
-		} else {
-			include_once($this->getDirectory().'english.php');
-		}
-		return;
-	}
-	
-	public function event_QuickMenu(&$data) {
-		global $member;
-		
-		if (!($member->isLoggedIn() && $member->isAdmin())) {
-			return;
-		}
-		
-		array_push(
-			$data['options'], 
-			array(
-				 'title'	=> _SKINFILES_TITLE,
-				 'url'	  => $this->getAdminURL(),
-				 'tooltip' => _SKINFILES_TOOLTIP
-			)
-		);
-		return;
-	}
-	
-	public function event_AdminPrePageHead(&$data) {
-		global $CONF;
-		if ($data['action'] != 'plugin_SkinFiles') {
-			return;
-		}
-		$data['extrahead'] .= sprintf('<link rel="stylesheet" type="text/css" href="%sskinfiles/style.css" />',$CONF['PluginURL']);
-	}
-	
-	public function event_PrePluginOptionsEdit($data) {
-		if ($data['context'] !== 'global' || $data['plugid'] !== $this->getID()) {
-			return;
-		}
-		foreach($data['options'] as $key => $value){
-			if (defined($value['description'])) {
-				$data['options'][$key]['description'] = constant($value['description']);
-			}
-		}
-		return;
-	}
+class NP_SkinFiles extends NucleusPlugin
+{
+    public function getName()
+    {
+        return 'SkinFiles';
+    }
+    public function getAuthor()
+    {
+        return 'Misc authors';
+    }
+    public function getURL()
+    {
+        return 'http://wakka.xiffy.nl/skinfiles';
+    }
+    public function getVersion()
+    {
+        return '2.032';
+    }
+    public function getDescription()
+    {
+        return _SKINFILES_01;
+    }
+    public function supportsFeature($feature)
+    {
+        return in_array($feature, array('SqlTablePrefix', 'SqlApi', 'HelpPage'));
+    }
+    public function hasAdminArea()
+    {
+        return 1;
+    }
+
+    public function install()
+    {
+        $this->createOption(
+            'generate_backup',
+            '_SKINFILES_OPT_GENBACKUP',
+            'yesno',
+            'no'
+        );
+        $this->createOption(
+            'backup_prefix',
+            '_SKINFILES_OPT_BACKUPPREFIX',
+            'text',
+            'bkup_'
+        );
+        return;
+    }
+
+    public function unInstall()
+    {
+        return;
+    }
+
+    public function getEventList()
+    {
+        return array(
+            'QuickMenu',
+            'AdminPrePageHead',
+            'PrePluginOptionsEdit'
+        );
+    }
+
+    public function init()
+    {
+        $language = preg_replace('#\\\\|/#', '', getLanguageName());
+        if (file_exists($this->getDirectory().$language.'.php')) {
+            include_once($this->getDirectory().$language.'.php');
+        } else {
+            include_once($this->getDirectory().'english.php');
+        }
+        return;
+    }
+
+    public function event_QuickMenu(&$data)
+    {
+        global $member;
+
+        if (!($member->isLoggedIn() && $member->isAdmin())) {
+            return;
+        }
+
+        array_push(
+            $data['options'],
+            array(
+                 'title'   => _SKINFILES_TITLE,
+                 'url'     => $this->getAdminURL(),
+                 'tooltip' => _SKINFILES_TOOLTIP
+            )
+        );
+        return;
+    }
+
+    public function event_AdminPrePageHead(&$data)
+    {
+        global $CONF;
+        if ($data['action'] != 'plugin_SkinFiles') {
+            return;
+        }
+        $data['extrahead'] .= sprintf('<link rel="stylesheet" type="text/css" href="%sskinfiles/style.css" />', $CONF['PluginURL']);
+    }
+
+    public function event_PrePluginOptionsEdit($data)
+    {
+        if ($data['context'] !== 'global' || $data['plugid'] !== $this->getID()) {
+            return;
+        }
+        foreach ($data['options'] as $key => $value) {
+            if (defined($value['description'])) {
+                $data['options'][$key]['description'] = constant($value['description']);
+            }
+        }
+        return;
+    }
 }

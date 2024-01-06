@@ -12,52 +12,56 @@
  * Class used to represent a collection of e-mail addresses, to which a
  * message can be sent (e.g. comment or karma vote notification).
  */
-class NOTIFICATION {
+class NOTIFICATION
+{
+    // array of addresses that need to get a notification
+    public $addresses = array();
 
-	// array of addresses that need to get a notification
-	var $addresses = array();
+    /**
+      * takes one string as argument, containing multiple e-mail addresses
+      * separated by semicolons
+      * eg: site@demuynck.org;nucleus@demuynck.org;foo@bar.com
+      */
+    public function __construct($addresses)
+    {
+        $this->addresses = explode(';', $addresses);
+    }
 
-	/**
-	  * takes one string as argument, containing multiple e-mail addresses
-	  * separated by semicolons
-	  * eg: site@demuynck.org;nucleus@demuynck.org;foo@bar.com
-	  */
-	function __construct($addresses) {
-		$this->addresses = explode(';' , $addresses);
-	}
+    /**
+      * returns true if all addresses are valid
+      */
+    public function validAddresses()
+    {
+        foreach ($this->addresses as $address) {
+            if (!isValidMailAddress(trim($address))) {
+                return 0;
+            }
+        }
+        return 1;
+    }
 
-	/**
-	  * returns true if all addresses are valid
-	  */
-	function validAddresses() {
-		foreach ( $this->addresses as $address ) {
-			if (!isValidMailAddress(trim($address)))
-				return 0;
-		}
-		return 1;
-	}
+    /**
+      * Sends email messages to all the email addresses
+      */
+    public function notify($title, $message, $from)
+    {
+        global $member;
 
-	/**
-	  * Sends email messages to all the email addresses
-	  */
-	function notify($title, $message, $from) {
-		global $member;
+        foreach ($this->addresses as $address) {
+            $address = trim($address);
 
-		foreach ( $this->addresses as $address ) {
-			$address = trim($address);
+            if (!$address) {
+                continue;
+            }
 
-			if (!$address)
-				continue;
+            // don't send messages to yourself
+            if ($member->isLoggedIn() && ($member->getEmail() == $address)) {
+                continue;
+            }
 
-			// don't send messages to yourself
-			if ($member->isLoggedIn() && ($member->getEmail() == $address))
-				continue;
-
-			@mb_language('ja');
-			@mb_internal_encoding(_CHARSET);
-			@mb_send_mail($address, $title, $message, "From: ". $from);
-		}
-	}
+            @mb_language('ja');
+            @mb_internal_encoding(_CHARSET);
+            @mb_send_mail($address, $title, $message, "From: ". $from);
+        }
+    }
 }
-
-?>

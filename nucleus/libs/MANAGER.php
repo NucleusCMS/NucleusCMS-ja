@@ -17,8 +17,8 @@
  * The class is a singleton, meaning that there will be only one object of it
  * active at all times. The object can be requested using MANAGER::instance()
  */
-class MANAGER {
-
+class MANAGER
+{
     /**
      * Cached ITEM, BLOG, PLUGIN, KARMA and MEMBER objects. When these objects are requested
      * through the global $manager object (getItem, getBlog, ...), only the first call
@@ -27,12 +27,12 @@ class MANAGER {
      * The $items, $blogs, ... arrays map an id to an object (for plugins, the name is used
      * rather than an ID)
      */
-    var $items;
-    var $blogs;
-    var $plugins;
-    var $karma;
-    var $templates;
-    var $members;
+    public $items;
+    public $blogs;
+    public $plugins;
+    public $karma;
+    public $templates;
+    public $members;
 
     /**
      * cachedInfo to avoid repeated SQL queries (see pidInstalled/pluginInstalled/getPidFromName)
@@ -40,7 +40,7 @@ class MANAGER {
      *
      * $cachedInfo['installedPlugins'] = array($pid -> $name)
      */
-    var $cachedInfo;
+    public $cachedInfo;
 
     /**
       * The plugin subscriptionlist
@@ -49,7 +49,7 @@ class MANAGER {
       *     $subscriptions[$EventName] = array containing names of plugin classes to be
       *                                  notified when that event happens
       */
-    var $subscriptions;
+    public $subscriptions;
 
     /**
       * Returns the only instance of this class. Creates the instance if it
@@ -57,7 +57,8 @@ class MANAGER {
       * $manager =& MANAGER::instance(); to get a reference to the object
       * instead of a copy
       */
-    public static function &instance() {
+    public static function &instance()
+    {
         static $instance = array();
         if (empty($instance)) {
             $instance[0] = new MANAGER();
@@ -68,13 +69,14 @@ class MANAGER {
     /**
       * The constructor of this class initializes the object caches
       */
-    function __construct() {
-        $this->items = array();
-        $this->blogs = array();
-        $this->plugins = array();
-        $this->karma = array();
+    public function __construct()
+    {
+        $this->items       = array();
+        $this->blogs       = array();
+        $this->plugins     = array();
+        $this->karma       = array();
         $this->parserPrefs = array();
-        $this->cachedInfo = array();
+        $this->cachedInfo  = array();
     }
 
     /**
@@ -82,23 +84,26 @@ class MANAGER {
       * first be loaded and then placed in the cache.
       * Intended use: $item =& $manager->getItem(1234)
       */
-    function &getItem($itemid, $allowdraft, $allowfuture) {
-        $item =& $this->items[$itemid];
+    public function &getItem($itemid, $allowdraft, $allowfuture)
+    {
+        $item = & $this->items[$itemid];
 
         // check the draft and future rules if the item was already cached
         if ($item) {
-            if ((!$allowdraft) && ($item['draft']))
+            if ((!$allowdraft) && ($item['draft'])) {
                 return 0;
+            }
 
-            $blog =& $this->getBlog(getBlogIDFromItemID($itemid));
-            if ((!$allowfuture) && ($item['timestamp'] > $blog->getCorrectTime()))
+            $blog = & $this->getBlog(getBlogIDFromItemID($itemid));
+            if ((!$allowfuture) && ($item['timestamp'] > $blog->getCorrectTime())) {
                 return 0;
+            }
         }
         if (!$item) {
             // load class if needed
             $this->loadClass('ITEM');
             // load item object
-            $item = ITEM::getitem($itemid, $allowdraft, $allowfuture);
+            $item                 = ITEM::getitem($itemid, $allowdraft, $allowfuture);
             $this->items[$itemid] = $item;
         }
         return $item;
@@ -107,37 +112,41 @@ class MANAGER {
     /**
       * Loads a class if it has not yet been loaded
       */
-    function loadClass($name) {
+    public function loadClass($name)
+    {
         $this->_loadClass($name, $name . '.php');
     }
 
     /**
       * Checks if an item exists
       */
-    function existsItem($id,$future,$draft) {
-        $this->_loadClass('ITEM','ITEM.php');
-        return ITEM::exists($id,$future,$draft);
+    public function existsItem($id, $future, $draft)
+    {
+        $this->_loadClass('ITEM', 'ITEM.php');
+        return ITEM::exists($id, $future, $draft);
     }
 
     /**
       * Checks if a category exists
       */
-    function existsCategory($id) {
+    public function existsCategory($id)
+    {
         return (quickQuery('SELECT COUNT(*) as result FROM '.sql_table('category').' WHERE catid='.intval($id)) > 0);
     }
 
     /**
       * Returns the blog object for a given blogid
       */
-    function &getBlog($blogid) {
-        $blog =& $this->blogs[$blogid];
+    public function &getBlog($blogid)
+    {
+        $blog = & $this->blogs[$blogid];
 
         if (!$blog) {
             // load class if needed
-            $this->_loadClass('BLOG','BLOG.php');
+            $this->_loadClass('BLOG', 'BLOG.php');
             // load blog object
-            $blog = new BLOG($blogid);
-            $this->blogs[$blogid] =& $blog;
+            $blog                 = new BLOG($blogid);
+            $this->blogs[$blogid] = & $blog;
         }
         return $blog;
     }
@@ -145,28 +154,31 @@ class MANAGER {
     /**
       * Checks if a blog exists
       */
-    function existsBlog($name) {
-        $this->_loadClass('BLOG','BLOG.php');
+    public function existsBlog($name)
+    {
+        $this->_loadClass('BLOG', 'BLOG.php');
         return BLOG::exists($name);
     }
 
     /**
       * Checks if a blog id exists
       */
-    function existsBlogID($id) {
-        $this->_loadClass('BLOG','BLOG.php');
+    public function existsBlogID($id)
+    {
+        $this->_loadClass('BLOG', 'BLOG.php');
         return BLOG::existsID($id);
     }
 
     /**
      * Returns a previously read template
      */
-    function &getTemplate($templateName) {
-        $template =& $this->templates[$templateName];
+    public function &getTemplate($templateName)
+    {
+        $template = & $this->templates[$templateName];
 
         if (!$template) {
-            $template = TEMPLATE::read($templateName);
-            $this->templates[$templateName] =& $template;
+            $template                       = TEMPLATE::read($templateName);
+            $this->templates[$templateName] = & $template;
         }
         return $template;
     }
@@ -174,15 +186,16 @@ class MANAGER {
     /**
      * Returns a KARMA object (karma votes)
      */
-    function &getKarma($itemid) {
-        $karma =& $this->karma[$itemid];
+    public function &getKarma($itemid)
+    {
+        $karma = & $this->karma[$itemid];
 
         if (!$karma) {
             // load class if needed
-            $this->_loadClass('KARMA','KARMA.php');
+            $this->_loadClass('KARMA', 'KARMA.php');
             // create KARMA object
-            $karma = new KARMA($itemid);
-            $this->karma[$itemid] =& $karma;
+            $karma                = new KARMA($itemid);
+            $this->karma[$itemid] = & $karma;
         }
         return $karma;
     }
@@ -190,15 +203,16 @@ class MANAGER {
     /**
      * Returns a MEMBER object
      */
-    function &getMember($memberid) {
-        $mem =& $this->members[$memberid];
+    public function &getMember($memberid)
+    {
+        $mem = & $this->members[$memberid];
 
         if (!$mem) {
             // load class if needed
-            $this->_loadClass('MEMBER','MEMBER.php');
+            $this->_loadClass('MEMBER', 'MEMBER.php');
             // create MEMBER object
-            $mem =& MEMBER::createFromID($memberid);
-            $this->members[$memberid] =& $mem;
+            $mem                      = & MEMBER::createFromID($memberid);
+            $this->members[$memberid] = & $mem;
         }
         return $mem;
     }
@@ -206,105 +220,105 @@ class MANAGER {
     /**
      * Set the global parser preferences
      */
-    function setParserProperty($name, $value) {
+    public function setParserProperty($name, $value)
+    {
         $this->parserPrefs[$name] = $value;
     }
 
     /**
      * Get the global parser preferences
      */
-    function getParserProperty($name) {
+    public function getParserProperty($name)
+    {
         return $this->parserPrefs[$name];
     }
 
     /**
       * A helper function to load a class
-      * 
+      *
       * private
       */
-    function _loadClass($name, $filename) {
+    public function _loadClass($name, $filename)
+    {
         if (!class_exists($name)) {
-                global $DIR_LIBS;
-                include($DIR_LIBS . $filename);
+            global $DIR_LIBS;
+            include($DIR_LIBS . $filename);
         }
     }
 
     /**
       * A helper function to load a plugin
-      * 
+      *
       * private
       */
-    function _loadPlugin($name) {
+    public function _loadPlugin($name)
+    {
         if (!class_exists($name)) {
-                global $DIR_PLUGINS;
+            global $DIR_PLUGINS;
 
-                $fileName = $DIR_PLUGINS . $name . '.php';
+            $fileName = $DIR_PLUGINS . $name . '.php';
 
-                if (!file_exists($fileName))
-                {
-                    if (!defined('_MANAGER_PLUGINFILE_NOTFOUND')) {
-                        define('_MANAGER_PLUGINFILE_NOTFOUND', 'Plugin %s was not loaded (File not found)');
-                    }
-                    ACTIONLOG::add(WARNING, sprintf(_MANAGER_PLUGINFILE_NOTFOUND, $name));
-                    return 0;
+            if (!file_exists($fileName)) {
+                if (!defined('_MANAGER_PLUGINFILE_NOTFOUND')) {
+                    define('_MANAGER_PLUGINFILE_NOTFOUND', 'Plugin %s was not loaded (File not found)');
                 }
+                ACTIONLOG::add(WARNING, sprintf(_MANAGER_PLUGINFILE_NOTFOUND, $name));
+                return 0;
+            }
 
-                // load plugin
-                include($fileName);
+            // load plugin
+            include($fileName);
 
-                // check if class exists (avoid errors in eval'd code)
-                if (!class_exists($name))
-                {
-                    if (!defined('_MANAGER_PLUGINFILE_NOCLASS')) {
-                        define('_MANAGER_PLUGINFILE_NOCLASS', "Plugin %s was not loaded (Class not found in file, possible parse error)");
-                    }
-                    ACTIONLOG::add(WARNING, sprintf(_MANAGER_PLUGINFILE_NOCLASS, $name));
-                    return 0;
+            // check if class exists (avoid errors in eval'd code)
+            if (!class_exists($name)) {
+                if (!defined('_MANAGER_PLUGINFILE_NOCLASS')) {
+                    define('_MANAGER_PLUGINFILE_NOCLASS', "Plugin %s was not loaded (Class not found in file, possible parse error)");
                 }
+                ACTIONLOG::add(WARNING, sprintf(_MANAGER_PLUGINFILE_NOCLASS, $name));
+                return 0;
+            }
 
-                // add to plugin array
-                eval('$this->plugins[$name] = new ' . $name . '();');
+            // add to plugin array
+            eval('$this->plugins[$name] = new ' . $name . '();');
 
-                // get plugid
-                $this->plugins[$name]->plugid = $this->getPidFromName($name);
+            // get plugid
+            $this->plugins[$name]->plugid = $this->getPidFromName($name);
 
-                // unload plugin if a prefix is used and the plugin cannot handle this^
-                global $MYSQL_PREFIX;
-                if (($MYSQL_PREFIX != '') && !$this->plugins[$name]->supportsFeature('SqlTablePrefix'))
-                {
-                    unset($this->plugins[$name]);
-                    ACTIONLOG::add(WARNING, sprintf(_MANAGER_PLUGINTABLEPREFIX_NOTSUPPORT, $name));
-                    return 0;
-                }
+            // unload plugin if a prefix is used and the plugin cannot handle this^
+            global $MYSQL_PREFIX;
+            if (($MYSQL_PREFIX != '') && !$this->plugins[$name]->supportsFeature('SqlTablePrefix')) {
+                unset($this->plugins[$name]);
+                ACTIONLOG::add(WARNING, sprintf(_MANAGER_PLUGINTABLEPREFIX_NOTSUPPORT, $name));
+                return 0;
+            }
 
-                // unload plugin if using non-mysql handler and plugin does not support it 
-                global $MYSQL_HANDLER;
-                if ((!in_array('mysql',$MYSQL_HANDLER)) && !$this->plugins[$name]->supportsFeature('SqlApi'))
-                {
-                    unset($this->plugins[$name]);
-                    ACTIONLOG::add(WARNING, sprintf(_MANAGER_PLUGINSQLAPI_NOTSUPPORT, $name));
-                    return 0;
-                }
+            // unload plugin if using non-mysql handler and plugin does not support it
+            global $MYSQL_HANDLER;
+            if ((!in_array('mysql', $MYSQL_HANDLER)) && !$this->plugins[$name]->supportsFeature('SqlApi')) {
+                unset($this->plugins[$name]);
+                ACTIONLOG::add(WARNING, sprintf(_MANAGER_PLUGINSQLAPI_NOTSUPPORT, $name));
+                return 0;
+            }
 
-                // call init method
-                $this->plugins[$name]->init();
-
+            // call init method
+            $this->plugins[$name]->init();
         }
     }
 
     /**
      * Returns a PLUGIN object
      */
-    function &getPlugin($name) {
+    public function &getPlugin($name)
+    {
         // retrieve the name of the plugin in the right capitalisation
-        $name = $this->getUpperCaseName ($name);
-        // get the plugin   
-        $plugin =& $this->plugins[$name];
+        $name = $this->getUpperCaseName($name);
+        // get the plugin
+        $plugin = & $this->plugins[$name];
 
         if (!$plugin) {
             // load class if needed
             $this->_loadPlugin($name);
-            $plugin =& $this->plugins[$name];
+            $plugin = & $this->plugins[$name];
         }
         return $plugin;
     }
@@ -312,17 +326,20 @@ class MANAGER {
     /**
       * Checks if the given plugin IS loaded or not
       */
-    function &pluginLoaded($name) {
-        $plugin =& $this->plugins[$name];
+    public function &pluginLoaded($name)
+    {
+        $plugin = & $this->plugins[$name];
         return $plugin;
     }
 
-    function &pidLoaded($pid) {
-        $plugin=false;
+    public function &pidLoaded($pid)
+    {
+        $plugin = false;
         reset($this->plugins);
         foreach ($this->plugins as $obj) {
-            if ($pid != $obj->getId())
+            if ($pid != $obj->getId()) {
                 continue;
+            }
             return $obj;
         }
         return $plugin;
@@ -331,22 +348,25 @@ class MANAGER {
     /**
       * checks if the given plugin IS installed or not
       */
-    function pluginInstalled($name) {
+    public function pluginInstalled($name)
+    {
         $this->_initPluginCacheInfo();
         return ($this->getPidFromName($name) != -1);
     }
 
-    function pidInstalled($pid) {
+    public function pidInstalled($pid)
+    {
         $this->_initPluginCacheInfo();
         return ($this->cachedInfo['installedPlugins'][$pid] != '');
     }
 
-    function getPidFromName($name) {
+    public function getPidFromName($name)
+    {
         $this->_initPluginCacheInfo();
-        foreach ($this->cachedInfo['installedPlugins'] as $pid => $pfile)
-        {
-            if (strtolower($pfile) == strtolower($name))
+        foreach ($this->cachedInfo['installedPlugins'] as $pid => $pfile) {
+            if (strtolower($pfile) == strtolower($name)) {
                 return $pid;
+            }
         }
         return -1;
     }
@@ -354,33 +374,36 @@ class MANAGER {
     /**
       * Retrieve the name of a plugin in the right capitalisation
       */
-    function getUpperCaseName ($name) {
+    public function getUpperCaseName($name)
+    {
         $this->_initPluginCacheInfo();
-        foreach ($this->cachedInfo['installedPlugins'] as $pid => $pfile)
-        {
-            if (strtolower($pfile) == strtolower($name))
+        foreach ($this->cachedInfo['installedPlugins'] as $pid => $pfile) {
+            if (strtolower($pfile) == strtolower($name)) {
                 return $pfile;
+            }
         }
         return -1;
     }
 
-    function clearCachedInfo($what) {
+    public function clearCachedInfo($what)
+    {
         unset($this->cachedInfo[$what]);
     }
 
-    function initSqlCacheInfo($what, $query='')
+    public function initSqlCacheInfo($what, $query = '')
     {
-        if (isset($this->cachedInfo[$what][$query])) return;
-        
-        switch ($what)
-        {
+        if (isset($this->cachedInfo[$what][$query])) {
+            return;
+        }
+
+        switch ($what) {
             case 'sql_num_rows':
-                $rs = sql_query($query);
+                $rs                                       = sql_query($query);
                 $this->cachedInfo['sql_num_rows'][$query] = sql_num_rows($rs);
                 break;
             case 'sql_fetch_object':
-                $rs  = sql_query($query);
-                $obj = sql_fetch_object($rs);
+                $rs                                           = sql_query($query);
+                $obj                                          = sql_fetch_object($rs);
                 $this->cachedInfo['sql_fetch_object'][$query] = is_object($obj) ? $obj->result : '';
                 break;
         }
@@ -389,15 +412,16 @@ class MANAGER {
     /**
      * Loads some info on the first call only
      */
-    function _initPluginCacheInfo()
+    public function _initPluginCacheInfo()
     {
-        if (isset($this->cachedInfo['installedPlugins'])) return;
-        
+        if (isset($this->cachedInfo['installedPlugins'])) {
+            return;
+        }
+
         $this->cachedInfo['installedPlugins'] = array();
-        $res = sql_query('SELECT pid, pfile FROM ' . sql_table('plugin'));
+        $res                                  = sql_query('SELECT pid, pfile FROM ' . sql_table('plugin'));
         $this->cachedInfo['installedPlugins'] = array();
-        while ($o = sql_fetch_object($res))
-        {
+        while ($o = sql_fetch_object($res)) {
             $this->cachedInfo['installedPlugins'][$o->pid] = $o->pfile;
         }
     }
@@ -414,11 +438,12 @@ class MANAGER {
       *     Can contain any type of data, depending on the event type. Usually this is
       *     an itemid, blogid, ... but it can also be an array containing multiple values
       */
-    function notify($eventName, &$data) {
+    public function notify($eventName, &$data)
+    {
         // load subscription list if needed
-        if (!is_array($this->subscriptions))
+        if (!is_array($this->subscriptions)) {
             $this->_loadSubscriptions();
-
+        }
 
         // get listening objects
         $listeners = false;
@@ -428,33 +453,34 @@ class MANAGER {
 
         // notify all of them
         if (is_array($listeners)) {
-            foreach($listeners as $listener) {
+            foreach ($listeners as $listener) {
                 // load class if needed
                 $this->_loadPlugin($listener);
                 // do notify (if method exists)
                 $event_funcname = 'event_' . $eventName;
-                if (isset($this->plugins[$listener]) && method_exists($this->plugins[$listener], $event_funcname ))
+                if (isset($this->plugins[$listener]) && method_exists($this->plugins[$listener], $event_funcname)) {
                     $this->plugins[$listener]->$event_funcname($data);
+                }
             }
         }
-
     }
 
     /**
       * Loads plugin subscriptions
       */
-    function _loadSubscriptions() {
+    public function _loadSubscriptions()
+    {
         // initialize as array
         $this->subscriptions = array();
 
         $res = sql_query('SELECT p.pfile as pfile, e.event as event FROM '.sql_table('plugin_event').' as e, '.sql_table('plugin').' as p WHERE e.pid=p.pid ORDER BY p.porder ASC');
-		if ($res)
-        while ($o = sql_fetch_object($res)) {
-            $pluginName = $o->pfile;
-            $eventName = $o->event;
-            $this->subscriptions[$eventName][] = $pluginName;
+        if ($res) {
+            while ($o = sql_fetch_object($res)) {
+                $pluginName                        = $o->pfile;
+                $eventName                         = $o->event;
+                $this->subscriptions[$eventName][] = $pluginName;
+            }
         }
-
     }
 
     /*
@@ -462,25 +488,28 @@ class MANAGER {
         requests. tickets are user specific
     */
 
-    var $currentRequestTicket = '';
+    public $currentRequestTicket = '';
 
     /**
      * GET requests: Adds ticket to URL (URL should NOT be html-encoded!, ticket is added at the end)
      */
-    function addTicketToUrl($url)
+    public function addTicketToUrl($url)
     {
         $ticketCode = 'ticket=' . $this->_generateTicket();
-        
-        if (strstr($url, '?')) $_ = '&';
-        else                   $_ = '?';
-        
+
+        if (strstr($url, '?')) {
+            $_ = '&';
+        } else {
+            $_ = '?';
+        }
+
         return "{$url}{$_}{$ticketCode}";
     }
 
     /**
      * POST requests: Adds ticket as hidden formvar
      */
-    function addTicketHidden()
+    public function addTicketHidden()
     {
         $ticket = $this->_generateTicket();
 
@@ -491,7 +520,7 @@ class MANAGER {
      * Get a new ticket
      * (xmlHTTPRequest AutoSaveDraft uses this to refresh the ticket)
      */
-    function getNewTicket()
+    public function getNewTicket()
     {
         $this->currentRequestTicket = '';
         return $this->_generateTicket();
@@ -500,7 +529,7 @@ class MANAGER {
     /**
      * Checks the ticket that was passed along with the current request
      */
-    function checkTicket()
+    public function checkTicket()
     {
         global $member;
 
@@ -508,23 +537,24 @@ class MANAGER {
         $ticket = requestVar('ticket');
 
         // no ticket -> don't allow
-        if ($ticket == '')
+        if ($ticket == '') {
             return false;
+        }
 
         // remove expired tickets first
         $this->_cleanUpExpiredTickets();
 
         // get member id
-        if (!$member->isLoggedIn())
+        if (!$member->isLoggedIn()) {
             $memberId = -1;
-        else
+        } else {
             $memberId = $member->getID();
+        }
 
         // check if ticket is a valid one
         $params = array(sql_table('tickets'), intval($memberId), sql_real_escape_string($ticket));
-        $query = vsprintf("SELECT COUNT(*) as result FROM %s WHERE member=%s and ticket='%s'", $params);
-        if (quickQuery($query) == 1)
-        {
+        $query  = vsprintf("SELECT COUNT(*) as result FROM %s WHERE member=%s and ticket='%s'", $params);
+        if (quickQuery($query) == 1) {
             // [in the original implementation, the checked ticket was deleted. This would lead to invalid
             //  tickets when using the browsers back button and clicking another link/form
             //  leaving the keys in the database is not a real problem, since they're member-specific and
@@ -536,54 +566,52 @@ class MANAGER {
             // not a valid ticket
             return false;
         }
-
     }
 
     /**
      * (internal method) Removes the expired tickets
      */
-    function _cleanUpExpiredTickets()
+    public function _cleanUpExpiredTickets()
     {
         // remove tickets older than 1 hour
         $oldTime = time() - 60 * 60;
-        $query = sprintf("DELETE FROM %s WHERE ctime < '%s'", sql_table('tickets'),date('Y-m-d H:i:s',$oldTime));
+        $query   = sprintf("DELETE FROM %s WHERE ctime < '%s'", sql_table('tickets'), date('Y-m-d H:i:s', $oldTime));
         sql_query($query);
     }
 
     /**
      * (internal method) Generates/returns a ticket (one ticket per page request)
      */
-    function _generateTicket()
+    public function _generateTicket()
     {
-        if ($this->currentRequestTicket == '')
-        {
+        if ($this->currentRequestTicket == '') {
             // generate new ticket (only one ticket will be generated per page request)
             // and store in database
             global $member;
             // get member id
-            if (!$member->isLoggedIn())
+            if (!$member->isLoggedIn()) {
                 $memberId = -1;
-            else
+            } else {
                 $memberId = $member->getID();
+            }
 
             $ok = false;
-            while (!$ok)
-            {
+            while (!$ok) {
                 // generate a random token
-                srand((double)microtime()*1000000);
+                mt_srand((double)microtime() * 1000000);
                 $ticket = md5(uniqid(mt_rand(), true));
 
                 // add in database as non-active
-                $params = array(sql_table('tickets'), sql_real_escape_string($ticket), intval($memberId), date('Y-m-d H:i:s',time()));
-                $query = vsprintf("INSERT INTO %s (ticket, member, ctime) VALUES ('%s', '%s', '%s')", $params);
-                
-                if (sql_query($query))
+                $params = array(sql_table('tickets'), sql_real_escape_string($ticket), intval($memberId), date('Y-m-d H:i:s', time()));
+                $query  = vsprintf("INSERT INTO %s (ticket, member, ctime) VALUES ('%s', '%s', '%s')", $params);
+
+                if (sql_query($query)) {
                     $ok = true;
+                }
             }
 
             $this->currentRequestTicket = $ticket;
         }
         return $this->currentRequestTicket;
     }
-
 }

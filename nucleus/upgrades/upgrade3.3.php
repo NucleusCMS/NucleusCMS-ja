@@ -10,19 +10,20 @@
  * (see nucleus/documentation/index.html#license for more info)
  */
 
-function upgrade_do330() {
-
-    if (upgrade_checkinstall(330))
+function upgrade_do330()
+{
+    if (upgrade_checkinstall(330)) {
         return _UPG_TEXT_ALREADY_INSTALLED;
+    }
 
-    if (!upgrade_checkIfColumnExists('comment','cemail')) {
+    if (!upgrade_checkIfColumnExists('comment', 'cemail')) {
         $query = "  ALTER TABLE `" . sql_table('comment') . "`
                     ADD `cemail` VARCHAR( 100 ) AFTER `cmail` ;";
 
         upgrade_query('Altering ' . sql_table('comment') . ' table', $query);
     }
 
-    if (!upgrade_checkIfColumnExists('blog','breqemail')) {
+    if (!upgrade_checkIfColumnExists('blog', 'breqemail')) {
         $query = "  ALTER TABLE `" . sql_table('blog') . "`
                     ADD `breqemail` TINYINT( 2 ) DEFAULT '0' NOT NULL ;";
 
@@ -31,35 +32,12 @@ function upgrade_do330() {
 
     // check cmail column to separate to URL and cemail
     sql_query(
-        'UPDATE ' . sql_table('comment') . ' ' . 
+        'UPDATE ' . sql_table('comment') . ' ' .
         "SET cemail = cmail, cmail = '' " .
         "WHERE cmail LIKE '%@%'"
     );
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // 3.2 -> 3.3
     // update database version
     update_version('330');
-
-
-
-
-
-
-
 }
-
-?>

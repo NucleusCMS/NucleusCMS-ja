@@ -1,0 +1,7 @@
+<IfModule mod_rewrite.c>
+RewriteEngine  On
+RewriteCond     %{HTTP:Authorization} ^(.*)
+RewriteRule     ^(.*) - [E=HTTP_AUTHORIZATION:%1]
+</IfModule>
+
+# if the input prompt loops : check httpd.conf : SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
