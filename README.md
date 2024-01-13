@@ -32,6 +32,8 @@ Please read the documentation first. Please access the upgrade URL.
 
 # Download
 
+https://github.com/NucleusCMS/NucleusCMS-ja/archive/master.zip 
+
 <br>
 
 # Old Archives
