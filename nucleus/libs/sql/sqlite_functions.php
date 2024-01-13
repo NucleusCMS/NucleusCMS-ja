@@ -4,8 +4,9 @@ class sqlite_functions
 {
     public static function pdo_register_user_functions($dbh)
     {
-        if (empty($dbh) || !($dbh instanceof PDO)) {
+        if (empty($dbh) || ! ($dbh instanceof PDO)) {
             trigger_error('handler is not PDO object.', E_USER_WARNING);
+
             return;
         }
         // standard: SUBSTR , non-standard: SUBSTRING
@@ -14,18 +15,21 @@ class sqlite_functions
         $dbh->sqliteCreateFunction(
             'SUBSTRING',
             function () {
-                $st = intval(func_get_arg(1));
+                $st = (int) (func_get_arg(1));
                 if ($st > 0) {
                     $st--;
                 }
-                return substr(func_get_arg(0), $st, func_get_arg(2));
+                return mb_substr(func_get_arg(0), $st, func_get_arg(2), 'utf-8');
             },
             3
         );
+        $dbh->sqliteCreateFunction(
+            'CHAR_LENGTH',
+            fn () => mb_strlen(func_get_arg(0), 'utf-8'),
+            1
+        );
         $dbh->sqliteCreateFunction('UNIX_TIMESTAMP', 'strtotime', 1);
-        $dbh->sqliteCreateFunction('NOW', function () {
-            return date("Y-m-d H:i:s", time());
-        }, 0); // local time
+        $dbh->sqliteCreateFunction('NOW', fn () => date("Y-m-d H:i:s", time()), 0); // local time
         // SQL non-standard : REGEXP (mysql , sqlite) , src_exp ~ pattern_text (postgreSQL)
         //                    --- src_exp like pattern_text  ,  %  _
         // src_exp REGEXP pattern_text
@@ -33,16 +37,16 @@ class sqlite_functions
         $dbh->sqliteCreateFunction(
             'REGEXP',
             function ($pattern, $Text) {
-                return preg_match("/(" . str_replace("/", "\\/", (string)$pattern) . ")/im", (string)$Text) ? 1 : 0;
+                return preg_match("/(" . str_replace(
+                    "/",
+                    "\\/",
+                    (string) $pattern
+                ) . ")/im", (string) $Text) ? 1 : 0;
             },
             2
         );
-        $dbh->sqliteCreateFunction('CONCAT', function () {
-            return implode("", func_get_args());
-        }, -1);
-        $dbh->sqliteCreateFunction('FIND_IN_SET', function ($k, $v) {
-            return in_array($k, explode($v)) ? 1 : 0;
-        }, 2);
+        $dbh->sqliteCreateFunction('CONCAT', fn () => implode("", func_get_args()), -1);
+        $dbh->sqliteCreateFunction('FIND_IN_SET', fn ($k, $v) => in_array($k, explode($v)) ? 1 : 0, 2);
         $dbh->sqliteCreateFunction('md5', 'md5', 1);
     }
 }

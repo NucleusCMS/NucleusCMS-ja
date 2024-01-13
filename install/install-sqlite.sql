@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `nucleus_blog` (
   `bconvertbreaks` tinyint(2)   NOT NULL default '1',
   `bdefcat`        int(11)               default NULL,
   `bnotifytype`    int(11)      NOT NULL default '15',
-  `ballowpast`     tinyint(2)   NOT NULL default '0',
+  `ballowpast`     tinyint(2)   NOT NULL default '1',
   `bincludesearch` tinyint(2)   NOT NULL default '0',
   `breqemail`      tinyint(2)   NOT NULL default '0',
   `bfuturepost`    tinyint(2)   NOT NULL default '0',
@@ -43,26 +43,26 @@ CREATE TABLE IF NOT EXISTS `nucleus_blog` (
 );
 
 INSERT INTO `nucleus_blog` VALUES (
-    1,                                  /* bnumber */
-    'My Nucleus CMS',                   /* bname */
-    'mynucleuscms',                     /* bshortname */
-    '',                                 /* bdesc */
-    1,                                  /* bcomments */
-    0,                                  /* bmaxcomments */
-    0.0,                                /* btimeoffset */
-    '',                                 /* bnotify */
-    'http://localhost:8080/nucleus/',   /* burl */
-    '',                                 /* bupdate */
-    5,                                  /* bdefskin */
-    0,                                  /* bpublic */
-    1,                                  /* bconvertbreaks */
-    1,                                  /* bdefcat */
-    1,                                  /* bnotifytype */
-    1,                                  /* ballowpast */
-    0,                                  /* bincludesearch */
-    0,                                  /* breqemail */
-    0,                                  /* bfuturepost */
-    1                                   /* bauthorvisible */
+    1,                     /* bnumber */
+    'My Nucleus CMS',      /* bname */
+    'mynucleuscms',        /* bshortname */
+    '',                    /* bdesc */
+    1,                     /* bcomments */
+    0,                     /* bmaxcomments */
+    0.0,                   /* btimeoffset */
+    '',                    /* bnotify */
+    'http://localhost/',   /* burl */
+    '',                    /* bupdate */
+    4,                     /* bdefskin */
+    0,                     /* bpublic */
+    1,                     /* bconvertbreaks */
+    1,                     /* bdefcat */
+    1,                     /* bnotifytype */
+    1,                     /* ballowpast */
+    0,                     /* bincludesearch */
+    0,                     /* breqemail */
+    0,                     /* bfuturepost */
+    1                      /* bauthorvisible */
 );
 
 CREATE TABLE IF NOT EXISTS `nucleus_category` (
@@ -128,8 +128,8 @@ CREATE INDEX IF NOT EXISTS `nucleus_comment_idx_cblog` on `nucleus_comment` (`cb
   CREATE INDEX IF NOT EXISTS `nucleus_comment_idx_cbody` on `nucleus_comment` (`cbody`);
 
 CREATE TABLE IF NOT EXISTS `nucleus_config` (
-  `name`  varchar(50)  NOT NULL default '' COLLATE NOCASE ,
-  `value` varchar(128)          default NULL COLLATE NOCASE ,
+  `name`  varchar(200)  NOT NULL default '' COLLATE NOCASE ,
+  `value` varchar(255)          default NULL COLLATE NOCASE ,
   PRIMARY KEY  (`name`)
 );
 
@@ -138,7 +138,9 @@ INSERT INTO `nucleus_config` (`name`, `value`) VALUES
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('AdminEmail',        'example@example.org');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
-    ('IndexURL',          'http://localhost:8080/nucleus/');
+    ('IndexURL',          'http://localhost/');
+INSERT INTO `nucleus_config` (`name`, `value`) VALUES
+    ('BaseURL',           '/');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('Language',          'japanese-utf8');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
@@ -150,17 +152,17 @@ INSERT INTO `nucleus_config` (`name`, `value`) VALUES
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('SiteName',          'My Nucleus CMS');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
-    ('AdminURL',          'http://localhost:8080/nucleus/nucleus/');
+    ('AdminURL',          'http://localhost/nucleus/');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('NewMemberCanLogon', '1');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('DisableSite',       '');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
-    ('DisableSiteURL',    'http://www.this-page-intentionally-left-blank.org/');
+    ('DisableSiteURL',    '');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('LastVisit',         '');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
-    ('MediaURL',          'http://localhost:8080/nucleus/media/');
+    ('MediaURL',          'http://localhost/media/');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('AllowedTypes',      'jpg,jpeg,gif,mpg,mpeg,avi,mov,mp3,swf,png');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
@@ -184,15 +186,15 @@ INSERT INTO `nucleus_config` (`name`, `value`) VALUES
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('NonmemberMail',     '');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
-    ('PluginURL',         'http://localhost:8080/nucleus/nucleus/plugins/');
+    ('PluginURL',         'http://localhost/nucleus/plugins/');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('ProtectMemNames',   '1');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
-    ('BaseSkin',          '5');
+    ('BaseSkin',          '4');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
-    ('SkinsURL',          'http://localhost:8080/nucleus/skins/');
+    ('SkinsURL',          'http://localhost/skins/');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
-    ('ActionURL',         'http://localhost:8080/nucleus/action.php');
+    ('ActionURL',         'http://localhost/action.php');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('URLMode',           'normal');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
@@ -205,12 +207,18 @@ INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('DefaultListSize',   '10');
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('AdminCSS',          'contemporary');
+INSERT INTO `nucleus_config` (`name`, `value`) VALUES
+    ('DisableRSS',          '1');
+INSERT INTO `nucleus_config` (`name`, `value`) VALUES
+    ('ENABLE_PLUGIN_ADMIN_V1', '1');
+INSERT INTO `nucleus_config` (`name`, `value`) VALUES
+    ('ENABLE_PLUGIN_UPDATE_CHECK', '1');
 
 CREATE TABLE IF NOT EXISTS `nucleus_item` (
   `inumber`   INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL ,
-  `ititle`    varchar(160)          default NULL COLLATE NOCASE ,
-  `ibody`     text         NOT NULL COLLATE NOCASE ,
-  `imore`     text COLLATE NOCASE ,
+  `ititle`    varchar(160) NOT NULL default '' COLLATE NOCASE ,
+  `ibody`     text         NOT NULL default '' COLLATE NOCASE ,
+  `imore`     text         NOT NULL default '' COLLATE NOCASE ,
   `iblog`     int(11)      NOT NULL default '0',
   `iauthor`   int(11)      NOT NULL default '0',
   `itime`     datetime     NOT NULL default '0000-00-00 00:00:00',
@@ -279,6 +287,7 @@ CREATE TABLE IF NOT EXISTS `nucleus_member` (
   `mautosave`  tinyint(2)   NOT NULL default '1',
   `mhalt`      tinyint(2)   NOT NULL default '0',
   `mhalt_reason`  varchar(100) NOT NULL default '' COLLATE NOCASE ,
+  `mtoken`     varchar(100)          default NULL,
   UNIQUE (`mname`)
 );
 
@@ -293,8 +302,16 @@ INSERT INTO `nucleus_member` (
   VALUES (
     1, 'example', 'example',
     '1a79a4d60de6718e8e5b326e338ae533', /* mpassword */
-    'example@example.org', 'http://localhost:8080/nucleus/', '',
+    'example@example.org', 'http://localhost/', '',
     1, 1, 'd767aefc60415859570d64c649257f19'
+);
+
+CREATE TABLE IF NOT EXISTS `nucleus_member_option` (
+  `omember`  int(11)      NOT NULL,
+  `ocontext` varchar(20)  NOT NULL default '' COLLATE NOCASE,
+  `name`     varchar(100) NOT NULL COLLATE NOCASE ,
+  `value`    varchar(255) NOT NULL default '',
+  UNIQUE (`omember`, `ocontext`, `name`)
 );
 
 CREATE TABLE IF NOT EXISTS `nucleus_plugin` (
@@ -327,7 +344,7 @@ CREATE INDEX IF NOT EXISTS `nucleus_plugin_option_idx_ocontextid` on `nucleus_pl
 CREATE TABLE IF NOT EXISTS `nucleus_plugin_option_desc` (
   `oid`      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL ,
   `opid`     int(11)     NOT NULL default '0',
-  `oname`    varchar(50) NOT NULL default '' COLLATE NOCASE ,
+  `oname`    varchar(200) NOT NULL default '' COLLATE NOCASE ,
   `ocontext` varchar(20) NOT NULL default '' COLLATE NOCASE ,
   `odesc`    varchar(255)         default NULL COLLATE NOCASE ,
   `otype`    varchar(20)          default NULL COLLATE NOCASE ,
@@ -352,7 +369,7 @@ CREATE TABLE IF NOT EXISTS `nucleus_skin` (
   `stype`    varchar(20) NOT NULL default '' COLLATE NOCASE ,
   `scontent` text        NOT NULL ,
   `spartstype`  varchar(20) NOT NULL default 'parts' ,
-  PRIMARY KEY  (`sdesc`,`stype`)
+  PRIMARY KEY  (`sdesc`,`stype`,`spartstype`)
 );
 
 CREATE TABLE IF NOT EXISTS `nucleus_skin_desc` (

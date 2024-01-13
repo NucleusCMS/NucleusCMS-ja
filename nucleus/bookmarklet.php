@@ -17,7 +17,7 @@
  */
 
 // bookmarklet is part of admin area (might need XML-RPC)
-$CONF                   = array();
+$CONF                   = [];
 $CONF['UsingAdminArea'] = 1;
 
 // include all classes and config data
@@ -25,27 +25,27 @@ include('../config.php');
 
 $action = requestVar('action');
 
-if ($action == 'contextmenucode') {
+if ('contextmenucode' === $action) {
     bm_doContextMenuCode();
     exit;
 }
 
-if (!$member->isLoggedIn()) {
+if ( ! $member->isLoggedIn()) {
     bm_loginAndPassThrough();
     exit;
 }
 
 // on successfull login
-if (($action == 'login') && ($member->isLoggedIn())) {
+if (('login' === $action) && ($member->isLoggedIn())) {
     $action = requestVar('nextaction');
 }
 
-if ($action == '') {
+if ('' == $action) {
     $action = 'add';
 }
 
 $actiontype = postVar('actiontype');
-if ($actiontype === 'delete' || $actiontype === 'itemdeleteconfirm') {
+if ('delete' === $actiontype || 'itemdeleteconfirm' === $actiontype) {
     $action = $actiontype;
 }
 
@@ -54,68 +54,62 @@ sendContentType('text/html', 'bookmarklet-' . $action);
 // check ticket
 $action = strtolower($action);
 
-$aActionsNotToCheck = array('login', 'add', 'edit');
+$aActionsNotToCheck = ['login', 'add', 'edit'];
 
-if (!in_array($action, $aActionsNotToCheck)) {
-    if (!$manager->checkTicket()) {
+if ( ! in_array($action, $aActionsNotToCheck)) {
+    if ( ! $manager->checkTicket()) {
         bm_doError(_ERROR_BADTICKET);
     }
 }
 
 // find out what to do
-switch ($action) {
-    case 'additem':
-        bm_doAddItem();
-        break; // adds the item for real
-    case 'edit':
-        bm_doEditForm();
-        break; // shows the edit item form
-    case 'edititem':
-        bm_doEditItem();
-        break; // edits the item for real
-    case 'delete':
-        bm_doDeleteItem();
-        break;
-    case 'itemdeleteconfirm':
-        bm_doDeleteItemComplete();
-        break;
-    case 'login':
-        bm_doError(_BOOKMARKLET_ERROR_SOMETHINGWRONG);
-        break; // on login, 'action' gets changed to 'nextaction'
-        // shows the fill in form
-    case 'add':
-    default:
-        bm_doShowForm();
-        break;
+if ('additem' === $action) {
+    bm_doAddItem();
+} elseif ('edit' === $action) {
+    bm_doEditForm();
+} elseif ('edititem' === $action) {
+    bm_doEditItem();
+} elseif ('delete' === $action) {
+    bm_doDeleteItem();
+} elseif ('itemdeleteconfirm' === $action) {
+    bm_doDeleteItemComplete();
+} elseif ('login' === $action) {
+    bm_doError(_BOOKMARKLET_ERROR_SOMETHINGWRONG);
+} else {
+    bm_doShowForm();
 }
 
 function bm_doAddItem()
 {
-    global $member, $manager, $CONF;
+    global $manager;
 
     $manager->loadClass('ITEM');
     $result = ITEM::createFromRequest();
 
-    if ($result['status'] == 'error') {
+    if ('error' === $result['status']) {
         bm_doError($result['message']);
     }
 
     $blogid = getBlogIDFromItemID($result['itemid']);
-    $blog   = & $manager->getBlog($blogid);
+    $blog   = &$manager->getBlog($blogid);
 
-    if ($result['status'] == 'newcategory') {
-        $href      = 'index.php?action=categoryedit&amp;blogid=' . $blogid . '&amp;catid=' . $result['catid'];
-        $onclick   = 'if (event &amp;&amp; event.preventDefault) event.preventDefault(); window.open(this.href); return false;';
-        $title     = _BOOKMARKLET_NEW_WINDOW;
-        $aTag      = ' <a href="' . $href . '" onclick="' . $onclick . '" title="' . $title . '">';
-        $message   = _BOOKMARKLET_NEW_CATEGORY . $aTag . _BOOKMARKLET_NEW_CATEGORY_EDIT . '</a>';
-        $extrahead = '';
-    } else {
-        $message   = _ITEM_ADDED;
-        $extrahead = '';
+    if ('newcategory' !== $result['status']) {
+        bm_message(_ITEM_ADDED, _ITEM_ADDED, _ITEM_ADDED, '');
+        return;
     }
 
-    bm_message(_ITEM_ADDED, _ITEM_ADDED, $message, $extrahead);
+    $message = sprintf(
+        '%s <a href="%s" onclick="if (event &amp;&amp; event.preventDefault) event.preventDefault(); window.open(this.href); return false;" title="%s">%s</a>',
+        _BOOKMARKLET_NEW_CATEGORY,
+        sprintf(
+            'index.php?action=categoryedit&amp;blogid=%s&amp;catid=%s',
+            $blogid,
+            $result['catid']
+        ),
+        _BOOKMARKLET_NEW_WINDOW,
+        _BOOKMARKLET_NEW_CATEGORY_EDIT
+    );
+    bm_message(_ITEM_ADDED, _ITEM_ADDED, $message, '');
 }
 
 function bm_doDeleteItem()
@@ -134,7 +128,21 @@ EOT;
     $ticket = $manager->getNewTicket();
     $itemid = intRequestVar('itemid');
     $title  = postVar('title');
-    $msg    = str_replace(array('<%_CONFIRMTXT_ITEM%>','<%_DELETE_CONFIRM_BTN%>','<%ticket%>','<%itemid%>','<%itemtitle%>'), array(_CONFIRMTXT_ITEM,_DELETE_CONFIRM_BTN,$ticket,$itemid,$title), $msg);
+    $msg    = str_replace(
+        [
+            '<%_CONFIRMTXT_ITEM%>','<%_DELETE_CONFIRM_BTN%>',
+            '<%ticket%>',
+            '<%itemid%>',
+            '<%itemtitle%>',
+        ],
+        [
+            _CONFIRMTXT_ITEM,_DELETE_CONFIRM_BTN,
+            $ticket,
+            $itemid,
+            $title,
+        ],
+        $msg
+    );
     bm_message(_DELETE_CONFIRM_BTN, _DELETE_CONFIRM, $msg, '', 0);
     exit;
 }
@@ -151,13 +159,13 @@ function bm_doDeleteItemComplete()
 
 function bm_doEditItem()
 {
-    global $member, $manager, $CONF;
+    global $member, $manager;
 
     $itemid = intRequestVar('itemid');
     $catid  = postVar('catid');
 
     // only allow if user is allowed to alter item
-    if (!$member->canUpdateItem($itemid, $catid)) {
+    if ( ! $member->canUpdateItem($itemid, $catid)) {
         bm_doError(_ERROR_DISALLOWED);
     }
 
@@ -169,16 +177,16 @@ function bm_doEditItem()
     $draftid    = intPostVar('draftid');
 
     // create new category if needed (only on edit/changedate)
-    if (strstr($catid, 'newcat')) {
+    if (str_contains($catid, 'newcat')) {
         // get blogid
-        list($blogid) = sscanf($catid, "newcat-%d");
+        [$blogid] = sscanf($catid, "newcat-%d");
 
         // create
-        $blog  = & $manager->getBlog($blogid);
+        $blog  = &$manager->getBlog($blogid);
         $catid = $blog->createNewCategory();
 
         // show error when sth goes wrong
-        if (!$catid) {
+        if ( ! $catid) {
             bm_doError(_BOOKMARKLET_ERROR_COULDNTNEWCAT);
         }
     }
@@ -212,55 +220,56 @@ function bm_doEditItem()
     }
 
     // show success message
-    if ($catid != intPostVar('catid')) {
-        $href    = 'index.php?action=categoryedit&amp;blogid=' . $blog->getID() . '&amp;catid=' . $catid;
-        $onclick = 'if (event &amp;&amp; event.preventDefault) event.preventDefault(); window.open(this.href); return false;';
-        $title   = _BOOKMARKLET_NEW_WINDOW;
-        $aTag    = ' <a href="' . $href . '" onclick="' . $onclick . '" title="' . $title . '">';
-        $message = _BOOKMARKLET_NEW_CATEGORY . $aTag . _BOOKMARKLET_NEW_CATEGORY_EDIT . '</a>';
-        bm_message(_ITEM_UPDATED, _ITEM_UPDATED, _BOOKMARKLET_NEW_CATEGORY . $aTag . _BOOKMARKLET_NEW_CATEGORY_EDIT . '</a>', '');
-    } else {
-        bm_message(_ITEM_UPDATED, _ITEM_UPDATED, _ITEM_UPDATED, '');
+    if ($catid == intPostVar('catid')) {
+        bm_message(_ITEM_UPDATED, _ITEM_UPDATED, _ITEM_UPDATED);
+        return;
     }
+    $message = sprintf(
+        '%s <a href="%s" onclick="%s" title="%s">%s</a>',
+        _BOOKMARKLET_NEW_CATEGORY,
+        sprintf('index.php?action=categoryedit&amp;blogid=%s&amp;catid=%s', $blog->getID(), $catid),
+        'if (event &amp;&amp; event.preventDefault) event.preventDefault(); window.open(this.href); return false;',
+        _BOOKMARKLET_NEW_WINDOW,
+        _BOOKMARKLET_NEW_CATEGORY_EDIT
+    );
+    bm_message(_ITEM_UPDATED, _ITEM_UPDATED, $message);
 }
 
 function bm_loginAndPassThrough()
 {
-    $blogid        = intRequestVar('blogid');
-    $log_text      = requestVar('logtext');
-    $log_link      = requestVar('loglink');
-    $log_linktitle = requestVar('loglinktitle');
+    $blogid        = hsc(intRequestVar('blogid'));
+    $log_text      = hsc(requestVar('logtext'));
+    $log_link      = hsc(requestVar('loglink'));
+    $log_linktitle = hsc(requestVar('loglinktitle'));
 
-    ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html <?php echo _HTML_XML_NAME_SPACE_AND_LANG_CODE; ?>>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=<?php echo _CHARSET ?>" />
-<title>Nucleus</title>
-    <?php bm_style(); ?>
-</head>
-<body>
-<h1><?php echo _LOGIN_PLEASE ?></h1>
+    $ct_login_please   = _LOGIN_PLEASE;
+    $ct_loginform_name = _LOGINFORM_NAME;
+    $ct_loginform_pwd  = _LOGINFORM_PWD;
+    $ct_login          = _LOGIN;
+    $ct_popup_close    = _POPUP_CLOSE;
+
+    $body = <<< EOT
+<h1>{$ct_login_please}</h1>
 
 <form method="post" action="bookmarklet.php">
     <p>
-        <input name="action" value="login" type="hidden" />
-        <input name="blogid" value="<?php echo hsc($blogid); ?>" type="hidden" />
-        <input name="logtext" value="<?php echo hsc($log_text); ?>" type="hidden" />
-        <input name="loglink" value="<?php echo hsc($log_link); ?>" type="hidden" />
-        <input name="loglinktitle" value="<?php echo hsc($log_linktitle); ?>" type="hidden" />
-        <?php echo _LOGINFORM_NAME ?>
-        <br /><input name="login" />
-        <br /><?php echo _LOGINFORM_PWD ?>
-        <br /><input name="password" type="password" />
+        <input name="action"  value="login"       type="hidden" />
+        <input name="blogid"  value="{$blogid}"   type="hidden" />
+        <input name="logtext" value="{$log_text}" type="hidden" />
+        <input name="loglink" value="{$log_link}" type="hidden" />
+        <input name="loglinktitle" value="{$log_linktitle}" type="hidden" />
+        {$ct_loginform_name}:<br />
+        <input name="login" /><br />
+        {$ct_loginform_pwd}:<br />
+        <input name="password" type="password" /><br />
         <br /><br />
-        <br /><input type="submit" value="<?php echo _LOGIN ?>" />
+        <input type="submit" value="{$ct_login}" />
     </p>
 </form>
-<p><a href="bookmarklet.php" onclick="window.close();"><?php echo _POPUP_CLOSE ?></a></p>
-</body>
-</html>
-    <?php
+<p><a href="bookmarklet.php" onclick="window.close();">{$ct_popup_close}</a></p>
+EOT;
+
+    bm_outputHtml('Nucleus', $body);
 }
 
 function bm_doShowForm()
@@ -268,18 +277,20 @@ function bm_doShowForm()
     global $member;
 
     $blogid        = intRequestVar('blogid');
-    $log_text      = trim(strval(requestVar('logtext')));
-    $log_link      = strval(requestVar('loglink'));
-    $log_linktitle = strval(requestVar('loglinktitle'));
+    $log_text      = trim((string) (requestVar('logtext')));
+    $log_link      = (string) (requestVar('loglink'));
+    $log_linktitle = (string) (requestVar('loglinktitle'));
 
-    $log_text      = uniDecode($log_text, _CHARSET);
-    $log_linktitle = uniDecode($log_linktitle, _CHARSET);
+    if (function_exists('mb_convert_encoding')) {
+        $log_text      = uniDecode($log_text, _CHARSET);
+        $log_linktitle = uniDecode($log_linktitle, _CHARSET);
+    }
 
-    if (!BLOG::existsID($blogid)) {
+    if ( ! BLOG::existsID($blogid)) {
         bm_doError(_ERROR_NOSUCHBLOG);
     }
 
-    if (!$member->isTeamMember($blogid)) {
+    if ( ! $member->isTeamMember($blogid)) {
         bm_doError(_ERROR_NOTONTEAM);
     }
 
@@ -289,7 +300,7 @@ function bm_doShowForm()
         $logje .= '<blockquote><div>"' . hsc($log_text) . '"</div></blockquote>' . "\n";
     }
 
-    if (!$log_linktitle) {
+    if ( ! $log_linktitle) {
         $log_linktitle = $log_link;
     }
 
@@ -310,19 +321,19 @@ function bm_doEditForm()
 
     $itemid = intRequestVar('itemid');
 
-    if (!$manager->existsItem($itemid, 0, 0)) {
+    if ( ! $manager->existsItem($itemid, 0, 0)) {
         bm_doError(_ERROR_NOSUCHITEM);
     }
 
-    if (!$member->canAlterItem($itemid)) {
+    if ( ! $member->canAlterItem($itemid)) {
         bm_doError(_ERROR_DISALLOWED);
     }
 
-    $item = & $manager->getItem($itemid, 1, 1);
-    $blog = & $manager->getBlog(getBlogIDFromItemID($itemid));
+    $item = &$manager->getItem($itemid, 1, 1);
+    $blog = &$manager->getBlog(getBlogIDFromItemID($itemid));
 
-    $param = array('item' => &$item);
-    $manager->notify('PrepareItemForEdit', $param);
+    $data = ['item' => &$item];
+    $manager->notify('PrepareItemForEdit', $data);
 
     if ($blog->convertBreaks()) {
         $item['body'] = removeBreaks($item['body']);
@@ -336,36 +347,45 @@ function bm_doEditForm()
 function bm_doError($msg)
 {
     bm_message(_ERROR, _ERRORMSG, $msg);
-    die;
+    exit;
 }
 
 function bm_message($title, $head, $msg, $extrahead = '', $showClose = 1)
 {
-    ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html <?php echo _HTML_XML_NAME_SPACE_AND_LANG_CODE; ?>>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=<?php echo _CHARSET ?>" />
-<title><?php echo $title ?></title>
-    <?php bm_style(); ?>
-    <?php echo $extrahead; ?>
-</head>
-<body>
-<h1><?php echo $head; ?></h1>
-<p><?php echo $msg; ?></p>
-    <?php if ($showClose) :?>
-<p><a href="bookmarklet.php" onclick="window.close();window.opener.location.reload();"><?php echo _POPUP_CLOSE ?></a></p>
-    <?php endif; ?>
-</body>
-</html>
+    $close = $showClose ? '<p><a href="bookmarklet.php" onclick="window.close();window.opener.location.reload();">'._POPUP_CLOSE.'</a></p>'
+             : '';
 
-    <?php
+    $body = <<< EOT
+<h1>{$head}</h1>
+<p>{$msg}</p>
+{$close}
+EOT;
+
+    bm_outputHtml($title, $body, $extrahead);
 }
 
-function bm_style()
+function bm_outputHtml($title, $body, $extrahead = '')
 {
-    echo '<link rel="stylesheet" type="text/css" href="styles/bookmarklet.css" />';
-    echo '<link rel="stylesheet" type="text/css" href="styles/addedit.css" />';
+    $lang    = _HTML_5_LANG_CODE;
+    $charset = _CHARSET;
+
+    $html = <<< EOT
+<!DOCTYPE html>
+<html lang="{$lang}">
+<head>
+<meta charset="{$charset}" />
+<title>{$title}</title>
+    <link rel="stylesheet" type="text/css" href="styles/bookmarklet.css" />
+    <link rel="stylesheet" type="text/css" href="styles/addedit.css" />
+    {$extrahead}
+</head>
+<body>
+{$body}
+</body>
+</html>
+EOT;
+
+    echo $html;
 }
 
 function bm_doContextMenuCode()
@@ -408,6 +428,7 @@ function uniDecode($str, $charcode)
 }
 function toUtf8($ar)
 {
+    $c = '';
     foreach ($ar as $val) {
         $val = intval(substr($val, 2), 16);
         if ($val < 0x7F) {        // 0000-007F

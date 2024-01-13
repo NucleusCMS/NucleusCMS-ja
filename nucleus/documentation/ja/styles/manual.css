@@ -1,20 +1,14 @@
 @charset 'UTF-8';
 
 body {
-	background: linear-gradient(#f0f0f0, #ffffff);
-	background-repeat:no-repeat;
+	background: #fff url(background.png) repeat-x;
 	padding-top: 13px;
 	color: #555;
-	font-family: Meiryo, "Hiragino Kaku Gothic Pro", "Trebuchet MS", "Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif;
+	font-family: "Trebuchet MS", Meiryo, "Hiragino Kaku Gothic Pro","Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif;
+	font-size: 14px;
+    line-height:1.7;
 }
 
-div.wrap {
-    background-color:#fff;
-    border:1px solid #ccc;
-    border-radius:8px;
-    padding:2em;
-    margin-bottom:2em;
-}
 input,text,select {font:inherit;}
 
 @media screen {
@@ -56,9 +50,14 @@ a:hover {
 	position: absolute;
 	top: 15px;
 	right: 5px;
-	font-size: small;
 	font-style: normal;
 	font-weight: normal;
+}
+
+
+p {
+	text-indent: 10px;
+	margin-left:20px;
 }
 
 h1 {
@@ -87,17 +86,8 @@ h3 {
 }
 
 pre, .note, .faq .answer {
-/*	font-family: "Meiryo", "MS PGothic", "Osaka", "IPA UIGothic", "IPA mona UIGothic", "VL PGothic", "Sazanami Gothic", "DynaLab-dfghsgothic w5-jisx0208.1990-0", "DynaLab-dfggothic w5-iso8859-1", "Trebuchet MS", "Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif;*/
-	font-family: "メイリオ", "Meiryo", "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "Osaka", "ＭＳ Ｐゴシック", "MS PGothic", "IPA UIGothic", "IPA mona UIGothic", "VL PGothic", "Sazanami Gothic", "DynaLab-dfghsgothic w5-jisx0208.1990-0", "DynaLab-dfggothic w5-iso8859-1", "Trebuchet MS", "Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif;
-	font-size: small;
 	background-color: #eee;
 	padding: 10px;
-	font-size: small;
-/*	white-space: -moz-pre-wrap; /* Mozilla *
-	white-space: -pre-wrap;     /* Opera 4-6 *
-	white-space: -o-pre-wrap;   /* Opera 7 *
-	white-space: pre-wrap;      /* CSS3 *
-	word-wrap: break-word;      /* IE 5.5+ */
 }
 
 .screenshot {
@@ -125,7 +115,6 @@ table {
 
 th {
 	background-color: linen;
-	font-size: medium;
 }
 
 th, td {
@@ -134,7 +123,6 @@ th, td {
 
 td {
 	background-color: #eee;
-	font-size: small;
 	vertical-align: top;
 	text-align: left;
 }
@@ -142,13 +130,6 @@ td {
 .deprecated {
 	border: 3px solid red;
 	padding: 5px;
-	font-size: medium;
-}
-
-tt, code, samp {
-	font-family: "メイリオ", "Meiryo", "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "Osaka", "ＭＳ Ｐゴシック", "MS PGothic", "IPA UIGothic", "IPA mona UIGothic", "VL PGothic", "Sazanami Gothic", "DynaLab-dfghsgothic w5-jisx0208.1990-0", "DynaLab-dfggothic w5-iso8859-1", "Trebuchet MS", "Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif;
-
-	font-size: small;
 }
 
 .warning {
@@ -156,26 +137,6 @@ tt, code, samp {
 }
 .ok {
 	color: green;
-}
-
-.warning a:link, .warning a:visited {
-	color: red;
-	background-color:#fff1e8;
-    border:1px solid #ccc;
-    border-radius:8px;
-    padding:1em;
-    display:block;
-    text-align:center;
-}
-
-.ok {
-	color: green;
-	background-color:#ebffe8;
-    border:1px solid #ccc;
-    border-radius:8px;
-    padding:1em;
-    display:block;
-    text-align:center;
 }
 
 acronym, abbr {
@@ -188,10 +149,14 @@ label {
 }
 
 ul {
-	line-height:1.5em;
+	line-height:1.8em;
 	margin:0 0 0.5em 40px;
 	padding:0;
 	list-style-image:url(bullet.gif);
+}
+
+li {
+	line-height: 2em;
 }
 
 table#files_index {

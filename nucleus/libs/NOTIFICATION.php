@@ -20,7 +20,7 @@
 class NOTIFICATION
 {
     // array of addresses that need to get a notification
-    public $addresses = array();
+    public $addresses = [];
 
     /**
      * takes one string as argument, containing multiple e-mail addresses
@@ -38,7 +38,7 @@ class NOTIFICATION
     public function validAddresses()
     {
         foreach ($this->addresses as $address) {
-            if (!isValidMailAddress(trim($address))) {
+            if ( ! isValidMailAddress(trim($address))) {
                 return 0;
             }
         }
@@ -55,7 +55,7 @@ class NOTIFICATION
         foreach ($this->addresses as $address) {
             $address = trim($address);
 
-            if (!$address) {
+            if ( ! $address) {
                 continue;
             }
 

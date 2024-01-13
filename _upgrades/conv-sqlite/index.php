@@ -19,8 +19,10 @@ ob_start();
 define('_CHARSET', 'UTF-8');
 
 // auto search config.php
-$self        = '_upgrades/conv-sqlite/index.php';
-$basepath    = str_replace('\\', '/', substr(__FILE__, 0, -strlen($self)));
+$basepath = realpath(__DIR__ . '/../../');
+if (substr($basepath, -1, 1) != DIRECTORY_SEPARATOR) {
+    $basepath .= DIRECTORY_SEPARATOR;
+}
 $config_file = $basepath . 'config.php';
 if (is_file($config_file)) {
     include_once($config_file);
@@ -35,15 +37,9 @@ class ConvertInstaller
 {
     public function __construct($basepath)
     {
-        global $member, $MYSQL_HANDLER, $CONF;
+        global $member, $CONF, $DB_DRIVER_NAME;
         $this->basepath           = $basepath;
-        $this->target_db_filename = $basepath . 'settings/db_nucleus.sqlite';
-
-//        if (version_compare(PHP_VERSION, '5.3.0'))
-//        {
-//            $this->error( $this->_('php 5.3.0 or higher'));
-//            exit;
-//        }
+        $this->target_db_filename = $basepath . 'settings' . DIRECTORY_SEPARATOR . 'db_nucleus.sqlite';
 
         if (!isset($member) || !$member->isLoggedIn()) {
             $this->showLogin('index.php');
@@ -56,13 +52,13 @@ class ConvertInstaller
             exit;
         }
 
-        if (!in_array('mysql', $MYSQL_HANDLER)) {
-            $msg = $this->_('Connected Driver is not mysql') . ' : ' . $MYSQL_HANDLER[1];
+        if ('mysql' != $DB_DRIVER_NAME) {
+            $msg = $this->_('Connected Driver is not mysql') . ' : ' . $DB_DRIVER_NAME;
             $this->error($msg);
             exit;
         }
 
-        foreach (array('pdo', 'pdo_sqlite', 'sqlite3') as $value) {
+        foreach (['pdo', 'pdo_sqlite', 'sqlite3'] as $value) {
             if (!extension_loaded($value)) {
                 $msg = $this->_('Not found') . ' : extension : ' . $value;
                 $this->error($msg);
@@ -96,13 +92,13 @@ class ConvertInstaller
     public function printHead($title)
     {
         ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
   <head>
-    <meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8" />
+    <meta charset="UTF-8" />
     <meta name="robots" content="noindex,nofollow,noarchive" />
     <title><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></title>
-    <link rel="stylesheet" href="../../nucleus/documentation/styles/manual.css" type="text/css" />
+    <link rel="stylesheet" href="../styles/manual.css" type="text/css" />
   </head>
   <body>
         <?php
@@ -132,7 +128,7 @@ class ConvertInstaller
     public function showLogin($type)
     {
         $this->printHead($this->_('Login Please'));
-        $name = isset($_POST['login']) ? "value='".hsc(strval($_POST['login']))."' " : '';
+        $name = isset($_POST['login']) ? "value='".hsc((string) ($_POST['login']))."' " : '';
         ?>
         <h1><?php echo $this->_('Login Please'); ?></h1>
         <p><?php echo  $this->_('Enter your data'); ?>:</p>
@@ -159,7 +155,7 @@ class ConvertInstaller
     {
         static $cached_array = null;
         if (is_null($cached_array)) {
-            $cached_array = array();
+            $cached_array = [];
             if (!extension_loaded('SimpleXML')) {
                 return $text;
             }
@@ -177,7 +173,7 @@ class ConvertInstaller
                     continue;
                 }
                 $keyname = '';
-                $items   = array();
+                $items   = [];
                 foreach ($text_node->children() as $node) {
                     $key   = $node->getName();
                     $value = (string) $node;
@@ -223,7 +219,7 @@ class ConvertInstaller
         // load text
         // if undefined, search constant
         $name = strtoupper(str_replace(' ', '_', $text));
-        foreach (array('','_TEXT_','_') as $prefix) {
+        foreach (['','_TEXT_','_'] as $prefix) {
             if (defined($prefix.$name)) {
                 return constant($prefix.$name);
             }
@@ -262,7 +258,7 @@ class ConvertInstaller
 //            echo sprintf("<blockquote><div>%s</div></blockquote>", $this->_('Currentry supports on shell or command prompt (php_sapi is cli). Do it yourself by manually.'));
         } else {
             echo "<p>"  . $this->_('If you want to convert start, please press the start button') ."</p>";
-            echo sprintf("<p>%s %ssettings/</p>", $this->_('Save file path:'), $this->basepath);
+            echo "<p>"  . $this->_('Save file path:') . " settings/</p>";
             // Todo : Note
             $btn_title = $this->_('Start convert');
             $s         = <<<EOD
@@ -282,14 +278,14 @@ EOD;
 
     private function doConvert()
     {
-        include_once(__DIR__ . '/table_conv_mysql_to_sqlite.php');
+        include_once(__DIR__ . DIRECTORY_SEPARATOR . "table_conv_mysql_to_sqlite.php");
 
         //$obj = new TableConvertor();
         $obj = new TableConvertor_mysql_to_sqlite();
 
         //var_dump ($obj->base_table_list);
 
-        $tables = array();
+        $tables = [];
         $result = @sql_query(sprintf("SHOW TABLES LIKE '%s'", sql_table("") . "%"));
         while ($row = @sql_fetch_array($result)) {
             $tables[] = $row[0];
@@ -301,7 +297,7 @@ EOD;
         $db = new SQLite3($this->target_db_filename);
         $db->exec('BEGIN;');
 
-        $error_messages = array();
+        $error_messages = [];
         foreach ($tables as $table) {
             //  echo $table.$obj->get_table_structure($table);
             ob_start();
@@ -330,12 +326,12 @@ EOD;
     public function getDefaultConfig()
     {
         $short = <<<EOD
-<blockquote><pre style="width:100%; overflow: auto; background-color: #ffffe1"><b>//</b>\$MYSQL_HANDLER = array('mysql','');<b>
-\$MYSQL_HANDLER = array(&#039;pdo&#039;,&#039;sqlite&#039;);
-if (\$MYSQL_HANDLER[1]==&#039;sqlite&#039;)
+<blockquote><pre style="width:100%; overflow: auto; background-color: #ffffe1"><b>//</b>\$DB_DRIVER_NAME = 'mysql'; \$DB_PHP_MODULE_NAME = 'mysql';<b>
+\$DB_DRIVER_NAME = &#039;sqlite&#039;; \$DB_PHP_MODULE_NAME = &#039;pdo&#039;;
+if (\$DB_DRIVER_NAME==&#039;sqlite&#039;)
 {
-   \$MYSQL_DATABASE = __DIR__ . str_replace(&#039;/&#039;, /, &#039;/settings/db_nucleus.sqlite&#039;);
-// \$MYSQL_DATABASE = &#039;pathto/&#039; . &#039;db_nucleus.sqlite&#039;;
+   \$DB_DATABASE = __DIR__ . str_replace(&#039;/&#039;, DIRECTORY_SEPARATOR, &#039;/settings/db_nucleus.sqlite&#039;);
+// \$DB_DATABASE = &#039;pathto/&#039; . &#039;db_nucleus.sqlite&#039;;
 }</b></pre></blockquote>
 EOD;
         return $short;
@@ -348,8 +344,8 @@ EOD;
         global $DIR_PLUGINS, $DIR_LANG, $DIR_LIBS;
         global $DIR_BASE;
 
-        $newDir = array();
-        foreach (array('DIR_NUCLEUS' => 'nucleus', 'DIR_MEDIA' => 'media', 'DIR_SKINS' => 'skins') as $key => $value) {
+        $newDir = [];
+        foreach (['DIR_NUCLEUS' => 'nucleus', 'DIR_MEDIA' => 'media', 'DIR_SKINS' => 'skins'] as $key => $value) {
             $newDir[$key] = sprintf("'%s'", $$key);
             if (!isset($DIR_BASE) || strlen($DIR_BASE) == 0) {
                 continue;
@@ -361,7 +357,7 @@ EOD;
             }
         }
 
-        foreach (array('DIR_PLUGINS' => 'plugins', 'DIR_LANG' => 'language', 'DIR_LIBS' => 'libs') as $key => $value) {
+        foreach (['DIR_PLUGINS' => 'plugins', 'DIR_LANG' => 'language', 'DIR_LIBS' => 'libs'] as $key => $value) {
             if ($DIR_NUCLEUS. $value .'/' == $$key) {
                 $newDir[$key] = "\$DIR_NUCLEUS . '{$value}/'";
             } elseif (str_starts_with($$key, $DIR_NUCLEUS)) {
@@ -379,22 +375,22 @@ EOD;
 // and basic functions that every page can use
 
 // mySQL connection information
-\$MYSQL_HOST     = '{$DB_HOST}';
-\$MYSQL_USER     = '{$DB_USER}';
-\$MYSQL_PASSWORD = '{$DB_PASSWORD}';
-\$MYSQL_DATABASE = '{$DB_DATABASE}';
-\$MYSQL_PREFIX   = '{$DB_PREFIX}';
+\$DB_HOST     = '{$DB_HOST}';
+\$DB_USER     = '{$DB_USER}';
+\$DB_PASSWORD = '{$DB_PASSWORD}';
+\$DB_DATABASE = '{$DB_DATABASE}';
+\$DB_PREFIX   = '{$DB_PREFIX}';
 
-// new in 3.50. first element is db handler, the second is the db driver used by the handler
-// default is \$MYSQL_HANDLER = array('mysql','');
-//\$MYSQL_HANDLER = array('pdo','mysql');
-\$MYSQL_HANDLER = array('pdo','sqlite');
-//\$MYSQL_HANDLER = array('mysql','');
+global \$DB_DRIVER_NAME, \$DB_PHP_MODULE_NAME;
+// default is default is  \$DB_DRIVER_NAME = 'mysql'; \$DB_PHP_MODULE_NAME = 'mysql';
+//\$DB_DRIVER_NAME = 'mysql';  \$DB_PHP_MODULE_NAME = 'pdo';
+\$DB_DRIVER_NAME = 'sqlite';  \$DB_PHP_MODULE_NAME = 'pdo';
+//\$DB_DRIVER_NAME = 'mysql';  \$DB_PHP_MODULE_NAME = 'mysql';
 
-if (\$MYSQL_HANDLER[1]=='sqlite')
+if (\$DB_DRIVER_NAME=='sqlite')
 {
-   \$MYSQL_DATABASE = __DIR__ . '/settings/db_nucleus.sqlite';
-// \$MYSQL_DATABASE = 'pathto/' . 'db_nucleus.sqlite';
+   \$DB_DATABASE = __DIR__ . str_replace('/', DIRECTORY_SEPARATOR, '/settings/db_nucleus.sqlite');
+// \$DB_DATABASE = 'pathto/' . 'db_nucleus.sqlite';
 }
 
 // main nucleus directory
@@ -462,7 +458,7 @@ EOD;
     public function showUnSupportedPlugins()
     {
         global $manager;
-        $items = array();
+        $items = [];
         $res   = sql_query(sprintf('SELECT pid, pfile FROM `%s` ORDER BY porder ASC', sql_table('plugin')));
         while ($res && ($row = sql_fetch_array($res))) {
             $plugin    = $manager->getPlugin($row[1]);

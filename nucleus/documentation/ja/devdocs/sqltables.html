@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="ja-JP" xml:lang="ja-JP">
+<!DOCTYPE html>
+<html lang="ja">
 <head>
 	<!--
 		Nucleus: PHP/MySQL Weblog CMS (http://nucleuscms.org/)
@@ -12,9 +11,8 @@
 		of the License, or (at your option) any later version.
 		(see nucleus/documentation/index.html#license for more info)
 	-->
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta http-equiv="Content-Style-Type" content="text/css" />
-    <meta http-equiv="Content-Script-Type" content="text/javascript" />
+    <meta charset="UTF-8" />
+	<meta name="robots" content="noindex,noarchive,nofollow" />
     <link rel="index" href="./index.html" />
 	<title>Nucleus - SQL テーブル構造</title>
 	<link rel="stylesheet" type="text/css" href="styles/manual.css" />
@@ -69,13 +67,7 @@
 
 
 	</style>
-	<script src="http://www.google.com/jsapi"></script>
-	<script type="text/javascript">
-		google.load("jquery", "1");
-		google.setOnLoadCallback(function() {
-			$.getScript("javascript/fontsizeChanger.js");
-		});
-	</script>
+	<script src="../common.js" cache-control="max-age=15552000"></script>
 </head>
 <body>
 	<div id="fontSizeChanger">
@@ -126,6 +118,7 @@
 			<li><a href="#nucleus_item">nucleus_item</a></li>
 			<li><a href="#nucleus_comment">nucleus_comment</a></li>
 			<li><a href="#nucleus_member">nucleus_member</a></li>
+			<li><a href="#nucleus_member_option">nucleus_member_option</a></li>
 			<li><a href="#nucleus_team">nucleus_team</a></li>
 		</ul>
 	</li>
@@ -302,7 +295,7 @@
 </tr><tr>
 	<td class="notnull">ballowpast</td>
 	<td>tinyint(2)</td>
-	<td>'0'</td>
+	<td>'1'</td>
 	<td>過去の日時での投稿を許可する (1=許可/0=不許可)</td>
 
 </tr><tr>
@@ -384,7 +377,7 @@
 </tr><tr>
 	<td class="fulltext">ititle</td>
 	<td>varchar(160)</td>
-	<td>NULL</td>
+	<td>(空白)</td>
 	<td>タイトル</td>
 
 </tr><tr>
@@ -396,7 +389,7 @@
 </tr><tr>
 	<td class="fulltext">imore</td>
 	<td>mediumtext</td>
-	<td>NULL</td>
+	<td>(空白)</td>
 	<td>追加部分(｢続き｣部分)</td>
 
 </tr><tr>
@@ -608,9 +601,47 @@
 	<td>varchar(20)</td>
 	<td>''</td>
 	<td>このメンバー用の言語ファイルを指定する</td>
+</tr>
+	<tr>
+		<td class="notnull">mimage</td>
+		<td>varchar(500)</td>
+		<td>''</td>
+		<td>Not documented</td>
+	</tr>
+</table>
+
+
+
+<h1><a id="nucleus_member_option" name="nucleus_member_option">nucleus_member_optionテーブル</a><a href="#top" class="toplink"><img src="../icon-up.gif" alt="back to top" width="15" height="15" /></a></h1>
+
+<p>主に管理画面でシステムが利用するためのテーブルで、プラグインからの利用は意図していません。</p>
+
+<table summary="nucleus_member_optionテーブル"><tr>
+	<th class="column" abbr="カラム名">カラム名</th>
+	<th class="type" abbr="データ型">データ型</th>
+	<th class="default" abbr="既定値">既定値</th>
+	<th class="description" abbr="データの説明">説明</th>
+</tr><tr>
+	<td class="notnull primary unique">omember</td>
+	<td>int(11)</td>
+	<td></td>
+	<td>メンバーのID</td>
+</tr><tr>
+	<td class="notnull unique">ocontext</td>
+	<td>varchar(20)</td>
+	<td>(空白)</td>
+	<td>オプションのコンテキスト</td>
+</tr><tr>
+	<td class="notnull unique">name</td>
+	<td>varchar(100)</td>
+	<td></td>
+	<td>設定値の名前</td>
+</tr><tr>
+	<td class="notnull">value</td>
+	<td>varchar(255)</td>
+	<td>(空白)</td>
+	<td>設定値</td>
 </tr></table>
-
-
 
 
 
@@ -756,7 +787,7 @@
 
 </tr><tr>
 	<td class="notnull primary">oname</td>
-	<td>varchar(50)</td>
+	<td>varchar(200)</td>
 	<td>(空白)</td>
 	<td>オプションの名前</td>
 
@@ -1026,13 +1057,13 @@
 	<th class="description" abbr="データの説明">説明</th>
 </tr><tr>
 	<td class="notnull primary">name</td>
-	<td>varchar(50)</td>
+	<td>varchar(200)</td>
 	<td>(空白)</td>
 	<td>オプションの名前</td>
 
 </tr><tr>
 	<td>value</td>
-	<td>varchar(128)</td>
+	<td>varchar(255)</td>
 	<td>NULL</td>
 	<td>オプションの値</td>
 </tr></table>

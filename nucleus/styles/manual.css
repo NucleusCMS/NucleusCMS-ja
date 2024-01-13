@@ -1,171 +1,155 @@
-@charset 'UTF-8';
-
 /*
 	documentation style
 */
 
 body {
-	background-color: #fff;
-	color: #000;
-/*	font-family: verdana, arial;
-	font-size: small;*/
-	font-family: "メイリオ", "Meiryo", "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "Osaka", "ＭＳ Ｐゴシック", "MS PGothic", "IPA UIGothic", "IPA mona UIGothic", "VL PGothic", "Sazanami Gothic", "DynaLab-dfghsgothic w5-jisx0208.1990-0", "DynaLab-dfggothic w5-iso8859-1", "Trebuchet MS", "Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif;
+    background-color: #ffffff;
+    padding-top: 13px;
+    color: #555;
+    font-family: Meiryo, "Hiragino Kaku Gothic Pro", arial, helvetica, sans-serif;
 }
-td,th,textarea,input,select {
-    font:inherit;
-}
-th {font-weigt:bold;}
 
 @media screen {
-	body {
-		margin-left: 10%;
-		margin-right: 10%;
-	}
+    body {
+        margin-left: 10%;
+        margin-right: 10%;
+    }
 }
 
 @media print {
-	pre, .note, td, th {
-		border: 1px dashed gray;
-	}
+    pre, .note, td, th {
+        border: 1px dashed gray;
+    }
 }
 
 img {
-	border: none;
+    border: none;
 }
 
 a:link, a:visited {
-	color: #1D3565; 
-	font-weight: bold;
-	text-decoration: none;
+    color: #1D3565;
+    font-weight: bold;
+    text-decoration: none;
 }
+
 a:hover {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 
 .heading {
-	text-align: center;
-	font-size: xx-large;
-	font-weight: bold;
-	color: gray;	
+    text-align: center;
+    font-size: xx-large;
+    font-weight: bold;
+    color: gray;
 }
 
 .heading i {
-	position: absolute;
-	top: 5px;
-	right: 5px;
-	font-style: normal;
-	font-weight: normal;
-}
-
-p {
-	text-indent: 20px;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: medium;
+    font-style: normal;
+    font-weight: normal;
 }
 
 h1 {
-	border-bottom: 1px dotted gray;
-	font-size: x-large;
-	color: #596d9d;
+    border-bottom: 1px dotted gray;
+    font-size: x-large;
+    color: #596d9d;
 }
 
 h2 {
-	color: gray;
-	font-size: large;
-	margin-left: 20px;
-	text-indent: 10px;
-	border-bottom: 1px solid #ddd;
+    color: gray;
+    font-size: large;
+    margin-left: 20px;
+    text-indent: 10px;
+    border-bottom: 1px solid #ddd;
 }
 
 pre, .note, .faq .answer {
-	background-color: #ddd;
-	padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
 }
 
 .screenshot {
-	text-align: center;
-	background-color: #ddd;
-	padding: 10px;
+    text-align: center;
+    background-color: #ddd;
+    padding: 10px;
 }
 
 .faq .question {
-	font-weight: bold;
-	margin-bottom: 0px;
-}
-
-.faq .answer {
-
+    font-weight: bold;
+    margin-bottom: 0px;
 }
 
 .faq {
-	margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 table {
-	border: none;
+    border: none;
 }
 
 th {
-	background-color: linen;
-	font-size: medium;
+    background-color: linen;
 }
 
 th, td {
-	padding: 5px;
+    padding: 5px;
 }
 
 td {
-	background-color: #dddddd;
-	vertical-align: top;
-	text-align: left;
+    background-color: #dddddd;
+    vertical-align: top;
+    text-align: left;
 }
 
-input, select, option, textarea {
-	background-color: transparent;
+input, select, option, textarea, td, th, tt, code, samp {
+    font-size: inherit;
 }
 
 .deprecated {
-	border: 3px solid red;
-	padding: 5px;
-	font-size: medium;
-}
-
-tt, code, samp {
+    border: 3px solid red;
+    padding: 5px;
+    font-size: medium;
 }
 
 .warning {
-	color: red;
+    color: red;
 }
+
+.warning a:visited, .warning a:link {
+    color: #f00;
+    border: 1px solid #ccc;
+    padding: 1em;
+    background-color: #fff1e8;
+    border-radius: 8px;
+    display: block;
+    margin-bottom: 1em;
+    text-align: center;
+}
+
 .ok {
-	color: green;
+    color: green;
 }
 
 acronym, abbr {
-	border-bottom: 1px dotted gray;
-	cursor: help;
+    border-bottom: 1px dotted gray;
+    cursor: help;
 }
 
 label {
-	cursor: hand;
+    cursor: hand;
 }
 
-
-#fontSizeCanger {
-	position: fixed;
-	top: 20px;
-	left: 50px;
-	font-size: medium !important;
+:placeholder-shown {
+    color: #aaa;
 }
 
-#fontSizeCanger a {
-	font-weight: normal;
-	border: 1px dotted gray;
-	padding: 0 3px;
+/* Google Chrome, Safari, Opera 15+, Android, iOS */
+::-webkit-input-placeholder {
+    color: #aaa;
 }
 
-#fontSizeCanger a#fontSmall {
-	font-weight: bold;
-}
-
-#fontSizeCanger a:hover {
-	color: #fff;
-	background-color: #1D3565;
-}

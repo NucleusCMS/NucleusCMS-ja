@@ -4,31 +4,40 @@ class entity
 {
     public static function named_to_numeric($string)
     {
-        $string = preg_replace_callback(
-            '/(&[0-9A-Za-z]+)(;?\=?|([^A-Za-z0-9\;\:\.\-\_]))/',
-            array('self', 'named_to_numeric_callback'),
-            $string
-        );
+        $string
+            = preg_replace_callback(
+                '/(&[0-9A-Za-z]+)(;?\=?|([^A-Za-z0-9\;\:\.\-\_]))/',
+                self::class . '::named_to_numeric_callback',
+                $string
+            );
+
         return $string;
     }
 
     private static function named_to_numeric_callback($matches)
     {
-        return self::_named($matches[1], $matches[2]) . $matches[3];
+        $m3 = $matches[3] ?? '';
+        return self::_named($matches[1], $matches[2]) . $m3;
     }
 
     public static function normalize_numeric($string)
     {
         global $_entities;
-        $string = preg_replace_callback('/&#([0-9]+)(;)?/', array('self', 'normalize_numeric_callback1'), $string);
-
         $string = preg_replace_callback(
-            '/&#[Xx](0)*([0-9A-Fa-f]+)(;?|([^A-Za-z0-9\;\:\.\-\_]))/',
-            array('self', 'normalize_numeric_callback2'),
+            '/&#([0-9]+)(;)?/',
+            self::class . '::normalize_numeric_callback1',
             $string
         );
 
+        $string
+            = preg_replace_callback(
+                '/&#[Xx](0)*([0-9A-Fa-f]+)(;?|([^A-Za-z0-9\;\:\.\-\_]))/',
+                self::class . '::normalize_numeric_callback2',
+                $string
+            );
+
         $string = strtr($string, $_entities['cp1251']);
+
         return $string;
     }
 
@@ -39,20 +48,31 @@ class entity
 
     private static function normalize_numeric_callback2($matches)
     {
-        return '&#x' . strtoupper($matches[2]) . ';' . $matches[4];
+        $m2 = $matches[2] ?? '';
+        $m4 = $matches[4] ?? '';
+        return '&#x' . strtoupper($m2) . ';' . $m4;
     }
 
     public static function numeric_to_utf8($string)
     {
-        $string = preg_replace_callback('/&#([0-9]+)(;)?/', array('self', 'numeric_to_utf8_callback1'), $string);
-
         $string = preg_replace_callback(
-            '/&#[Xx](0)*([0-9A-Fa-f]+)(;?|([^A-Za-z0-9\;\:\.\-\_]))/',
-            array('self', 'numeric_to_utf8_callback2'),
+            '/&#([0-9]+)(;)?/',
+            self::class . '::numeric_to_utf8_callback1',
             $string
         );
 
-        $string = preg_replace_callback('/&#x([0-9A-Fa-f]+);/', array('self', 'numeric_to_utf8_callback3'), $string);
+        $string
+            = preg_replace_callback(
+                '/&#[Xx](0)*([0-9A-Fa-f]+)(;?|([^A-Za-z0-9\;\:\.\-\_]))/',
+                self::class . '::numeric_to_utf8_callback2',
+                $string
+            );
+
+        $string = preg_replace_callback(
+            '/&#x([0-9A-Fa-f]+);/',
+            self::class . '::numeric_to_utf8_callback3',
+            $string
+        );
 
         return $string;
     }
@@ -64,7 +84,8 @@ class entity
 
     private static function numeric_to_utf8_callback2($matches)
     {
-        return '&#x' . strtoupper($matches[2]) . ';' . $matches[4];
+        $m4 = $matches[4] ?? '';
+        return '&#x' . strtoupper($matches[2]) . ';' . $m4;
     }
 
     private static function numeric_to_utf8_callback3($matches)
@@ -75,8 +96,13 @@ class entity
     public static function numeric_to_named($string)
     {
         global $_entities;
-        $string = preg_replace_callback('/&#[Xx]([0-9A-Fa-f]+)/', array('self', 'numeric_to_named_callback'), $string);
+        $string = preg_replace_callback(
+            '/&#[Xx]([0-9A-Fa-f]+)/',
+            self::class . '::numeric_to_named_callback',
+            $string
+        );
         $string = strtr($string, array_flip($_entities['named']));
+
         return $string;
     }
 
@@ -87,8 +113,8 @@ class entity
 
     public static function specialchars($string, $type = 'xml')
     {
-        $apos         = $type == 'xml' ? '&apos;' : '&#39;';
-        $specialchars = array(
+        $apos         = 'xml' === $type ? '&apos;' : '&#39;';
+        $specialchars = [
             '&quot;' => '&quot;',
             '&amp;'  => '&amp;',
             '&apos;' => $apos,
@@ -98,12 +124,21 @@ class entity
             '&'      => '&amp;',
             "'"      => $apos,
             '<'      => '&lt;',
-            '>'      => '&gt;'
+            '>'      => '&gt;',
+        ];
+
+        $string = preg_replace(
+            '/&(#?[Xx]?[0-9A-Za-z]+);/',
+            "[[[ENTITY:\\1]]]",
+            $string
+        );
+        $string = strtr($string, $specialchars);
+        $string = preg_replace(
+            '/\[\[\[ENTITY\:([^\]]+)\]\]\]/',
+            "&\\1;",
+            $string
         );
 
-        $string = preg_replace('/&(#?[Xx]?[0-9A-Za-z]+);/', "[[[ENTITY:\\1]]]", $string);
-        $string = strtr($string, $specialchars);
-        $string = preg_replace('/\[\[\[ENTITY\:([^\]]+)\]\]\]/', "&\\1;", $string);
         return $string;
     }
 
@@ -118,10 +153,14 @@ class entity
                 $str = chr(0xC0 | $c >> 6) . chr(0x80 | $c & 0x3F);
             } else {
                 if ($c < 0x10000) {
-                    $str = chr(0xE0 | $c >> 12) . chr(0x80 | $c >> 6 & 0x3F) . chr(0x80 | $c & 0x3F);
+                    $str = chr(0xE0 | $c >> 12) . chr(0x80 | $c >> 6 & 0x3F)
+                           . chr(0x80 | $c & 0x3F);
                 } else {
                     if ($c < 0x200000) {
-                        $str = chr(0xF0 | $c >> 18) . chr(0x80 | $c >> 12 & 0x3F) . chr(0x80 | $c >> 6 & 0x3F) . chr(0x80 | $c & 0x3F);
+                        $str = chr(0xF0 | $c >> 18) . chr(0x80 | $c >> 12
+                                                                 & 0x3F)
+                               . chr(0x80 | $c >> 6 & 0x3F) . chr(0x80 | $c
+                                                                         & 0x3F);
                     }
                 }
             }
@@ -134,7 +173,7 @@ class entity
     {
         global $_entities;
 
-        if ($extra == '=') {
+        if ('=' === $extra) {
             return $entity . '=';
         }
 
@@ -143,16 +182,19 @@ class entity
         while ($length > 0) {
             $check = substr($entity, 0, $length);
             if (isset($_entities['named'][$check])) {
-                return $_entities['named'][$check] . ';' . substr($entity, $length);
+                return $_entities['named'][$check] . ';' . substr(
+                    $entity,
+                    $length
+                );
             }
             $length--;
         }
 
-        return $entity . ($extra == ';' ? ';' : '');
+        return $entity . (';' === $extra ? ';' : '');
     }
 }
 
-$_entities['cp1251'] = array(
+$_entities['cp1251'] = [
     '&#x80;' => '&#x20AC;',
     '&#x82;' => '&#x201A;',
     '&#x83;' => '&#x192;',
@@ -180,9 +222,9 @@ $_entities['cp1251'] = array(
     '&#x9C;' => '&#x153;',
     '&#x9E;' => '&#x17E;',
     '&#x9F;' => '&#x178;',
-);
+];
 
-$_entities['named'] = array(
+$_entities['named'] = [
     '&nbsp'     => '&#160',
     '&iexcl'    => '&#161',
     '&cent'     => '&#162',
@@ -431,4 +473,4 @@ $_entities['named'] = array(
     '&clubs'    => '&#9827',
     '&hearts'   => '&#9829',
     '&diams'    => '&#9830',
-);
+];

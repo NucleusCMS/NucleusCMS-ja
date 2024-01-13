@@ -1,29 +1,27 @@
 <?php
-
 function get_install_lang_defs()
 {
     static $val = null;
     if (is_array($val)) {
         return $val;
     }
-    $val = array( // Deprecated a language other than UTF-8
-        'en' => array('name' => 'english', 'utf8' => 'english-utf8', 'title' => 'English'),
-        'ja' => array('name' => 'japanese', 'utf8' => 'japanese-utf8', 'title' => '日本語 - Japanese'),
-//        'fr' => array('name' => 'french',   'utf8'=>'french-utf8'  ,  'title' => 'French'),
+    $val = [ // Deprecated a language other than UTF-8
+        'en' => ['name' => 'english',  'utf8' => 'english-utf8',  'title' => 'English'],
+        'ja' => ['name' => 'japanese', 'utf8' => 'japanese-utf8', 'title' => '日本語 - Japanese'],
+        'fr' => ['name' => 'french',   'utf8' => 'french-utf8',  'title' => 'French'],
 //        'es' => array('name' => 'spanish',  'utf8'=>'spanish-utf8'  , 'title' => 'Spanish'),
 //        'ko' => array('name' => 'korean-utf',  'title' => '한국어 - Korean'),
 //        'zh_cn' => array('name' => '',  'title' => '中文 - Chinese simplified'),
 //        'zh_tw' => array('name' => 'traditional_chinese' , 'title' => '中文 - Chinese traditional'),
-    );
+    ];
     foreach (array_keys($val) as $key) {
-        if (!is_file("./install_lang_{$key}.php")) {
+        if ( ! is_file("./install_lang_{$key}.php")) {
             unset($val[$key]);
         }
     }
     ksort($val);
     return $val;
 }
-
 function get_install_lang_keys()
 {
     static $val = null;
@@ -36,7 +34,7 @@ function get_install_lang_keys()
 
 function add_last_directory_separator($dirname)
 {
-    if (($dirname !== '') && (!preg_match('#[\\/]$#', $dirname))) {
+    if (('' !== $dirname) && ( ! preg_match('#[\\/]$#', $dirname))) {
         return $dirname . '/';
     }
     return $dirname;
@@ -46,7 +44,7 @@ function getSiteUrl()
 {
     $url = 'http://' . serverVar('HTTP_HOST') . serverVar('PHP_SELF');
     $url = str_replace('install/index.php', '', $url);
-    return rtrim($url, '/') . '/';
+    return rtrim($url, '/').'/';
 }
 
 /*
@@ -57,9 +55,9 @@ function getSiteUrl()
  */
 function tableName($unPrefixed)
 {
-    global $mysql_usePrefix, $mysql_prefix;
+    global $mysql_use_prefix, $mysql_prefix;
 
-    if ($mysql_usePrefix == 1) {
+    if (1 == $mysql_use_prefix) {
         return $mysql_prefix . $unPrefixed;
     } else {
         return $unPrefixed;
@@ -75,20 +73,16 @@ function showInstallForm()
 
     doCheckFiles(); // 0. pre check if all necessary files exist
 
-    if (!defined('_INSTALL_TEXT_EXPERIMENTAL')) {
+    if ( ! defined('_INSTALL_TEXT_EXPERIMENTAL')) {
         define('_INSTALL_TEXT_EXPERIMENTAL', 'experimental');
     }
 
-    $ph                          = array();
+    $ph                          = [];
     $ph['_TITLE']                = _TITLE;
-    $ph['_INSTALL_TEXT_VERSION'] = sprintf(
-        '%s %s',
-        htmlspecialchars(_INSTALL_TEXT_VERSION, ENT_QUOTES, 'UTF-8'),
-        NUCLEUS_VERSION
-    );
-    $ph['_HEADER1'] = sprintf('%s', hsc(_HEADER1));
-    $ph['_TEXT1']   = _TEXT1;
-    if (!@is_writable('../')) {
+    $ph['_INSTALL_TEXT_VERSION'] = sprintf('%s %s', htmlspecialchars(_INSTALL_TEXT_VERSION, ENT_QUOTES, 'UTF-8'), NUCLEUS_VERSION);
+    $ph['_HEADER1']              = sprintf('%s', hsc(_HEADER1));
+    $ph['_TEXT1']                = _TEXT1;
+    if ( ! @is_writable('../')) {
         $ph['_TEXT1'] .= sprintf('<p class="note">%s</p>', _INSTALL_TEXT_ERROR_ROOT_CONFIGFOLDER_NOT_WRITABLE);
     }
     $ph['lang']                            = $lang;
@@ -97,17 +91,22 @@ function showInstallForm()
     $ph['_TEXT_LANG_SELECT1_1_TAB_HEAD']   = _TEXT_LANG_SELECT1_1_TAB_HEAD;
     $ph['_TEXT_LANG_SELECT1_1_TAB_FIELD1'] = _TEXT_LANG_SELECT1_1_TAB_FIELD1;
     $install_lang_defs                     = get_install_lang_defs();
-    $options                               = array();
+    $options                               = [];
     foreach ($install_lang_defs as $k => $v) {
-        $selected  = ($k === INSTALL_LANG) ? 'selected' : '';
-        $options[] = sprintf('<option value="%s" %s>%s</option>', $k, $selected, hsc($v['title']));
+        $selected  = (INSTALL_LANG === $k) ? 'selected' : '';
+        $options[] = sprintf(
+            '<option value="%s" %s>%s</option>',
+            $k,
+            $selected,
+            hsc($v['title'])
+        );
     }
     $ph['dispINSTALL_LANG'] = htmlspecialchars($install_lang_defs[INSTALL_LANG]['title']);
     $ph['lang_options']     = implode("\n", $options);
     $ph['_HEADER2']         = _HEADER2;
     $ph['_TEXT2']           = _TEXT2;
     $ph['phpversion']       = phpversion();
-    if (is_file('../config.php') && !is_writable('../config.php')) {
+    if (is_file('../config.php') && ! is_writable('../config.php')) {
         $ph['configPermMsg'] = '<h1>' . _HEADER3 . '</h1>' . _TEXT3;
     } else {
         $ph['configPermMsg'] = '';
@@ -120,6 +119,7 @@ function showInstallForm()
         $_ .= '<label for="install_db_type_mysql">mysql</label>';
     }
     if (extension_loaded('pdo_sqlite') && ENABLE_SQLITE_INSTALL) {
+        $_ .= '<br /><br />';
         $_ .= '<input type="radio" id="install_db_type_sqlite" name="install_db_type" tabindex="10021" value="sqlite" onclick="db_change();" />';
         $_ .= '<label for="install_db_type_sqlite">sqlite(' . _INSTALL_TEXT_EXPERIMENTAL . ')</label>';
     }
@@ -138,61 +138,53 @@ function showInstallForm()
     $ph['_TEXT4_TAB2_HEAD']                  = _TEXT4_TAB2_HEAD;
     $ph['_TEXT4_TAB2_FIELD']                 = _TEXT4_TAB2_FIELD;
     $ph['_TEXT4_TAB2_ADD']                   = _TEXT4_TAB2_ADD;
-    $ph['_HEADER1_2']                        = _HEADER1_2;
-    $ph['_TEXT1_2']                          = _TEXT1_2;
-    $ph['_TEXT1_2_TAB_HEAD']                 = _TEXT1_2_TAB_HEAD;
-    $ph['_TEXT1_2_TAB_FIELD1']               = _TEXT1_2_TAB_FIELD1;
-    if (INSTALL_LANG === 'ja' && function_exists('mb_convert_encoding') && ENABLE_INSTALL_LANG_EUCJP) {
-        $ph['euc_option'] = '<option value="ujis" >EUC-JP</option>';
-    } else {
-        $ph['euc_option'] = '';
-    }
-    $ph['_HEADER5']            = _HEADER5;
-    $ph['_TEXT5']              = _TEXT5;
-    $ph['_TEXT5_TAB_HEAD']     = _TEXT5_TAB_HEAD;
-    $ph['_TEXT5_TAB_FIELD1']   = _TEXT5_TAB_FIELD1;
-    $ph['NC_SITE_URL']         = NC_SITE_URL;
-    $ph['NC_BASE_PATH']        = NC_BASE_PATH;
-    $ph['_TEXT5_TAB_FIELD2']   = _TEXT5_TAB_FIELD2;
-    $ph['NC_SITE_URL']         = NC_SITE_URL;
-    $ph['_TEXT5_TAB_FIELD3']   = _TEXT5_TAB_FIELD3;
-    $ph['_TEXT5_TAB_FIELD4']   = _TEXT5_TAB_FIELD4;
-    $ph['_TEXT5_TAB_FIELD5']   = _TEXT5_TAB_FIELD5;
-    $ph['_TEXT5_TAB_FIELD6']   = _TEXT5_TAB_FIELD6;
-    $ph['_TEXT5_TAB_FIELD7_2'] = _TEXT5_TAB_FIELD7_2;
-    $ph['_TEXT5_TAB_FIELD7']   = _TEXT5_TAB_FIELD7;
-    $ph['_TEXT5_TAB_FIELD7_2'] = _TEXT5_TAB_FIELD7_2;
-    $ph['_TEXT5_TAB_FIELD8']   = _TEXT5_TAB_FIELD8;
-    $ph['_TEXT5_TAB_FIELD9']   = _TEXT5_TAB_FIELD9;
-    $ph['_TEXT5_TAB_FIELD9_2'] = _TEXT5_TAB_FIELD9_2;
-    $ph['_TEXT5_2']            = _TEXT5_2;
-    $ph['_HEADER6']            = _HEADER6;
-    $ph['_TEXT6']              = _TEXT6;
-    $ph['_TEXT6_TAB_HEAD']     = _TEXT6_TAB_HEAD;
-    $ph['_TEXT6_TAB_FIELD1']   = _TEXT6_TAB_FIELD1;
-    $ph['_TEXT6_TAB_FIELD1_2'] = _TEXT6_TAB_FIELD1_2;
-    $ph['_TEXT6_TAB_FIELD2']   = _TEXT6_TAB_FIELD2;
-    $ph['_TEXT6_TAB_FIELD3']   = _TEXT6_TAB_FIELD3;
-    $ph['_TEXT6_TAB_FIELD4']   = _TEXT6_TAB_FIELD4;
-    $ph['_TEXT6_TAB_FIELD5']   = _TEXT6_TAB_FIELD5;
-    $ph['_TEXT6_TAB_FIELD5_2'] = _TEXT6_TAB_FIELD5_2;
-    $ph['_HEADER7']            = _HEADER7;
-    $ph['_TEXT7']              = _TEXT7;
-    $ph['_TEXT7_TAB_HEAD']     = _TEXT7_TAB_HEAD;
-    $ph['_TEXT7_TAB_FIELD1']   = _TEXT7_TAB_FIELD1;
-    $ph['_TEXT7_TAB_FIELD2']   = _TEXT7_TAB_FIELD2;
-    $ph['_TEXT7_TAB_FIELD2_2'] = _TEXT7_TAB_FIELD2_2;
-    $ph['_HEADER9']            = _HEADER9;
-    $ph['_TEXT9']              = _TEXT9;
-    $ph['_BUTTON1']            = _BUTTON1;
-    $tpl                       = file_get_contents('first.tpl');
-    echo parseText($tpl, $ph);
+    $ph['_HEADER5']                          = _HEADER5;
+    $ph['_TEXT5']                            = _TEXT5;
+    $ph['_TEXT5_TAB_HEAD']                   = _TEXT5_TAB_HEAD;
+    $ph['_TEXT5_TAB_FIELD1']                 = _TEXT5_TAB_FIELD1;
+    $ph['NC_SITE_URL']                       = NC_SITE_URL;
+    $ph['NC_BASE_PATH']                      = NC_BASE_PATH;
+    $ph['_TEXT5_TAB_FIELD2']                 = _TEXT5_TAB_FIELD2;
+    $ph['NC_SITE_URL']                       = NC_SITE_URL;
+    $ph['_TEXT5_TAB_FIELD3']                 = _TEXT5_TAB_FIELD3;
+    $ph['_TEXT5_TAB_FIELD4']                 = _TEXT5_TAB_FIELD4;
+    $ph['_TEXT5_TAB_FIELD5']                 = _TEXT5_TAB_FIELD5;
+    $ph['_TEXT5_TAB_FIELD6']                 = _TEXT5_TAB_FIELD6;
+    $ph['_TEXT5_TAB_FIELD7_2']               = _TEXT5_TAB_FIELD7_2;
+    $ph['_TEXT5_TAB_FIELD7']                 = _TEXT5_TAB_FIELD7;
+    $ph['_TEXT5_TAB_FIELD7_2']               = _TEXT5_TAB_FIELD7_2;
+    $ph['_TEXT5_TAB_FIELD8']                 = _TEXT5_TAB_FIELD8;
+    $ph['_TEXT5_TAB_FIELD9']                 = _TEXT5_TAB_FIELD9;
+    $ph['_TEXT5_TAB_FIELD9_2']               = _TEXT5_TAB_FIELD9_2;
+    $ph['_TEXT5_2']                          = _TEXT5_2;
+    $ph['_HEADER6']                          = _HEADER6;
+    $ph['_TEXT6']                            = _TEXT6;
+    $ph['_TEXT6_TAB_HEAD']                   = _TEXT6_TAB_HEAD;
+    $ph['_TEXT6_TAB_FIELD1']                 = _TEXT6_TAB_FIELD1;
+    $ph['_TEXT6_TAB_FIELD1_2']               = _TEXT6_TAB_FIELD1_2;
+    $ph['_TEXT6_TAB_FIELD2']                 = _TEXT6_TAB_FIELD2;
+    $ph['_TEXT6_TAB_FIELD3']                 = _TEXT6_TAB_FIELD3;
+    $ph['_TEXT6_TAB_FIELD4']                 = _TEXT6_TAB_FIELD4;
+    $ph['_TEXT6_TAB_FIELD5']                 = _TEXT6_TAB_FIELD5;
+    $ph['_TEXT6_TAB_FIELD5_2']               = _TEXT6_TAB_FIELD5_2;
+    $ph['_HEADER7']                          = _HEADER7;
+    $ph['_TEXT7']                            = _TEXT7;
+    $ph['_TEXT7_TAB_HEAD']                   = _TEXT7_TAB_HEAD;
+    $ph['_TEXT7_TAB_FIELD1']                 = _TEXT7_TAB_FIELD1;
+    $ph['_TEXT7_TAB_FIELD2']                 = _TEXT7_TAB_FIELD2;
+    $ph['_TEXT7_TAB_FIELD2_2']               = _TEXT7_TAB_FIELD2_2;
+    $ph['_HEADER9']                          = _HEADER9;
+    $ph['_TEXT9']                            = _TEXT9;
+    $ph['_BUTTON1']                          = _BUTTON1;
+    $ph['_CONFIRM_RETRY_SEND_FORM']          = _CONFIRM_RETRY_SEND_FORM;
+    $tpl                                     = file_get_contents('first.tpl');
+    echo parseHtml($tpl, $ph);
 }
 
 function treatPathStr($str)
 {
     $str = str_replace('\\', '/', $str);
-    if (substr($str, -4) === '.php') {
+    if ('.php' === substr($str, -4)) {
         return $str;
     } else {
         return rtrim($str, '/') . '/';
@@ -204,17 +196,17 @@ function treatPathStr($str)
  */
 function doInstall()
 {
-    global $mysql_usePrefix, $mysql_prefix;
+    global $mysql_use_prefix, $mysql_prefix;
     global $lang;
 
     // 0. put all POST-vars into vars
-    $mysql_host        = postVar('install_db_host');
-    $mysql_user        = postVar('install_db_user');
-    $mysql_password    = postVar('install_db_password');
-    $mysql_database    = postVar('install_db_database');
-    $mysql_create      = postVar('install_db_create');
-    $mysql_usePrefix   = postVar('install_db_usePrefix');
-    $mysql_prefix      = postVar('install_db_tablePrefix');
+    $mysql_host        = postVar('install_db_host', 'localhost');
+    $mysql_user        = postVar('install_db_user', 'root');
+    $mysql_password    = postVar('install_db_password', '');
+    $mysql_database    = trim((string) postVar('install_db_database'));
+    $mysql_create      = (int) postVar('install_db_create') ? 1 : 0;
+    $mysql_use_prefix  = (int) postVar('install_db_use_prefix') ? 1 : 0;
+    $mysql_prefix      = trim((string) postVar('install_db_tablePrefix'));
     $config_indexurl   = postVar('IndexURL');
     $config_adminurl   = postVar('AdminURL');
     $config_adminpath  = postVar('AdminPath');
@@ -231,19 +223,23 @@ function doInstall()
     $user_email        = postVar('User_email');
     $blog_name         = postVar('Blog_name');
     $blog_shortname    = postVar('Blog_shortname');
-    $charset           = strtolower(postVar('charset'));
     $config_adminemail = $user_email;
     $config_sitename   = $blog_name;
 
     $install_db_type = postVar('install_db_type');
 
-    if ($install_db_type != 'sqlite' || !ENABLE_SQLITE_INSTALL) {
+    $charset = 'utf8';
+
+    if ('sqlite' != $install_db_type || ! ENABLE_SQLITE_INSTALL) {
         $install_db_type = 'mysql';
     }
-    $is_install_mysql  = ($install_db_type == 'mysql');
-    $is_install_sqlite = ($install_db_type == 'sqlite');
-    if (!$is_install_mysql) {
-        $charset = 'utf8';
+    $is_install_mysql  = ('mysql' == $install_db_type);
+    $is_install_sqlite = ('sqlite' == $install_db_type);
+
+    if ('sqlite' === $install_db_type) {
+        $mysql_host     = '';
+        $mysql_user     = '';
+        $mysql_password = '';
     }
 
     $config_indexurl  = treatPathStr($config_indexurl);
@@ -265,64 +261,52 @@ function doInstall()
         @date_default_timezone_set((function_exists('date_default_timezone_get')) ? @date_default_timezone_get() : 'UTC');
     }
 
+    if (DEBUG_INSTALL_STEPS) {
+        global $DB_DRIVER_NAME, $DB_PHP_MODULE_NAME;
+        echo sprintf("PHP version : %s<br>\n", PHP_VERSION);
+        echo sprintf("\$DB_DRIVER_NAME : %s<br>\n", $DB_DRIVER_NAME);
+        echo sprintf("Step1(Line:%d)", __LINE__);
+    }
     // 1. check all the data
-    $errors = array();
+    $errors = [];
 
-    if (!$mysql_database && !$is_install_sqlite) {
+    if ( ! $mysql_database && ! $is_install_sqlite) {
         array_push($errors, _ERROR_NO_DBNAME);
     }
-    if (($mysql_usePrefix == 1) && (strlen($mysql_prefix) == 0)) {
+    if ((1 == $mysql_use_prefix) && (0 == strlen($mysql_prefix))) {
         array_push($errors, _ERROR3);
     }
 
-    if (($mysql_usePrefix == 1) && (!preg_match('#^[a-zA-Z0-9_]+$#', $mysql_prefix))) {
+    if ((1 == $mysql_use_prefix) && ( ! preg_match('#^[a-zA-Z0-9_]+$#', $mysql_prefix))) {
         array_push($errors, _ERROR4);
     }
 
-    if (!function_exists('mb_convert_encoding') && $charset != 'latin1') {
-        $charset = 'utf8';
-    }
-
-    if (!defined('_CHARSET')) {
+    $install_db_charset = $charset;
+    define('_CHARSET_INSTALL', 'UTF-8');
+    if ( ! defined('_CHARSET')) {
         define('_CHARSET', 'UTF-8');
     }
-
-    $install_db_charset = $charset;
-    switch ($install_db_charset) {
-        case 'latin1':
-            define('_CHARSET_INSTALL', 'iso-8859-1');
-            break;
-        case 'ujis':
-            if (ENABLE_INSTALL_LANG_EUCJP) {
-                define('_CHARSET_INSTALL', 'EUC-JP');
-            } else {
-                $install_db_charset = 'utf8';
-                define('_CHARSET_INSTALL', 'UTF-8');
-            }
-            break;
-        default:
-            $charset = 'utf8';
-            define('_CHARSET_INSTALL', 'UTF-8');
+    if ('UTF-8' !== constant('_CHARSET')) {
+        exit;
     }
-    $charset = 'utf8';
 
-    if (!endsWithSlash($config_skinspath)) {
+    if ( ! endsWithSlash($config_skinspath)) {
         array_push($errors, _ERROR8);
     }
 
-    if (!is_dir($config_adminpath)) {
+    if ( ! is_dir($config_adminpath)) {
         array_push($errors, _ERROR9);
     }
 
-    if (!_isValidMailAddress($user_email)) {
+    if ( ! _isValidMailAddress($user_email)) {
         array_push($errors, _ERROR10);
     }
 
-    if (!_isValidDisplayName($user_name)) {
+    if ( ! _isValidDisplayName($user_name)) {
         array_push($errors, _ERROR11);
     }
 
-    if (!$user_password || !$user_password2) {
+    if ( ! $user_password || ! $user_password2) {
         array_push($errors, _ERROR12);
     }
 
@@ -330,7 +314,7 @@ function doInstall()
         array_push($errors, _ERROR13);
     }
 
-    if (!_isValidShortName($blog_shortname)) {
+    if ( ! _isValidShortName($blog_shortname)) {
         array_push($errors, _ERROR14);
     }
 
@@ -338,6 +322,9 @@ function doInstall()
         showErrorMessages($errors);
     }
 
+    if (DEBUG_INSTALL_STEPS) {
+        echo sprintf("Step2(Line:%d)", __LINE__);
+    }
     // 2. try to log in to mySQL
     $db_host = $mysql_host;
 
@@ -350,12 +337,8 @@ function doInstall()
         $sqlite_db_name = $sqlite_db_dir . '/db_nucleus.sqlite';
         $mysql_database = $sqlite_db_name;
 
-        if ((!$sqlite_db_dir) || !is_dir($sqlite_db_dir)) {
-            $msg = sprintf(
-                "<p>not found: %s</p><p>%s</p>",
-                _INSTALL_TEXT_SETTINGS_NOEXSIT,
-                htmlspecialchars($sqlite_db_dir, null, _CHARSET)
-            );
+        if (( ! $sqlite_db_dir) || ! is_dir($sqlite_db_dir)) {
+            $msg = sprintf("<p>not found: %s</p><p>%s</p>", _INSTALL_TEXT_SETTINGS_NOEXSIT, htmlspecialchars($sqlite_db_dir, null, _CHARSET));
             _doError($msg);
             exit;
         }
@@ -363,80 +346,62 @@ function doInstall()
         if (@is_file($sqlite_db_name)) {
             $fsize = @filesize($sqlite_db_name);
             if ($fsize) {
-                $msg = sprintf(
-                    "<p>%s: %s</p>",
-                    _INSTALL_TEXT_DATABASE_EXSIT,
-                    htmlspecialchars($sqlite_db_name, null, _CHARSET)
-                );
+                $msg = sprintf("<p>%s: %s</p>", _INSTALL_TEXT_DATABASE_EXSIT, htmlspecialchars($sqlite_db_name, null, _CHARSET));
                 _doError($msg);
                 exit;
             }
         }
         $db_name = $sqlite_db_name;
 
-//          if (is_file('../config.php') || is_file('../config-custum.php'))
-//          {
-//              $msg = sprintf("<p>%s</p><p>%s</p>", _INSTALL_TEXT_ERROR_SQLITE_SETTINGS_EXSIT_1 , _INSTALL_TEXT_ERROR_SQLITE_SETTINGS_EXSIT_2 );
-//              KaguyaInstaller::doError ( $msg );
-//              exit;
-//          }
-
-        $mysql_create    = 0;
-        $mysql_usePrefix = 0;
-        $MYSQL_CONN      = @sql_connect_args($db_host, $mysql_user, $mysql_password, $db_name);
-        $SQL_DBH         = $MYSQL_CONN;
-        $DB_PHP_MODULE_NAME == 'pdo';
-//            var_dump($MYSQL_CONN);
+        $mysql_create       = 0;
+        $mysql_use_prefix   = 0;
+        $MYSQL_CONN         = @sql_connect_args($db_host, $mysql_user, $mysql_password, $db_name);
+        $SQL_DBH            = $MYSQL_CONN;
+        $DB_PHP_MODULE_NAME = 'pdo';
     }
 
     if ($is_install_mysql) {
         $MYSQL_CONN = @sql_connect_args($db_host, $mysql_user, $mysql_password);
     }
 
-    if ($MYSQL_CONN == false) {
+    if (false == $MYSQL_CONN) {
         _doError(_ERROR15 . ': ' . sql_error());
     }
 
-    $DB_HANDLE = $MYSQL_CONN;
-    if ($DB_PHP_MODULE_NAME == 'pdo') {
-        $SQL_DBH    = $MYSQL_CONN;
-        $MYSQL_CONN = 0;
-    }
-    //var_dump($SQL_DBH, $DB_HANDLE);
-    if ($is_install_sqlite) {
-        $DB_HANDLE->beginTransaction();
-    } // sql_query("begin");
+    $DB_HANDLE  = $MYSQL_CONN;
+    $SQL_DBH    = $MYSQL_CONN;
+    $MYSQL_CONN = 0;
 
+    if ($is_install_sqlite) {
+        $DB_HANDLE->beginTransaction(); // sql_query("begin");
+    }
+
+    if (DEBUG_INSTALL_STEPS) {
+        echo sprintf("Step3(Line:%d)", __LINE__);
+    }
     // 3. try to create database (if needed)
     if ($is_install_mysql) {
-        $mySqlVer = sql_get_server_version();
-        switch (strtolower($install_db_charset)) {
-            case 'ujis':
-                $collation = 'ujis_japanese_ci';
-                break;
-            case 'latin1':
-                $collation = 'latin1_swedish_ci';
-                break;
-            case 'utf8':
-            default:
-                $collation = 'utf8_general_ci';
-                if (version_compare(
-                    '5.5.0',
-                    $mySqlVer,
-                    '<='
-                ) && ($res = sql_query("SHOW CHARACTER SET LIKE 'utf8mb4'"))) {
-                    $install_db_charset = 'utf8mb4';
-                    $collation          = 'utf8mb4_general_ci';
-                }
+        $mySqlVer  = sql_get_server_version();
+        $collation = 'utf8_general_ci';
+        if (version_compare('5.5.0', $mySqlVer, '<=') && ($res = sql_query("SHOW CHARACTER SET LIKE 'utf8mb4'"))) {
+            $install_db_charset = 'utf8mb4';
+            $collation          = 'utf8mb4_general_ci';
         }
 
-        if ($mysql_create == 1) {
+        if (1 == $mysql_create) {
             $sql = "CREATE DATABASE `{$mysql_database}`";
             $sql .= " DEFAULT CHARACTER SET {$install_db_charset} COLLATE {$collation}";
             sql_query($sql) or _doError(_ERROR16 . ': ' . sql_error());
         }
     }
 
+    if ($is_install_mysql && version_compare($mySqlVer, '5.6.0', '>=')) {
+        sql_query("SET SESSION sql_mode = '';");
+    }
+
+    if (DEBUG_INSTALL_STEPS) {
+        echo sprintf("Step4(Line:%d)", __LINE__);
+    }
     // 4. try to select database
     if ($is_install_mysql) {
         sql_select_db($mysql_database, $DB_HANDLE) or _doError(_ERROR17);
@@ -447,20 +412,23 @@ function doInstall()
      * This processing is added by Nucleus CMS Japanese Package Release Team as of Mar.30, 2011
     */
     if ($is_install_mysql) {
-        sql_set_charset('utf8'); // Don't localized
+        sql_set_charset($install_db_charset);
     }
 
+    if (DEBUG_INSTALL_STEPS) {
+        echo sprintf("Step5(Line:%d)", __LINE__);
+    }
     // 5. execute queries
     if ($is_install_sqlite) {
         $queries = file_get_contents('install-sqlite.sql');
         if (0) {
-            $queries = array($queries);
+            $queries = [$queries];
         } else {
             $queries = preg_replace("#/\*.*?\*/#ims", '', $queries);
             $queries = preg_split("#(;\n|;\r)#m", $queries);
-            for ($i = 0; $i < count($queries); $i++) {
-                if (strtoupper(trim($queries[$i])) == 'END') {
-                    $queries[$i - 1] .= ';' . $queries[$i];
+            for ($i = 0, $iMax = count($queries); $i < $iMax; $i++) {
+                if ('END' == strtoupper(trim($queries[$i]))) {
+                    $queries[$i - 1] .= ';' .$queries[$i];
                     $queries[$i] = '';
                 }
             }
@@ -470,7 +438,7 @@ function doInstall()
         $queries = preg_split("#(;\n|;\r)#m", $queries);
     }
 
-    $aTableNames = array(
+    $aTableNames = [
         'nucleus_actionlog',
         'nucleus_ban',
         'nucleus_blog',
@@ -487,10 +455,10 @@ function doInstall()
         'nucleus_activation',
         'nucleus_tickets',
         'nucleus_cached_data',
-        'nucleus_systemlog'
-    );
+        'nucleus_systemlog',
+        ];
 
-    $aTableNamesPrefixed = array();
+    $aTableNamesPrefixed = [];
     foreach ($aTableNames as $v) {
         $aTableNamesPrefixed[] = $mysql_prefix . $v;
     }
@@ -500,21 +468,17 @@ function doInstall()
     foreach ($queries as $query) {
         $query = trim($query);
         if ($query) {
-//       echo "QUERY = \n" . htmlspecialchars($query) . "\n<p>";
+            //echo "QUERY = \n" . htmlspecialchars($query) . "\n<p>";
 
-            if ($mysql_usePrefix == 1) {
+            if (1 == $mysql_use_prefix) {
                 $query = str_replace($aTableNames, $aTableNamesPrefixed, $query);
             }
 
-            if ($is_install_mysql && $mysql_create != 1 && str_starts_with($query, 'CREATE TABLE')) {
+            if ($is_install_mysql && 1 != $mysql_create && str_starts_with($query, 'CREATE TABLE')) {
                 $query .= " DEFAULT CHARACTER SET {$install_db_charset} COLLATE {$collation}";
             }
 
-            sql_query($query) or _doError(_ERROR30 . ' (' . htmlspecialchars(
-                $query,
-                ENT_QUOTES,
-                _CHARSET
-            ) . '): ' . sql_error());
+            sql_query($query) or _doError(_ERROR30 . ' (' . htmlspecialchars($query, ENT_QUOTES, _CHARSET) . '): ' . sql_error());
         }
     }
 
@@ -524,28 +488,22 @@ function doInstall()
     $itm_body  = _1ST_POST;
     $itm_more  = _1ST_POST2;
 
-    $newpost = "INSERT INTO "
-        . tableName('nucleus_item')
-        . ' (`inumber`, `ititle`, `ibody`, `imore`,'
-        . '`iblog`, `iauthor`, `itime`,'
-        . '`iclosed`, `idraft`, `ikarmapos`, `icat`, `ikarmaneg`, `iposted`)'
-        . " VALUES ("
-        . "1, "
-        . sql_quote_string($itm_title) . ","
-        . sql_quote_string($itm_body) . ","
-        . sql_quote_string($itm_more) . ","
-        . " 1, 1, '2005-08-15 11:04:26', 0, 0, 0, 1, 0, 1);";
-    sql_query($newpost) or _doError(_ERROR18 . ' (' . htmlspecialchars(
-        $newpost,
-        ENT_QUOTES,
-        _CHARSET
-    ) . '): ' . sql_error());
+    $newpost = sprintf(
+        "INSERT INTO %s (`inumber`, `ititle`, `ibody`, `imore`,`iblog`, `iauthor`, `itime`,`iclosed`, `idraft`, `ikarmapos`, `icat`, `ikarmaneg`, `iposted`) VALUES (1, %s,%s,%s, 1, 1, '2005-08-15 11:04:26', 0, 0, 0, 1, 0, 1)",
+        tableName('nucleus_item'),
+        sql_quote_string($itm_title),
+        sql_quote_string($itm_body),
+        sql_quote_string($itm_more)
+    );
+    sql_query($newpost) or _doError(_ERROR18 . ' (' . htmlspecialchars($newpost, ENT_QUOTES, _CHARSET) . '): ' . sql_error());
 
     if (DEBUG_INSTALL_STEPS) {
-        echo sprintf("Step6(%d)", __LINE__);
+        echo sprintf("Step6(Line:%d)", __LINE__);
     }
     // 6. update global settings
+    updateConfig('DatabaseVersion', NUCLEUS_DATABASE_VERSION_ID);
     updateConfig('IndexURL', $config_indexurl);
+    updateConfig('BaseURL', getBaseUrl());
     updateConfig('AdminURL', $config_adminurl);
     updateConfig('MediaURL', $config_mediaurl);
     updateConfig('SkinsURL', $config_skinsurl);
@@ -553,24 +511,13 @@ function doInstall()
     updateConfig('ActionURL', $config_actionurl);
     updateConfig('AdminEmail', $config_adminemail);
     updateConfig('SiteName', $config_sitename);
+    updateConfig('CookiePath', getBaseUrl());
 
     $install_lang_defs = get_install_lang_defs();
-    if (($install_db_charset == 'utf8') || ($install_db_charset == 'utf8mb4')) {
-        if (isset($install_lang_defs[$lang]['utf8'])) {
-            updateConfig('Language', $install_lang_defs[$lang]['utf8']);
-        } else {
-            updateConfig('Language', $install_lang_defs[$lang]['name']);
-        }
+    if (isset($install_lang_defs[$lang]['utf8'])) {
+        updateConfig('Language', $install_lang_defs[$lang]['utf8']);
     } else {
-        if ($install_db_charset == 'latin1') {
-            updateConfig('Language', 'english');
-        } else {
-            if ($install_db_charset == 'ujis') {
-                updateConfig('Language', 'japanese-euc');
-            } else {
-                updateConfig('Language', 'english-utf8');
-            }
-        }
+        _doError('Invalid lang.');
     }
 
     if (DEBUG_INSTALL_STEPS) {
@@ -578,14 +525,14 @@ function doInstall()
     }
     // 7. update GOD member
     $query = 'UPDATE ' . tableName('nucleus_member')
-        . " SET mname='" . sql_real_escape_string($user_name) . "',"
-        . " mrealname='" . sql_real_escape_string($user_realname) . "',"
-        . " mpassword='" . md5(addslashes($user_password)) . "',"
-        . " murl='" . sql_real_escape_string($config_indexurl) . "',"
-        . " memail='" . sql_real_escape_string($user_email) . "',"
-        . " madmin=1,"
-        . " mcanlogin=1"
-        . " WHERE mnumber=1";
+            . " SET mname='" . sql_real_escape_string($user_name) . "',"
+            . " mrealname='" . sql_real_escape_string($user_realname) . "',"
+            . " mpassword='" . md5(addslashes($user_password)) . "',"
+            . " murl='"      . sql_real_escape_string($config_indexurl) . "',"
+            . " memail='"    . sql_real_escape_string($user_email) . "',"
+            . " madmin=1,"
+            . " mcanlogin=1"
+            . " WHERE mnumber=1";
 
     sql_query($query) or _doError(_ERROR19 . ': ' . sql_error());
 
@@ -594,10 +541,10 @@ function doInstall()
     }
     // 8. update weblog settings
     $query = 'UPDATE ' . tableName('nucleus_blog')
-        . " SET bname='" . sql_real_escape_string($blog_name) . "',"
-        . " bshortname='" . sql_real_escape_string($blog_shortname) . "',"
-        . " burl='" . sql_real_escape_string($config_indexurl) . "'"
-        . " WHERE bnumber=1";
+            . " SET bname='" . sql_real_escape_string($blog_name) . "',"
+            . " bshortname='" . sql_real_escape_string($blog_shortname) . "',"
+            . " burl='" . sql_real_escape_string($config_indexurl) . "'"
+            . " WHERE bnumber=1";
 
     sql_query($query) or _doError(_ERROR20 . ': ' . sql_error());
 
@@ -609,7 +556,7 @@ function doInstall()
         . " cdesc	  = '" . $cat_desc . "'"
         . " WHERE"
         . " catid	  = 1";
-//     . " SET cname = '{$cat_name}', cdesc = '{$cat_desc}' WHERE catid = 1");
+    //  . " SET cname = '{$cat_name}', cdesc = '{$cat_desc}' WHERE catid = 1");
 
     sql_query($query) or _doError(_ERROR20 . ': ' . sql_error());
 
@@ -618,18 +565,18 @@ function doInstall()
     }
     // 9. update item date
     $query = 'UPDATE ' . tableName('nucleus_item')
-        . " SET itime='" . date('Y-m-d H:i:s', time()) . "'"
-        . " WHERE inumber=1";
+            . " SET itime='" . date('Y-m-d H:i:s', time()) ."'"
+            . " WHERE inumber=1";
 
     sql_query($query) or _doError(_ERROR21 . ': ' . sql_error());
 
     global $aConfPlugsToInstall, $aConfSkinsToImport;
-    $aSkinErrors = array();
-    $aPlugErrors = array();
+    $aSkinErrors = [];
+    $aPlugErrors = [];
 
     if ($is_install_sqlite) {
-        $SQL_DBH->commit();
-    } // sql_query("end");
+        $SQL_DBH->commit(); // sql_query("end");
+    }
     // close database connection (needs to be closed if we want to include globalfunctions.php)
     sql_close();
 
@@ -640,11 +587,12 @@ function doInstall()
         // 10. set global variables
         global $DB_HOST, $DB_USER, $DB_PASSWORD, $DB_DATABASE, $DB_PREFIX;
 
-        $DB_HOST     = $mysql_host;
-        $DB_USER     = $mysql_user;
-        $DB_PASSWORD = $mysql_password;
-        $DB_DATABASE = $mysql_database;
-        $DB_PREFIX   = ($mysql_usePrefix == 1) ? $mysql_prefix : '';
+        $db__use_prefix = $mysql_use_prefix;
+        $DB_HOST        = $mysql_host;
+        $DB_USER        = $mysql_user;
+        $DB_PASSWORD    = $mysql_password;
+        $DB_DATABASE    = $mysql_database;
+        $DB_PREFIX      = (1 == $db__use_prefix) ? $mysql_prefix : '';
 
         global $DIR_NUCLEUS, $DIR_MEDIA, $DIR_SKINS, $DIR_PLUGINS, $DIR_LANG, $DIR_LIBS;
 
@@ -663,11 +611,18 @@ function doInstall()
         }
         // 11. install custom skins
         $aSkinErrors = installCustomSkins($manager);
-        $defskinQue  = 'SELECT `sdnumber` as result FROM ' . sql_table('skin_desc') . ' WHERE `sdname` = "default"';
+        $defskinQue  = sprintf(
+            "SELECT `sdnumber` as result FROM %s WHERE `sdname` = 'classic'",
+            sql_table('skin_desc')
+        );
         $defSkinID   = quickQuery($defskinQue);
-        $updateQuery = 'UPDATE ' . sql_table('blog') . ' SET `bdefskin` = ' . intval($defSkinID) . ' WHERE `bnumber` = 1';
+        $updateQuery = sprintf(
+            "UPDATE %s SET `bdefskin` = %d WHERE `bnumber` = 1",
+            sql_table('blog'),
+            (int) $defSkinID
+        );
         sql_query($updateQuery);
-        $updateQuery = 'UPDATE ' . sql_table('config') . ' SET `value` = ' . intval($defSkinID) . ' WHERE `name` = "BaseSkin"';
+        $updateQuery = 'UPDATE ' . sql_table('config') . ' SET `value` = ' . (int) $defSkinID . ' WHERE `name` = "BaseSkin"';
         sql_query($updateQuery);
 
         if (DEBUG_INSTALL_STEPS) {
@@ -684,46 +639,53 @@ function doInstall()
     $bConfigWritten = 0;
 
     $configFilename = dirname(__DIR__) . '/config.php';
-    if (!@is_file($configFilename)
-//      || (@is_file($configFilename) && is_writable($configFilename))
+    if ( ! @is_file($configFilename)
+        //  || (@is_file($configFilename) && is_writable($configFilename))
     ) {
         global $DB_DRIVER_NAME, $DB_PHP_MODULE_NAME, $MYSQL_HANDLER;
+        $indent      = str_repeat(' ', 4);
         $config_data = '<' . '?php' . "\n\n";
         //$config_data .= "\n"; (extraneous, just added extra \n to previous line
-        $config_data .= "	// database connection information\n";
-        $config_data .= "	\$MYSQL_HOST = '" . $mysql_host . "';\n";
-        $config_data .= "	\$MYSQL_USER = '" . $mysql_user . "';\n";
-        $config_data .= "	\$MYSQL_PASSWORD = '" . $mysql_password . "';\n";
-        $config_data .= "	\$MYSQL_DATABASE = '" . $mysql_database . "';\n";
-        $config_data .= "	\$MYSQL_PREFIX = '" . (($mysql_usePrefix == 1) ? $mysql_prefix : '') . "';\n";
-        $config_data .= "	// new in 3.50. first element is db handler, the second is the db driver used by the handler\n";
-        $config_data .= "	// default is \$MYSQL_HANDLER = array('mysql','');\n";
-        $config_data .= "	//\$MYSQL_HANDLER = array('mysql','mysql');\n";
-        $config_data .= "	//\$MYSQL_HANDLER = array('pdo','mysql');\n";
-        $config_data .= "	\$MYSQL_HANDLER = array('" . $MYSQL_HANDLER[0] . "','" . $MYSQL_HANDLER[1] . "');\n";
+        $config_data .= "// database connection information\n";
+        $config_data .= "\$DB_HOST = '" . $DB_HOST . "';\n";
+        $config_data .= "\$DB_USER = '" . $DB_USER . "';\n";
+        $config_data .= "\$DB_PASSWORD = '" . $DB_PASSWORD . "';\n";
+        $config_data .= "\$DB_DATABASE = '" . $DB_DATABASE . "';\n";
+        $config_data .= "\$DB_PREFIX = '" . ((1 == $db__use_prefix) ? $DB_PREFIX : '') . "';\n";
         $config_data .= "\n";
-        $config_data .= "	// main nucleus directory\n";
-        $config_data .= "	\$DIR_NUCLEUS = '" . $config_adminpath . "';\n";
+        $config_data .= "global \$DB_DRIVER_NAME;\n";
+
+        $config_data .= "// Database driver settings\n";
+        if ('mysql' == $DB_DRIVER_NAME) {
+            $config_data .= "// default is  \$DB_DRIVER_NAME = 'mysql';\n";
+            $config_data .= "//\$DB_DRIVER_NAME = 'mysql';\n";
+            $config_data .= "\$DB_DRIVER_NAME = '{$DB_DRIVER_NAME}';\n";
+        } elseif ('sqlite' == $DB_DRIVER_NAME) {
+            $config_data .= "\$DB_DRIVER_NAME = '{$DB_DRIVER_NAME}'; // sqlite\n";
+        }
         $config_data .= "\n";
-        $config_data .= "	// path to media dir\n";
-        $config_data .= "	\$DIR_MEDIA = '" . $config_mediapath . "';\n";
+        $config_data .= "// main nucleus directory\n";
+        $config_data .= "\$DIR_NUCLEUS = '" . $config_adminpath . "';\n";
         $config_data .= "\n";
-        $config_data .= "	// extra skin files for imported skins\n";
-        $config_data .= "	\$DIR_SKINS = '" . $config_skinspath . "';\n";
+        $config_data .= "// path to media dir\n";
+        $config_data .= "\$DIR_MEDIA = '" . $config_mediapath . "';\n";
         $config_data .= "\n";
-        $config_data .= "	// these dirs are normally sub dirs of the nucleus dir, but \n";
-        $config_data .= "	// you can redefine them if you wish\n";
-        $config_data .= "	\$DIR_PLUGINS = \$DIR_NUCLEUS . 'plugins/';\n";
-        $config_data .= "	\$DIR_LANG = \$DIR_NUCLEUS . 'language/';\n";
-        $config_data .= "	\$DIR_LIBS = \$DIR_NUCLEUS . 'libs/';\n";
+        $config_data .= "// extra skin files for imported skins\n";
+        $config_data .= "\$DIR_SKINS = '" . $config_skinspath . "';\n";
         $config_data .= "\n";
-        $config_data .= "	// include libs\n";
-        $config_data .= "	include(\$DIR_LIBS.'globalfunctions.php');\n";
+        $config_data .= "// these dirs are normally sub dirs of the nucleus dir, but \n";
+        $config_data .= "// you can redefine them if you wish\n";
+        $config_data .= "\$DIR_PLUGINS = \$DIR_NUCLEUS . 'plugins/';\n";
+        $config_data .= "\$DIR_LANG = \$DIR_NUCLEUS . 'language/';\n";
+        $config_data .= "\$DIR_LIBS = \$DIR_NUCLEUS . 'libs/';\n";
+        $config_data .= "\n";
+        $config_data .= "// include libs\n";
+        $config_data .= "include(\$DIR_LIBS.'globalfunctions.php');\n";
 
         $result = @file_put_contents($configFilename, $config_data);
         if ($result) {
             if (is_file($configFilename)) {
-                @chmod($configFilename, 0444);
+                @chmod($configFilename, 0o444);
             }
             $bConfigWritten = 1;
         }
@@ -777,9 +739,9 @@ function installCustomPlugs(&$manager)
 {
     global $aConfPlugsToInstall, $DIR_LIBS;
 
-    $aErrors = array();
+    $aErrors = [];
 
-    if (count($aConfPlugsToInstall) == 0) {
+    if (0 == count($aConfPlugsToInstall)) {
         return $aErrors;
     }
 
@@ -788,15 +750,20 @@ function installCustomPlugs(&$manager)
 
     foreach ($aConfPlugsToInstall as $plugName) {
         // do this before calling getPlugin (in case the plugin id is used there)
-        $query = 'INSERT INTO ' . sql_table('plugin') . ' (porder, pfile) VALUES (' . (++$numCurrent) . ', "' . sql_real_escape_string($plugName) . '")';
+        $query = sprintf(
+            "INSERT INTO %s (porder, pfile) VALUES (%s, '%s')",
+            sql_table('plugin'),
+            ++$numCurrent,
+            sql_real_escape_string($plugName)
+        );
         sql_query($query);
 
         // get and install the plugin
         $manager->clearCachedInfo('installedPlugins');
-        $plugin         = & $manager->getPlugin($plugName);
+        $plugin         = &$manager->getPlugin($plugName);
         $plugin->plugid = $numCurrent;
 
-        if (!$plugin) {
+        if ( ! $plugin) {
             sql_query('DELETE FROM ' . sql_table('plugin') . ' WHERE pfile=\'' . sql_real_escape_string($plugName) . '\'');
             $numCurrent--;
             array_push($aErrors, _ERROR22 . $plugName);
@@ -814,7 +781,7 @@ function installCustomPlugs(&$manager)
 
     while ($o = sql_fetch_object($res)) {
         $pid  = $o->pid;
-        $plug = & $manager->getPlugin($o->pfile);
+        $plug = &$manager->getPlugin($o->pfile);
 
         if ($plug) {
             $eventList = $plug->_getEventList();
@@ -836,13 +803,13 @@ function installCustomSkins(&$manager)
 {
     global $aConfSkinsToImport, $DIR_LIBS, $DIR_SKINS;
 
-    $aErrors = array();
+    $aErrors = [];
     global $manager;
     if (empty($manager)) {
         $manager = new MANAGER();
     }
 
-    if (count($aConfSkinsToImport) == 0) {
+    if (0 == count($aConfSkinsToImport)) {
         return $aErrors;
     }
 
@@ -853,13 +820,13 @@ function installCustomSkins(&$manager)
 
     foreach ($aConfSkinsToImport as $skinName) {
         $importer->reset();
-        $skinFile = $DIR_SKINS . $skinName . '/skinbackup.xml';
-//      Todo: localize skin file
-//      $skinFile_2 = $DIR_SKINS . $skinName . sprintf("/skinbackup-%s.xml", INSTALL_LANG);
-//      if ((INSTALL_LANG != 'en') && is_file($skinFile_2))
-//          $skinFile = $skinFile_2;
+        $skinFile = sprintf('%s%s/skinbackup.xml', $DIR_SKINS, $skinName);
+        //  Todo: localize skin file
+        //    $skinFile_2 = $DIR_SKINS . $skinName . sprintf("/skinbackup-%s.xml", INSTALL_LANG);
+        //    if ((INSTALL_LANG != 'en') && is_file($skinFile_2))
+        //        $skinFile = $skinFile_2;
 
-        if (!@file_exists($skinFile)) {
+        if ( ! @is_file($skinFile)) {
             array_push($aErrors, _ERROR23_1 . $skinFile . ' : ' . _ERROR23_2);
             continue;
         }
@@ -888,8 +855,8 @@ function installCustomSkins(&$manager)
  */
 function doCheckFiles()
 {
-    $missingfiles = array();
-    $files        = array(
+    $missingfiles = [];
+    $files        = [
         'install-mysql.sql',
 //      'install-sqlite.sql',
         '../index.php',
@@ -906,8 +873,8 @@ function doCheckFiles()
         '../nucleus/libs/TEMPLATE.php',
         '../nucleus/libs/MEDIA.php',
         '../nucleus/libs/ACTIONLOG.php',
-        '../nucleus/media.php'
-    );
+        '../nucleus/media.php',
+        ];
 
     if (ENABLE_SQLITE_INSTALL) {
         $files[] = 'install-sqlite.sql';
@@ -916,7 +883,7 @@ function doCheckFiles()
     $count = count($files);
 
     for ($i = 0; $i < $count; $i++) {
-        if (!is_readable($files[$i])) {
+        if ( ! is_readable($files[$i])) {
             array_push($missingfiles, _ERROR25_1 . $files[$i] . _ERROR25_2);
         }
     }
@@ -930,9 +897,9 @@ function doCheckFiles()
  *  Updates the configuration in the database
  *
  * @param $name
- *               name of the config var
+ *              name of the config var
  * @param $val
- *               new value of the config var
+ *              new value of the config var
  */
 function updateConfig($name, $val)
 {
@@ -951,7 +918,7 @@ function updateConfig($name, $val)
  * Checks if a string ends with a slash
  *
  * @param $s
- *            string
+ *           string
  */
 function endsWithSlash($s)
 {
@@ -962,11 +929,11 @@ function endsWithSlash($s)
  * Checks if email address is valid
  *
  * @param $address
- *                  address which should be tested
+ *                 address which should be tested
  */
 function _isValidMailAddress($address)
 {
-    $patterns   = array();
+    $patterns   = [];
     $patterns[] = "#^[a-zA-Z0-9\._-]+@+[A-Za-z0-9\._-]+\.+[A-Za-z]{2,4}$#";
     $patterns[] = "#^[a-zA-Z0-9\._-]+@localhost$#";
     foreach ($patterns as $pattern) {
@@ -1008,4 +975,77 @@ function _isValidDisplayName($name)
     } else {
         return 0;
     }
+}
+
+/*
+ * Shows error message
+ *
+ * @param	$msg
+ * 			error message
+ */
+function _doError($msg)
+{
+    ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title><?php echo _TITLE; ?></title>
+    <style>@import url('../nucleus/styles/manual.css');</style>
+</head>
+<body>
+    <div style="text-align:center"><img src="../nucleus/styles/logo.gif" alt="<?php echo _ALT_NUCLEUS_CMS_LOGO; ?>" /></div> <!-- Nucleus logo -->
+    <h1><?php echo _ERROR27; ?></h1>
+
+    <p><?php echo _ERROR28; ?></p>
+    <div style="color: #ff0000; border-color: #c0dcc0; border-style:dotted "><?php echo $msg; ?></div>
+
+    <p><a href="index.php" onclick="history.back();return false;"><?php echo _TEXT17; ?></a></p>
+</body>
+</html>
+
+    <?php
+    exit;
+}
+
+/*
+ * Shows error messages
+ *
+ * @param	$errors
+ * 			array with error messages
+ */
+function showErrorMessages($errors)
+{
+    ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <title><?php echo _TITLE; ?></title>
+    <link rel="stylesheet" type="text/css" href="../nucleus/styles/manual.css">
+</head>
+<body>
+    <div style="text-align:center"><img src="../nucleus/styles/logo.gif" alt="<?php echo _ALT_NUCLEUS_CMS_LOGO; ?>" /></div> <!-- Nucleus logo -->
+    <h1><?php echo _ERROR27; ?></h1>
+
+    <p><?php echo _ERROR29; ?>:</p>
+
+    <ul>
+
+    <?php
+    while ($msg = array_shift($errors)) {
+        echo '<li>' . $msg . '</li>';
+    }
+    ?>
+
+    </ul>
+
+    <p><a href="index.php" onclick="history.back();return false;"><?php echo _TEXT17; ?></a></p>
+</body>
+</html>
+
+    <?php
+    exit;
 }

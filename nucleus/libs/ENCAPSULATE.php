@@ -17,6 +17,7 @@
 
 class ENCAPSULATE
 {
+    protected $isFootNavigation;
     /**
      * Uses $call to call a function using parameters $params
      * This function should return the amount of entries shown.
@@ -25,22 +26,26 @@ class ENCAPSULATE
      *
      * Passes on the amount of results found (for further encapsulation)
      */
-    public function doEncapsulate($call, $params, $errorMessage = _ENCAPSULATE_ENCAPSULATE_NOENTRY)
-    {
+    public function doEncapsulate(
+        &$call,
+        &$params,
+        $errorMessage = _ENCAPSULATE_ENCAPSULATE_NOENTRY
+    ) {
         // start output buffering
         ob_start();
 
         $nbOfRows = call_user_func_array($call, $params);
 
         // get list contents and stop buffering
-        $list = ob_get_clean();
+        $list = ob_get_contents();
+        ob_end_clean();
 
         $this->isFootNavigation = ($nbOfRows > 0);
         $this->showHead();
         if ($nbOfRows > 0) {
             echo $list;
         } else {
-            echo $errorMessage;
+            printf("<p class='note'>%s</p>", hsc($errorMessage));
         }
         $this->showFoot();
 

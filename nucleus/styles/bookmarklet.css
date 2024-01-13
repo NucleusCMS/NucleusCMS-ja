@@ -1,193 +1,164 @@
-@charset 'UTF-8';
-/*
+/* 
 	style definitions for the bookmarklet 
+	
+	$Id$
 */
 
 body {
-	font-size: 92.5%;
-	background: #fff;
-	color: #000;
-	font-family: Meiryo, "Hiragino Kaku Gothic Pro", Osaka, "MS PGothic", "IPA UIGothic", "IPA mona UIGothic", "VL PGothic", "Sazanami Gothic", "DynaLab-dfghsgothic w5-jisx0208.1990-0", "DynaLab-dfggothic w5-iso8859-1", "Trebuchet MS", "Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif;
-	margin:0;
-	padding:5px;
-	overflow: auto;
+    font-size: medium;
+    background: #fff;
+    color: #000;
+    font-family: "Trebuchet MS", Trebuchet, "Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif
 }
-input,textarea,select,td,th {font:inherit;}
 
 h1 {
-	border-bottom: 1px dotted #aaa;
-	font-size: 1.2em;
-	color: #596d9d;
-	margin:0;
-	padding:5px;
-	letter-spacing:1px;
+    border-bottom: 1px dotted gray;
+    font-size: medium;
+    color: #596d9d;
 }
 
-#tabs {
-    padding-bottom:50px;
+/* 
+	Hide switch buttons initially, we'll enable them again if we are sure
+	the browser supports DOM
+*/
+#switchbuttons {
+    display: none;
+}
+
+/*
+	Hide preview also when no DOM is supported
+*/
+#preview {
+    display: none;
+}
+
+.buttonbar {
+    margin-bottom: 5px;
+    background: rgb(187, 187, 204);
+    padding: 3px;
+}
+
+.buttonbar input {
+    background: #C5C5D3;
+    border: 1px solid #CACAD7;
+    border-right: 2px solid #8E8EAB;
+    border-bottom: 2px solid #8E8EAB;
+    color: #000000;
+    font-family: "Trebuchet MS", Trebuchet, "Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    cursor: hand;
 }
 
 .contentblock {
-	border:1px solid #ccc;
-	overflow: auto;
-	padding: 1em;
-	margin: 0px;
-	vertical-align: top;
+    /*background: #ddd;*/
+    /*	height: 400px;*/
+    overflow: auto; /* temporary removed, to make the select box work in Mozilla */
+    padding: 1px;
+    margin: 0px;
+    vertical-align: top;
 }
 
 .shortcuts {
-	float: right; 
-	text-align: right;
-	font-size: 1.1em;
+    float: right;
+    text-align: right;
+    /*font-size: x-small;*/
 }
 
-#options h2 {
-   margin:15px 0 0 0;
+#tab_options h2 {
+    margin: 15px 0 0 0;
 }
 
 h2 {
-	font-size: 1.2em;
-	color: gray;
-	margin-top: 0px;
-	padding-top: 0px;
-	padding-bottom: 0px;
-	margin-top: 0px;
+    font-size: 1.5em;
+    color: gray;
+    margin-top: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-top: 0px;
 }
 
 a:link, a:visited {
-	color: #1D3565; 
-	text-decoration: none;
+    color: #1D3565;
+    font-weight: bold;
+    text-decoration: none;
 }
 
 a:hover {
-	text-decoration: underline;
-}			
+    text-decoration: underline;
+}
 
-img { 
-	border: none;
+img {
+    border: none;
 }
 
 .indent {
-	margin-left: 40px;
+    margin-left: 40px;
 }
 
-label		{ cursor: pointer; }
+label {
+    cursor: pointer;
+}
 
 table {
-	border: none;
-	border-collapse: collapse;
-	margin: auto;
+    border: none;
+    width: 95%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+th {
+    background: #bbc;
+    color: #000;
+    font-size: medium;
 }
 
 th, td {
-	padding: 4px;
-	empty-cells: show;
-	background: #fff;
-	border: none;
-	vertical-align: top;
-	text-align: left;
+    padding: 4px;
+    empty-cells: show;
 }
 
-td a:link, td a:visited { 
-	text-decoration: underline;
-	color: black;
-	font-weight: normal;
+td {
+    background: #fff;
+    border: 1px solid #ddd;
+    font-size: medium;
+    vertical-align: top;
+    text-align: left;
 }
+
+td a:link, td a:visited {
+    text-decoration: underline;
+    color: black;
+    font-weight: normal;
+}
+
 td a:hover {
-	color: #1D3565;
-	text-decoration: underline;
+    color: #1D3565;
+    text-decoration: underline;
 }
 
 td.draft, td.future {
-	background: #ffe;
+    background: #ffe;
 }
 
 tr.highlighted td {
-	background: green;
+    background: green;
 }
 
 ul.nobullets {
-	list-style-type: none;
-	padding: 0;
-	margin: 0;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
 }
 
-form {
-		margin:0;
-		padding:0;
+input, textarea, select {
+    font: inherit;
 }
 
-.jsbuttonbar,
-#inputtitle,
-#body textarea,
-#body select,
-#more textarea,
-#more select {
-	margin: auto;
-	padding:0;
-	display: block;
-	width: 98%;
-    padding:3px;
-}
-
-#body textarea {
-	height: 250px;
-	margin-top: 4px;
-}
-#more textarea {
-	height: 300px;
-	margin-top: 4px;
-}
-
-.submitbuttons {
-	line-height: 2em;
-	margin: 8px;
-	position: fixed;
-	bottom: 0px;
-	background: #fff;
-	width:100%;
-	border-top: 1px dotted gray;
-}
-
-.submitbuttons input {
-	float: left;
-	width: 9em;
-	margin: 0 3px;
-	cursor:pointer;cursor:hand;
-}
-
-.submitbuttons span.autosavestatus {
-	display: block;
-	clear: both;
-	height: 2em;
-	margin: 0 3px;
-}
-
-div#preview {
-    overflow: auto;
-    height:330px;
-}
-
-#submitbuttons {
-    position:fixed;
-    top:10px;
-    right:10px;
-    background: rgba(20, 20, 20, 0.3);
-    padding:10px 15px;
-    border-radius:8px;
-    z-index:999;
-}
-
-#submitbuttons input {
-    background-color:#eee;
-    border:none;
-    padding:3px 15px;
-    cursor:pointer;cursor:hand;
-    border-radius:3px;
-}
-
-#submitbuttons #goSubmit {
-    background-color:#596D9D;
-    border:none;
-    color:#fff;
+input[name="title"], textarea[name="body"], textarea[name="more"]
+{
+    width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
 }

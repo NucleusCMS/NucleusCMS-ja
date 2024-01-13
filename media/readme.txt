@@ -1,17 +1,16 @@
-Nucleus Media ディレクトリ
+Nucleus Media Directory
 -----------------------
 
-アップロードされた画像等のファイルは、最終的にこのディレクトリに移動されます。
+Uploaded images will end up in the media directory.
 
+Subdirectories work as follows:
 
-サブディレクトリについて：
+* numeric (e.g. /media/1/)
 
-* 数字 (例 /media/1/)
+Media files for a certain member (directory name is the memberid)
 
-アップロードしたメンバーだけがファイルを使用できます。(ディレクトリ名はメンバーIDになります)
+* other directories (e.g. /media/common/)
 
-* 数字以外 (例 /media/common/)
+Global media collections that can be used by any member that is on a team. In order to create a new collection, simply create a new directory and assure write access is enabled for it.
 
-誰が使ってもいいファイルを保存しておく為のディレクトリ。
-ディレクトリを作ってパーミッションを777等にしておくだけで、新しいコレクションとして追加されます。
-
+PLEASE NOTE: The .htaccess file in this directory is intended to enhance security of your server by disallowing the running of scripts from the media folder. This will protect against rogue members, or external exploits, that rely on uploading script files to this folder for execution at a later time. Depending on the configuration of your web server, this code may not run as intended. it can be disabled by renaming the .htaccess file.

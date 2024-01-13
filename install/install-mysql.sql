@@ -34,7 +34,7 @@ CREATE TABLE `nucleus_blog` (
   `bconvertbreaks` tinyint(2)   NOT NULL default '1',
   `bdefcat`        int(11)               default NULL,
   `bnotifytype`    int(11)      NOT NULL default '15',
-  `ballowpast`     tinyint(2)   NOT NULL default '0',
+  `ballowpast`     tinyint(2)   NOT NULL default '1',
   `bincludesearch` tinyint(2)   NOT NULL default '0',
   `breqemail`      tinyint(2)   NOT NULL default '0',
   `bfuturepost`    tinyint(2)   NOT NULL default '0',
@@ -54,7 +54,7 @@ INSERT INTO `nucleus_blog` VALUES (
     '',                                 /* bnotify */
     'http://localhost:8080/nucleus/',   /* burl */
     '',                                 /* bupdate */
-    5,                                  /* bdefskin */
+    4,                                  /* bdefskin */
     0,                                  /* bpublic */
     1,                                  /* bconvertbreaks */
     1,                                  /* bdefcat */
@@ -98,26 +98,27 @@ CREATE TABLE `nucleus_comment` (
 ) ENGINE=MyISAM;
 
 CREATE TABLE `nucleus_config` (
-  `name`  varchar(50)  NOT NULL default '',
-  `value` varchar(128)          default NULL,
+  `name`  varchar(200)  NOT NULL default '',
+  `value` varchar(255)          default NULL,
   PRIMARY KEY  (`name`)
 ) ENGINE=MyISAM;
 
 INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('DefaultBlog',       '1'),
     ('AdminEmail',        'example@example.org'),
-    ('IndexURL',          'http://localhost:8080/nucleus/'),
+    ('IndexURL',          'http://localhost/'),
+    ('BaseURL',           '/'),
     ('Language',          'japanese-utf8'),
     ('SessionCookie',     ''),
     ('AllowMemberCreate', ''),
     ('AllowMemberMail',   '1'),
     ('SiteName',          'My Nucleus CMS'),
-    ('AdminURL',          'http://localhost:8080/nucleus/nucleus/'),
+    ('AdminURL',          'http://localhost/nucleus/'),
     ('NewMemberCanLogon', '1'),
     ('DisableSite',       ''),
-    ('DisableSiteURL',    'http://www.this-page-intentionally-left-blank.org/'),
+    ('DisableSiteURL',    ''),
     ('LastVisit',         ''),
-    ('MediaURL',          'http://localhost:8080/nucleus/media/'),
+    ('MediaURL',          'http://localhost/media/'),
     ('AllowedTypes',      'jpg,jpeg,gif,mpg,mpeg,avi,mov,mp3,swf,png'),
     ('AllowLoginEdit',    ''),
     ('AllowUpload',       '1'),
@@ -129,23 +130,26 @@ INSERT INTO `nucleus_config` (`name`, `value`) VALUES
     ('MediaPrefix',       '1'),
     ('MaxUploadSize',     '3145728'),
     ('NonmemberMail',     ''),
-    ('PluginURL',         'http://localhost:8080/nucleus/nucleus/plugins/'),
+    ('PluginURL',         'http://localhost/nucleus/plugins/'),
     ('ProtectMemNames',   '1'),
-    ('BaseSkin',          '5'),
-    ('SkinsURL',          'http://localhost:8080/nucleus/skins/'),
-    ('ActionURL',         'http://localhost:8080/nucleus/action.php'),
+    ('BaseSkin',          '4'),
+    ('SkinsURL',          'http://localhost/skins/'),
+    ('ActionURL',         'http://localhost/action.php'),
     ('URLMode',           'normal'),
     ('DatabaseName',      'Nucleus'),
     ('DatabaseVersion',   '380'),
     ('DebugVars',         '0'),
     ('DefaultListSize',   '10'),
+    ('DisableRSS',        '1'),
+    ('ENABLE_PLUGIN_ADMIN_V1', '1'),
+    ('ENABLE_PLUGIN_UPDATE_CHECK', '1'),
     ('AdminCSS',          'contemporary_jp');
 
 CREATE TABLE `nucleus_item` (
   `inumber`   int(11)      NOT NULL auto_increment,
-  `ititle`    varchar(160) NOT NULL default '',
-  `ibody`     mediumtext         NOT NULL,
-  `imore`     mediumtext         NOT NULL,
+  `ititle`    varchar(160) NOT NULL,
+  `ibody`     mediumtext   NOT NULL,
+  `imore`     mediumtext   NOT NULL,
   `iblog`     int(11)      NOT NULL default '0',
   `iauthor`   int(11)      NOT NULL default '0',
   `itime`     datetime     NOT NULL default '00-01-01 00:00:00',
@@ -183,8 +187,10 @@ CREATE TABLE `nucleus_member` (
   `mautosave`  tinyint(2)   NOT NULL default '0',
   `mhalt`      tinyint(2)   NOT NULL default '0',
   `mhalt_reason`  varchar(100) NOT NULL default '',
+  `mtoken`     varchar(100)          default NULL,
   PRIMARY KEY         (`mnumber`),
-  UNIQUE  KEY `mname` (`mname`)
+  UNIQUE  KEY `mname` (`mname`),
+  INDEX `mhalt` (`mhalt`)
 ) ENGINE=MyISAM;
 
 INSERT INTO `nucleus_member` (
@@ -208,6 +214,14 @@ INSERT INTO `nucleus_member` (
     '',                                 /* deflang */
     1                                   /* mautosave */
 );
+
+CREATE TABLE `nucleus_member_option` (
+  `omember`  int(11)      NOT NULL,
+  `ocontext` varchar(20)  NOT NULL default '',
+  `name`     varchar(100) NOT NULL,
+  `value`    varchar(255) NOT NULL default '',
+  PRIMARY KEY (`omember`, `name`, `ocontext`)
+) ENGINE=MyISAM;
 
 CREATE TABLE `nucleus_plugin` (
   `pid`    int(11)     NOT NULL auto_increment,
@@ -233,7 +247,7 @@ CREATE TABLE `nucleus_plugin_option` (
 CREATE TABLE `nucleus_plugin_option_desc` (
   `oid`      int(11)     NOT NULL auto_increment,
   `opid`     int(11)     NOT NULL default '0',
-  `oname`    varchar(50) NOT NULL default '',
+  `oname`    varchar(200) NOT NULL default '',
   `ocontext` varchar(20) NOT NULL default '',
   `odesc`    varchar(255)         default NULL,
   `otype`    varchar(20)          default NULL,
@@ -259,7 +273,7 @@ CREATE TABLE `nucleus_skin` (
   `stype`    varchar(20) NOT NULL default '',
   `scontent` text        NOT NULL,
   `spartstype`  varchar(20) NOT NULL default 'parts' ,
-  PRIMARY KEY  (`sdesc`,`stype`)
+  PRIMARY KEY  (`sdesc`,`stype`,`spartstype`)
 ) ENGINE=MyISAM;
 
 CREATE TABLE `nucleus_skin_desc` (
@@ -275,15 +289,15 @@ CREATE TABLE `nucleus_skin_desc` (
 
 CREATE TABLE `nucleus_systemlog` (
   `logyear`        SMALLINT     NOT NULL,
-  `logid`          BIGINT       NOT NULL,
+  `logid`          BIGINT       NOT NULL AUTO_INCREMENT,
   `logtype`        varchar(30)  NOT NULL,
   `subtype`        varchar(30)  NOT NULL default '',
   `mnumber`        varchar(30)  NOT NULL default '0',
   `timestamp_utc`  datetime     NOT NULL,
-  `message`        MEDIUMTEXT   NOT NULL,
+  `message`        MEDIUMTEXT   NOT NULL default '',
   `message_hash`   varchar(64)  NOT NULL,
-   PRIMARY KEY  (`logyear`, `logid`),
-   INDEX `logtype` (`logtype`)
+  PRIMARY KEY  (`logyear`, `logid`),
+  INDEX `logtype` (`logtype`)
 ) ENGINE=MyISAM;
 
 CREATE TABLE `nucleus_team` (

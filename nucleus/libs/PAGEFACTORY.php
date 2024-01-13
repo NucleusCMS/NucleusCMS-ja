@@ -45,11 +45,11 @@ class PAGEFACTORY extends BaseActions
         parent::__construct();
 
         global $manager;
-        $this->blog = & $manager->getBlog($blogid);
+        $this->blog = &$manager->getBlog($blogid);
 
         // TODO: move the definition of actions to the createXForm
         // methods
-        $this->actions = array(
+        $this->actions = [
             'actionurl',
             'title',
             'body',
@@ -84,33 +84,33 @@ class PAGEFACTORY extends BaseActions
             'inctabindex',
             'copytabindex',
             'tabindex',
-            'settabindex'
-        );
+            'settabindex',
+        ];
 
         // TODO: maybe add 'skin' later on?
         // TODO: maybe add other pages from admin area
-        $this->allowedTypes = array('bookmarklet', 'admin');
+        $this->allowedTypes = ['bookmarklet', 'admin'];
     }
 
     /**
      * creates a "add item" form for a given type of page
      *
-     * @param type
+     * @param   type
      *        'admin' or 'bookmarklet'
      */
-    public function createAddForm($type, $contents = array())
+    public function createAddForm($type, $contents = [])
     {
-        if (!in_array($type, $this->allowedTypes)) {
+        if ( ! in_array($type, $this->allowedTypes)) {
             return;
         }
         $this->type   = $type;
         $this->method = 'add';
 
         global $manager;
-        $param = array(
+        $param = [
             'contents' => &$contents,
-            'blog'     => &$this->blog
-        );
+            'blog'     => &$this->blog,
+        ];
         $manager->notify('PreAddItemForm', $param);
 
         $this->createForm($contents);
@@ -119,16 +119,16 @@ class PAGEFACTORY extends BaseActions
     /**
      * creates a "add item" form for a given type of page
      *
-     * @param type
-     *        'admin' or 'bookmarklet'
-     * @param contents
-     *        An associative array
+     * @param   type
+     *            'admin' or 'bookmarklet'
+     * @param   contents
+     *            An associative array
      *            'author' => author
      *            '' =>
      */
     public function createEditForm($type, $contents)
     {
-        if (!in_array($type, $this->allowedTypes)) {
+        if ( ! in_array($type, $this->allowedTypes)) {
             return;
         }
         $this->type   = $type;
@@ -148,7 +148,8 @@ class PAGEFACTORY extends BaseActions
         $template = $this->getTemplateFor($this->type);
 
         // use the PARSER engine to parse that template
-        $parser = new PARSER($this->actions, $this);
+        $parser        = new PARSER($this->actions, $this);
+        $parser->delim = '{%,%}';
         $parser->parse($template);
     }
 
@@ -161,59 +162,89 @@ class PAGEFACTORY extends BaseActions
 
         $filename = "{$DIR_LIBS}include/{$this->type}-{$this->method}.template";
 
-        if (!is_file($filename)) {
+        if ( ! is_file($filename)) {
             return '';
         }
 
         $contents = file_get_contents($filename);
 
-        if (($contents !== false) && preg_match("#^(admin|bookmarklet)$#", $this->type) && preg_match(
-            "#^(add|edit)$#",
-            $this->method,
-            $m2
-        )) {
+        if ((false !== $contents)
+            && preg_match("#^(admin|bookmarklet)$#", $this->type)
+            && preg_match(
+                "#^(add|edit)$#",
+                $this->method,
+                $m2
+            )) {
             $this->replace_date_time_picker($contents);
         }
 
-        return ($contents !== false ? $contents : '');
+        return (false !== $contents ? $contents : '');
     }
 
     private function replace_date_time_picker(&$data)
     {
-        $items = array();
+        $items = [];
         $spa   = explode(',', _EDIT_DATE_FORMAT_SEPARATOR);
-        foreach (array('itemtime', 'currenttime') as $stime) {
-            $s = array();
+        foreach (['itemtime', 'currenttime'] as $stime) {
+            $s = [];
             foreach (explode(',', _EDIT_DATE_FORMAT) as $key => $value) {
+                $s[] = '<span style="white-space: nowrap;">';
                 switch ($value) {
                     case 'year':
-                        $s[] = '<input id="inputyear" name="year" tabindex="<%tabindex()%>" size="4" value="<%' . $stime . '(year)%>" onchange="document.forms[0].act_future.checked=true;" />';
+                        $s[]
+                            = '<input id="inputyear" name="year" tabindex="{%tabindex()%}" size="4" value="{%'
+                              . $stime
+                              . '(year)%}" onchange="document.forms[0].act_future.checked=true;" />';
                         break;
                     case 'month':
-                        $s[] = '<input id="inputmonth" name="month" tabindex="<%tabindex()%>" size="2" value="<%' . $stime . '(mon)%>" onchange="document.forms[0].act_future.checked=true;" />';
+                        $s[]
+                            = '<input id="inputmonth" name="month" tabindex="{%tabindex()%}" size="2" value="{%'
+                              . $stime
+                              . '(mon)%}" onchange="document.forms[0].act_future.checked=true;" />';
                         break;
                     case 'day':
-                        $s[] = '<input id="inputday" name="day" tabindex="<%tabindex()%>" size="2" value="<%' . $stime . '(mday)%>" onchange="document.forms[0].act_future.checked=true;" />';
+                        $s[]
+                            = '<input id="inputday" name="day" tabindex="{%tabindex()%}" size="2" value="{%'
+                              . $stime
+                              . '(mday)%}" onchange="document.forms[0].act_future.checked=true;" />';
                         break;
                 }
                 if (isset($spa[$key])) {
                     $s[] = $spa[$key];
                 }
+                $s[] = '</span>';
             }
-            $s[] = '<input id="inputhour" name="hour" tabindex="<%tabindex()%>" size="2" value="<%' . $stime . '(hours)%>" onchange="document.forms[0].act_future.checked=true;" />';
+            $s[] = '<div style="display: inline-block;"><span style="white-space: nowrap;">';
+            $s[] = '<input id="inputhour" name="hour" tabindex="{%tabindex()%}" size="2" value="{%'
+                   . $stime
+                   . '(hours)%}" onchange="document.forms[0].act_future.checked=true;" />';
             $key = 3;
             if (isset($spa[$key])) {
                 $s[] = $spa[$key];
             }
-            $s[] = '<input id="inputminutes" name="minutes" tabindex="<%tabindex()%>" size="2" value="<%' . $stime . '(minutes)%>" onchange="document.forms[0].act_future.checked=true;" />';
+            $s[] = '</span>';
+
+            $s[] = '<span style="white-space: nowrap;">';
+            $s[] = '<input id="inputminutes" name="minutes" tabindex="{%tabindex()%}" size="2" value="{%'
+                   . $stime
+                   . '(minutes)%}" onchange="document.forms[0].act_future.checked=true;" />';
             $key = 4;
             if (isset($spa[$key])) {
                 $s[] = $spa[$key];
             }
-            $s[] = '<br />' . hsc(_ITEM_ADDEDITTEMPLATE_FORMAT) . hsc(_EDIT_DATE_FORMAT_DESC);
+            $s[] = '</span></div>';
 
-            $s[] = '<input tabindex="<%tabindex()%>" type="button" value="' . _ADD_DATEINPUTNOW . '" onclick = "document.forms[0].act_future.checked=true;  return edit_form_change_date_now();" />';
-            $s[] = '<input tabindex="<%tabindex()%>" type="button" value="' . _ADD_DATEINPUTRESET . '" onclick = " return date_' . $stime . '_reset();" />';
+            $s[] = '<br />' . hsc(_ITEM_ADDEDITTEMPLATE_FORMAT)
+                   . hsc(_EDIT_DATE_FORMAT_DESC);
+
+            $s[] = '<div style="display: inline-block;">';
+            $s[] = '<input tabindex="{%tabindex()%}" type="button" value="'
+                   . _ADD_DATEINPUTNOW
+                   . '" onclick = "document.forms[0].act_future.checked=true;  return edit_form_change_date_now();" />';
+            $s[] = '<input tabindex="{%tabindex()%}" type="button" value="'
+                   . _ADD_DATEINPUTRESET . '" onclick = " return date_' . $stime
+                   . '_reset();" />';
+            $s[] = '</div>';
 
             $items[$stime] = &$s;
             unset($s);
@@ -222,24 +253,37 @@ class PAGEFACTORY extends BaseActions
         foreach ($items as $key => $value) {
             $items[$key] = implode("\n\t\t\t\t", $value);
         }
-        $items['itemtime'] = str_replace('act_future.', 'act_changedate.', $items['itemtime']);
+        $items['itemtime'] = str_replace(
+            'act_future.',
+            'act_changedate.',
+            $items['itemtime']
+        );
 
-        $data = str_replace('<%date_time_picker%>', $items['currenttime'], $data);
-        $data = str_replace('<%date_time_picker(currenttime)%>', $items['currenttime'], $data);
-        $data = str_replace('<%date_time_picker(itemtime)%>', $items['itemtime'], $data);
+        $data = strtr($data, [
+            '{%date_time_picker%}'              => $items['currenttime'],
+            '{%date_time_picker(currenttime)%}' => $items['currenttime'],
+            '{%date_time_picker(itemtime)%}'    => $items['itemtime'],
+        ]);
     }
 
     // create category dropdown box
     public function parse_categories($startidx = 0)
     {
-        if (array_key_exists('catid', $this->variables) && $this->variables['catid']) {
+        if (array_key_exists('catid', $this->variables)
+            && $this->variables['catid']) {
             $catid = $this->variables['catid'];
         }                // on edit item
         else {
             $catid = $this->blog->getDefaultCategory();
         }        // on add item
 
-        ADMIN::selectBlogCategory('catid', $catid, $startidx, 1, $this->blog->getID());
+        ADMIN::selectBlogCategory(
+            'catid',
+            $catid,
+            $startidx,
+            1,
+            $this->blog->getID()
+        );
     }
 
     public function parse_blogid()
@@ -254,7 +298,8 @@ class PAGEFACTORY extends BaseActions
 
     public function parse_bloglink()
     {
-        echo '<a href="' . hsc($this->blog->getRealURL()) . '">' . hsc($this->blog->getName()) . '</a>';
+        echo '<a href="' . hsc($this->blog->getRealURL()) . '">'
+             . hsc($this->blog->getName()) . '</a>';
     }
 
     public function parse_authorname()
@@ -285,14 +330,15 @@ class PAGEFACTORY extends BaseActions
 
     public function parse_ifitemproperty($name, $value = 1)
     {
-        $this->_addIfCondition((isset($this->variables[$name]) && $this->variables[$name] == $value));
+        $this->_addIfCondition((isset($this->variables[$name])
+                                && $this->variables[$name] == $value));
     }
 
     public function parse_iftext($name, $value)
     {
         $flag = false;
         if (defined($name) && isset($value)) {
-            $flag = (strcasecmp(constant($name), $value) == 0);
+            $flag = (0 == strcasecmp(constant($name), $value));
         }
         $this->_addIfCondition($flag);
     }
@@ -325,7 +371,8 @@ class PAGEFACTORY extends BaseActions
     // some init stuff for all forms
     public function parse_init()
     {
-        $authorid = ($this->method == 'edit') ? $this->variables['authorid'] : '';
+        $authorid = ('edit' == $this->method) ? $this->variables['authorid']
+            : '';
         $this->blog->insertJavaScriptInfo($authorid);
     }
 
@@ -336,9 +383,9 @@ class PAGEFACTORY extends BaseActions
 
         $extrahead = '';
 
-        $param = array(
-            'extrahead' => &$extrahead
-        );
+        $param = [
+            'extrahead' => &$extrahead,
+        ];
         $manager->notify('BookmarkletExtraHead', $param);
 
         echo $extrahead;
@@ -348,7 +395,7 @@ class PAGEFACTORY extends BaseActions
     public function parse_text($which)
     {
         if (defined($which)) {
-            echo strval(constant($which));
+            echo (string) (constant($which));
         } else {
             echo $which;    // this way we see where definitions are missing
         }
@@ -356,7 +403,7 @@ class PAGEFACTORY extends BaseActions
 
     public function parse_contents($which)
     {
-        if (!isset($this->variables[$which])) {
+        if ( ! isset($this->variables[$which])) {
             $this->variables[$which] = '';
         }
         echo hsc($this->variables[$which]);
@@ -364,7 +411,7 @@ class PAGEFACTORY extends BaseActions
 
     public function parse_checkedonval($value, $name)
     {
-        if (!isset($this->variables[$name])) {
+        if ( ! isset($this->variables[$name])) {
             $this->variables[$name] = '';
         }
         if ($this->variables[$name] == $value) {
@@ -374,10 +421,10 @@ class PAGEFACTORY extends BaseActions
 
     public function parse_checked_valtext($name, $value)
     {
-        if (!isset($this->variables[$name])) {
+        if ( ! isset($this->variables[$name])) {
             $this->variables[$name] = '';
         }
-        if (strcasecmp($this->variables[$name], $value) == 0) {
+        if (0 == strcasecmp($this->variables[$name], $value)) {
             echo "checked='checked'";
         }
     }
@@ -390,7 +437,7 @@ class PAGEFACTORY extends BaseActions
         $attributes = " name=\"{$which}\"";
         $attributes .= " id=\"input{$which}\"";
 
-        if ($CONF['DisableJsTools'] != 1) {
+        if (1 != $CONF['DisableJsTools']) {
             $attributes .= ' onclick="storeCaret(this);"';
             $attributes .= ' onselect="storeCaret(this);"';
             if ($member->getAutosave()) {
@@ -399,7 +446,7 @@ class PAGEFACTORY extends BaseActions
                 $attributes .= " onkeyup=\"storeCaret(this); updPreview('{$which}');\"";
             }
         } else {
-            if ($CONF['DisableJsTools'] == 0) {
+            if (0 == $CONF['DisableJsTools']) {
                 $attributes .= ' onkeypress="shortCuts();"';
             }
             if ($member->getAutosave()) {
@@ -417,17 +464,53 @@ class PAGEFACTORY extends BaseActions
             case "0":
                 echo '<div class="jsbuttonbar">';
 
-                $this->_jsbutton('cut', 'cutThis()', _ADD_CUT_TT . " (Ctrl + X)");
-                $this->_jsbutton('copy', 'copyThis()', _ADD_COPY_TT . " (Ctrl + C)");
-                $this->_jsbutton('paste', 'pasteThis()', _ADD_PASTE_TT . " (Ctrl + V)");
+                $this->_jsbutton(
+                    'cut',
+                    'cutThis()',
+                    _ADD_CUT_TT . " (Ctrl + X)"
+                );
+                $this->_jsbutton(
+                    'copy',
+                    'copyThis()',
+                    _ADD_COPY_TT . " (Ctrl + C)"
+                );
+                $this->_jsbutton(
+                    'paste',
+                    'pasteThis()',
+                    _ADD_PASTE_TT . " (Ctrl + V)"
+                );
                 $this->_jsbuttonspacer();
-                $this->_jsbutton('bold', "boldThis()", _ADD_BOLD_TT . " (Ctrl + Shift + B)");
-                $this->_jsbutton('italic', "italicThis()", _ADD_ITALIC_TT . " (Ctrl + Shift + I)");
-                $this->_jsbutton('link', "ahrefThis()", _ADD_HREF_TT . " (Ctrl + Shift + A)");
+                $this->_jsbutton(
+                    'bold',
+                    "boldThis()",
+                    _ADD_BOLD_TT . " (Ctrl + Shift + B)"
+                );
+                $this->_jsbutton(
+                    'italic',
+                    "italicThis()",
+                    _ADD_ITALIC_TT . " (Ctrl + Shift + I)"
+                );
+                $this->_jsbutton(
+                    'link',
+                    "ahrefThis()",
+                    _ADD_HREF_TT . " (Ctrl + Shift + A)"
+                );
                 $this->_jsbuttonspacer();
-                $this->_jsbutton('alignleft', "alignleftThis()", _ADD_ALIGNLEFT_TT);
-                $this->_jsbutton('alignright', "alignrightThis()", _ADD_ALIGNRIGHT_TT);
-                $this->_jsbutton('aligncenter', "aligncenterThis()", _ADD_ALIGNCENTER_TT);
+                $this->_jsbutton(
+                    'alignleft',
+                    "alignleftThis()",
+                    _ADD_ALIGNLEFT_TT
+                );
+                $this->_jsbutton(
+                    'alignright',
+                    "alignrightThis()",
+                    _ADD_ALIGNRIGHT_TT
+                );
+                $this->_jsbutton(
+                    'aligncenter',
+                    "aligncenterThis()",
+                    _ADD_ALIGNCENTER_TT
+                );
                 $this->_jsbuttonspacer();
                 $this->_jsbutton('left', "leftThis()", _ADD_LEFT_TT);
                 $this->_jsbutton('right', "rightThis()", _ADD_RIGHT_TT);
@@ -438,10 +521,18 @@ class PAGEFACTORY extends BaseActions
                     foreach ($btns as $button) {
                         switch ($button) {
                             case "media":
-                                $this->_jsbutton('media', "addMedia()", _ADD_MEDIA_TT . " (Ctrl + Shift + M)");
+                                $this->_jsbutton(
+                                    'media',
+                                    "addMedia()",
+                                    _ADD_MEDIA_TT . " (Ctrl + Shift + M)"
+                                );
                                 break;
                             case "preview":
-                                $this->_jsbutton('preview', "showedit()", _ADD_PREVIEW_TT);
+                                $this->_jsbutton(
+                                    'preview',
+                                    "showedit()",
+                                    _ADD_PREVIEW_TT
+                                );
                                 break;
                         }
                     }
@@ -457,9 +548,21 @@ class PAGEFACTORY extends BaseActions
                 $this->_jsbutton('italic', "italicThis()", _ADD_ITALIC_TT);
                 $this->_jsbutton('link', "ahrefThis()", _ADD_HREF_TT);
                 $this->_jsbuttonspacer();
-                $this->_jsbutton('alignleft', "alignleftThis()", _ADD_ALIGNLEFT_TT);
-                $this->_jsbutton('alignright', "alignrightThis()", _ADD_ALIGNRIGHT_TT);
-                $this->_jsbutton('aligncenter', "aligncenterThis()", _ADD_ALIGNCENTER_TT);
+                $this->_jsbutton(
+                    'alignleft',
+                    "alignleftThis()",
+                    _ADD_ALIGNLEFT_TT
+                );
+                $this->_jsbutton(
+                    'alignright',
+                    "alignrightThis()",
+                    _ADD_ALIGNRIGHT_TT
+                );
+                $this->_jsbutton(
+                    'aligncenter',
+                    "aligncenterThis()",
+                    _ADD_ALIGNCENTER_TT
+                );
                 $this->_jsbuttonspacer();
                 $this->_jsbutton('left', "leftThis()", _ADD_LEFT_TT);
                 $this->_jsbutton('right', "rightThis()", _ADD_RIGHT_TT);
@@ -470,7 +573,11 @@ class PAGEFACTORY extends BaseActions
                     foreach ($btns as $button) {
                         switch ($button) {
                             case "media":
-                                $this->_jsbutton('media', "addMedia()", _ADD_MEDIA_TT);
+                                $this->_jsbutton(
+                                    'media',
+                                    "addMedia()",
+                                    _ADD_MEDIA_TT
+                                );
                                 break;
                         }
                     }
@@ -491,17 +598,17 @@ class PAGEFACTORY extends BaseActions
 
         switch ($this->method) {
             case 'add':
-                $param = array(
-                    'blog' => &$this->blog
-                );
+                $param = [
+                    'blog' => &$this->blog,
+                ];
                 $manager->notify('AddItemFormExtras', $param);
                 break;
             case 'edit':
-                $param = array(
+                $param = [
                     'variables' => $this->variables,
                     'blog'      => &$this->blog,
-                    'itemid'    => $this->variables['itemid']
-                );
+                    'itemid'    => $this->variables['itemid'],
+                ];
                 $manager->notify('EditItemFormExtras', $param);
                 break;
         }
@@ -509,6 +616,7 @@ class PAGEFACTORY extends BaseActions
 
     /**
      * Adds the itemOptions of a plugin to a page
+     *
      * @author TeRanEX
      */
     public function parse_itemoptions()
@@ -528,15 +636,15 @@ class PAGEFACTORY extends BaseActions
         global $manager;
         $name  = 'tabindex' . $key;
         $value = 0;
-        if (is_string($inc) && strlen($inc) == 0) {
+        if (is_string($inc) && 0 == strlen($inc)) {
             $inc = 1;
         }
-        $inc = intval($inc);
+        $inc = (int) $inc;
         if (isset($manager->parserPrefs[$name])) {
-            $value = intval($manager->getParserProperty($name));
+            $value = (int) ($manager->getParserProperty($name));
         }
         printf("%d", $value);
-        if ($inc !== 0) {
+        if (0 !== $inc) {
             $manager->setParserProperty($name, $value + $inc);
         }
     }
@@ -544,11 +652,11 @@ class PAGEFACTORY extends BaseActions
     public function parse_settabindex($baseindex, $inc = 0, $key = "")
     {
         global $manager;
-        if (is_string($inc) && strlen($inc) == 0) {
+        if (is_string($inc) && 0 == strlen($inc)) {
             $inc = 1;
         }
         $name  = 'tabindex' . $key;
-        $value = intval($baseindex) + intval($inc);
+        $value = (int) $baseindex + (int) $inc;
         $manager->setParserProperty($name, $value);
     }
 
@@ -556,13 +664,13 @@ class PAGEFACTORY extends BaseActions
     {
         global $manager;
         $namefrom = 'tabindex' . $keyfrom;
-        if (is_string($keyto) && strlen($keyto) == 0) {
+        if (is_string($keyto) && 0 == strlen($keyto)) {
             $keyto = "0";
         }
         $nameto = 'tabindex' . $keyto;
         $value  = "";
         if (isset($manager->parserPrefs[$namefrom])) {
-            $value = intval($manager->getParserProperty($namefrom));
+            $value = (int) ($manager->getParserProperty($namefrom));
         }
         $manager->setParserProperty($nameto, $value);
     }
@@ -570,16 +678,16 @@ class PAGEFACTORY extends BaseActions
     public function parse_inctabindex($inc = 1, $key = "")
     {
         global $manager;
-        if (is_string($inc) && strlen($inc) == 0) {
+        if (is_string($inc) && 0 == strlen($inc)) {
             $inc = 1;
         }
         $name  = 'tabindex' . $key;
         $value = 0;
-        $inc   = intval($inc);
+        $inc   = (int) $inc;
         if (isset($manager->parserPrefs[$name])) {
-            $value = intval($manager->getParserProperty($name));
+            $value = (int) ($manager->getParserProperty($name));
         }
-        if ($inc !== 0) {
+        if (0 !== $inc) {
             $manager->setParserProperty($name, $value + $inc);
         }
     }
@@ -593,14 +701,36 @@ class PAGEFACTORY extends BaseActions
         <span class="jsbutton"
               onmouseover="BtnHighlight(this);"
               onmouseout="BtnNormal(this);"
-              onclick="<?php echo $code ?>">
-                <img src="images/button-<?php echo $type ?>.gif" alt="<?php echo $tooltip ?>"
-                     title="<?php echo $tooltip ?>" width="16" height="16"/>
+              onclick="<?php
+                echo $code ?>">
+                <img src="images/button-<?php
+                echo $type ?>.gif" alt="<?php
+                echo $tooltip ?>" title="<?php
+                echo $tooltip ?>" width="16" height="16"/>
             </span>
-    <?php }
+        <?php
+    }
 
     public function _jsbuttonspacer()
     {
         echo '<span class="jsbuttonspacer">&nbsp;</span>';
+    }
+
+    public static function getFormatedText(&$text, $format)
+    {
+        switch ($format) {
+            case 'xml':
+                return stringToXML($text);
+                break;
+            case 'attribute':
+                return stringToAttribute($text);
+                break;
+            case 'raw':
+                return $text;
+                break;
+            default:
+                return hsc(strip_tags($text));
+                break;
+        }
     }
 }

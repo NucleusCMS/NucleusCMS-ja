@@ -41,13 +41,13 @@ function preview(id, value) {
 
 function showedit() {
 	prevval = document.getElementById('edit').style.display;
-	if (prevval == "block")
+	if (prevval === "table-row")
 		newval = "none";
 	else
-		newval = "block";
+		newval = "table-row";
 	document.getElementById('edit').style.display = newval;
 
-	if (newval == "block")
+	if (newval === "table-row")
 		updAllPreviews();
 }
 
@@ -61,7 +61,7 @@ function isEditVisible() {
 	var editform = document.getElementById('edit');
 	if (!editform) return true;
 	var prevval = editform.style.display;
-	return (prevval == "none") ? false : true;
+	return (prevval != "none");
 }
 
 function updPreview(id) {
@@ -149,7 +149,7 @@ function setMediaPopupURL(url) {
 
 function includeImage(collection, filename, type, width, height) {
 	if (isCaretEmpty()) {
-		text = prompt("Text to display ?", filename);
+		text = prompt("Text to display ?",filename);
 	} else {
 		text = getCaretText();
 	}
@@ -181,7 +181,7 @@ function includeImage(collection, filename, type, width, height) {
 
 function includeOtherMedia(collection, filename) {
 	if (isCaretEmpty()) {
-		text = prompt("Text to display ?", filename);
+		text = prompt("Text to display ?",filename);
 	} else {
 		text = getCaretText();
 	}
@@ -209,8 +209,12 @@ function checkSubmit() {
 		submitcount++;
 		return true;
 	} else {
-		return false;
-	}
+        if (document.documentElement.lang === 'ja') {
+            return window.confirm("もう一度送信しますか ?");
+        } else {
+            return window.confirm("Would you like to retry submitting the form?");
+        }
+    }
 }
 
 
@@ -219,13 +223,11 @@ function checkSubmit() {
 // http://www.faqts.com/knowledge_base/view.phtml/aid/1052/fid/130
 
 // stores the caret
-var lastSelected, lastCaretPos;
 function storeCaret (textEl) {
 
 	// store caret
-	if (textEl.createTextRange) 
-		//textEl.caretPos = document.selection.createRange().duplicate();
-		lastCaretPos = document.selection.createRange().duplicate();
+	if (textEl.createTextRange)
+		textEl.caretPos = document.selection.createRange().duplicate();
 
 	// also store lastselectedelement
 	lastSelected = textEl;
@@ -235,17 +237,17 @@ function storeCaret (textEl) {
 	scrollTop = textEl.scrollTop;
 }
 
-//var lastSelected;
+var lastSelected;
 
-// inserts text at caret (overwriting selection)
+ // inserts text at caret (overwriting selection)
 function insertAtCaret (text) {
 	var textEl = lastSelected;
 	var new_positon = -1;
 	if (textEl && (typeof textEl.selectionEnd == 'number')) {
 		new_positon = textEl.selectionEnd + text.length;
 	}
-	if (textEl && textEl.createTextRange && lastCaretPos) {
-		var caretPos = lastCaretPos;
+	if (textEl && textEl.createTextRange && textEl.caretPos) {
+		var caretPos = textEl.caretPos;
 		caretPos.text = caretPos.text.charAt(caretPos.text.length - 1) == ' ' ? text + ' ' : text;
 	} else if (!document.all && document.getElementById) {
 		mozReplace(document.getElementById('input' + nonie_FormType), text);
@@ -272,7 +274,7 @@ function insertAtCaret (text) {
 	}
 }
 
-// inserts a tag around the selected text
+ // inserts a tag around the selected text
 function insertAroundCaret (textpre, textpost) {
 	var textEl = lastSelected;
 	var start_positon = -1;
@@ -286,8 +288,8 @@ function insertAroundCaret (textpre, textpost) {
 			end_positon = textEl.selectionEnd + textpre.length + textpost.length;
 		}
 	}
-	if (textEl && textEl.createTextRange && lastCaretPos) {
-		var caretPos = lastCaretPos;
+	if (textEl && textEl.createTextRange && textEl.caretPos) {
+		var caretPos = textEl.caretPos;
 		caretPos.text = textpre + caretPos.text + textpost;
 	} else if (!document.all && document.getElementById) {
 		mozWrap(document.getElementById('input' + nonie_FormType), textpre, textpost);
@@ -347,12 +349,12 @@ function getCaretText() {
 	if (!document.all && document.getElementById)
 		return mozSelectedText();
 	else
-		return lastCaretPos.text;
+		return lastSelected.caretPos.text;
 }
 
 function isCaretEmpty() {
-	if (lastSelected && lastSelected.createTextRange && lastCaretPos)
-		return (lastCaretPos.text == '');
+	if (lastSelected && lastSelected.createTextRange && lastSelected.caretPos)
+		return (lastSelected.caretPos.text == '');
 	else if (!document.all && document.getElementById)
 		return (mozSelectedText() == '');
 	else

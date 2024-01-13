@@ -17,6 +17,8 @@
 
 /**
  * A class used to encapsulate a list of some sort in a batch selection
+ *
+ * @property  type
  */
 class BATCH extends ENCAPSULATE
 {
@@ -32,9 +34,9 @@ class BATCH extends ENCAPSULATE
         ?>
         <form method="post" action="index.php">
         <?php
-// TODO: get a list op operations above the list too
-// (be careful not to use the same names for the select...)
-//        $this->showOperationList();
+        // TODO: get a list op operations above the list too
+        // (be careful not to use the same names for the select...)
+        //        $this->showOperationList();
     }
 
     public function showFoot()
@@ -50,41 +52,43 @@ class BATCH extends ENCAPSULATE
         global $manager;
         ?>
         <div class="batchoperations">
-            <?php echo _BATCH_WITH_SEL ?>
+            <?php
+            echo _BATCH_WITH_SEL ?>
             <select name="batchaction">
-                <?php $options = array();
+                <?php
+                $options = [];
         switch ($this->type) {
             case 'item':
-                $options = array(
+                $options = [
                     'delete' => _BATCH_ITEM_DELETE,
-                    'move'   => _BATCH_ITEM_MOVE
-                );
+                    'move'   => _BATCH_ITEM_MOVE,
+                ];
                 break;
             case 'member':
-                $options = array(
+                $options = [
                     'delete'     => _BATCH_MEMBER_DELETE,
                     'setadmin'   => _BATCH_MEMBER_SET_ADM,
-                    'unsetadmin' => _BATCH_MEMBER_UNSET_ADM
-                );
+                    'unsetadmin' => _BATCH_MEMBER_UNSET_ADM,
+                ];
                 break;
             case 'team':
-                $options = array(
+                $options = [
                     'delete'     => _BATCH_TEAM_DELETE,
                     'setadmin'   => _BATCH_TEAM_SET_ADM,
                     'unsetadmin' => _BATCH_TEAM_UNSET_ADM,
-                );
+                ];
                 break;
             case 'category':
-                $options = array(
+                $options = [
                     'change_corder' => _BATCH_CAT_CAHANGE_ORDER,
                     'delete'        => _BATCH_CAT_DELETE,
                     'move'          => _BATCH_CAT_MOVE,
-                );
+                ];
                 break;
             case 'comment':
-                $options = array(
+                $options = [
                     'delete' => _BATCH_COMMENT_DELETE,
-                );
+                ];
                 break;
         }
         foreach ($options as $option => $label) {
@@ -92,25 +96,27 @@ class BATCH extends ENCAPSULATE
         }
         ?>
             </select>
-            <input type="hidden" name="action" value="batch<?php echo $this->type ?>"/>
+            <input type="hidden" name="action" value="batch<?php
+            echo $this->type ?>"/>
             <?php
             $manager->addTicketHidden();
 
         // add hidden fields for 'team' and 'comment' batchlists
-        if ($this->type == 'team') {
+        if ('team' === $this->type) {
             echo '<input type="hidden" name="blogid" value="', intRequestVar('blogid'), '" />';
         }
-        if ($this->type == 'comment') {
+        if ('comment' === $this->type) {
             echo '<input type="hidden" name="itemid" value="', intRequestVar('itemid'), '" />';
         }
 
         echo '<input type="submit" value="', _BATCH_EXEC, '" />';
         ?>(
             <a href=""
-               onclick="if (event &amp;&amp; event.preventDefault) event.preventDefault(); return batchSelectAll(1); "><?php echo _BATCH_SELECTALL ?></a>
-            -
+               onclick="if (event &amp;&amp; event.preventDefault) event.preventDefault(); return batchSelectAll(1); "><?php
+            echo _BATCH_SELECTALL ?></a> -
             <a href=""
-               onclick="if (event &amp;&amp; event.preventDefault) event.preventDefault(); return batchSelectAll(0); "><?php echo _BATCH_DESELECTALL ?></a>
+               onclick="if (event &amp;&amp; event.preventDefault) event.preventDefault(); return batchSelectAll(0); "><?php
+            echo _BATCH_DESELECTALL ?></a>
             )
         </div>
         <?php
@@ -120,7 +126,7 @@ class BATCH extends ENCAPSULATE
     public function showList($query, $type, $template, $errorMessage = _LISTS_NOMORE)
     {
         $call   = 'showlist';
-        $params = array($query, $type, $template);
+        $params = [$query, $type, $template];
 
         return $this->doEncapsulate($call, $params, $errorMessage);
     }

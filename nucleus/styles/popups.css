@@ -1,72 +1,73 @@
-@charset 'UTF-8';
 /*
 	media library popup
+	
+	$Id$
 */
 
 body {
-/*	font-family: verdana, arial;*/
-	font-family: "メイリオ", "Meiryo", "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "Osaka", "ＭＳ Ｐゴシック", "MS PGothic", "IPA UIGothic", "IPA mona UIGothic", "VL PGothic", "Sazanami Gothic", "DynaLab-dfghsgothic w5-jisx0208.1990-0", "DynaLab-dfggothic w5-iso8859-1", "Trebuchet MS", "Bitstream Vera Sans", verdana, lucida, arial, helvetica, sans-serif;
-	font-size: small;
-	background-color: #fff;
-	color: #000;
+    font-family: verdana, arial;
+    font-size: medium;
+    background-color: #fff;
+    color: #000;
 }
 
 img {
-	border: none;
+    border: none;
 }
 
 a:link, a:visited {
-	color: #1D3565; 
-	font-weight: bold;
-	text-decoration: none;
+    color: #1D3565;
+    font-weight: bold;
+    text-decoration: none;
 }
+
 a:hover {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 
 .heading {
-	text-align: center;
-	font-size: xx-large;
-	font-weight: bold;
-	color: gray;	
+    text-align: center;
+    font-size: xx-large;
+    font-weight: bold;
+    color: gray;
 }
 
 .heading i {
-	position: absolute;
-	top: 5px;
-	right: 5px;
-	font-size: small;
-	font-style: normal;
-	font-weight: normal;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: medium;
+    font-style: normal;
+    font-weight: normal;
 }
 
 p {
-	text-indent: 20px;
+    text-indent: 20px;
 }
 
 h1 {
-	border-bottom: 1px dotted gray;
-	font-size: x-large;
-	color: #596d9d;
+    border-bottom: 1px dotted gray;
+    font-size: x-large;
+    color: #596d9d;
 }
 
 h2 {
-	color: gray;
-	font-size: large;
-	margin-left: 20px;
-	text-indent: 10px;
-	border-bottom: 1px solid #ddd;
+    color: gray;
+    font-size: large;
+    margin-left: 20px;
+    text-indent: 10px;
+    border-bottom: 1px solid #ddd;
 }
 
 pre, .note, .faq .answer {
-	background-color: #ddd;
-	padding: 10px;
-	font-size: small;
+    background-color: #ddd;
+    padding: 10px;
+    font-size: medium;
 }
 
 .faq .question {
-	font-weight: bold;
-	margin-bottom: 0px;
+    font-weight: bold;
+    margin-bottom: 0px;
 }
 
 .faq .answer {
@@ -74,29 +75,33 @@ pre, .note, .faq .answer {
 }
 
 .faq {
-	margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 table {
-	border: none;
+    border: none;
 }
 
 th {
-	background-color: linen;
-	font-size: medium;
+    background-color: linen;
+    font-size: medium;
 }
 
 th, td {
-	padding: 5px;
+    padding: 5px;
 }
 
 td {
-	background-color: #dddddd;
-	font-size: small;
-	vertical-align: top;
-	text-align: left;
+    background-color: #dddddd;
+    font-size: medium;
+    vertical-align: top;
+    text-align: left;
 }
 
 label {
-	cursor: pointer;
+    cursor: pointer;
+}
+
+input, textarea, select {
+    font: inherit;
 }

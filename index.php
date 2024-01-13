@@ -1,11 +1,11 @@
 <?php
 
 // This file will generate and return the main page of the site
-$CONF         = array();
+$CONF         = [];
 $CONF['Self'] = 'index.php';
 
-if (!@is_file('./config.php')) {
-    if (@is_file('./install/index.php') && !headers_sent()) {
+if ( ! @is_file('./config.php')) {
+    if (@is_file('./install/index.php') && ! headers_sent()) {
         header('Location: ./install/');
         exit;
     }

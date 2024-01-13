@@ -10,10 +10,9 @@
 
 	<skin name="feeds/atom" type="application/atom+xml" includeMode="normal" includePrefix="">
 		<description>Atom 1.0 weblog syndication</description>
-		<part name="index"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
-<feed xml:lang="ja" xmlns="http://www.w3.org/2005/Atom">
+		<part name="index"><![CDATA[<?xml version="1.0" encoding="<%charset%>"?>
+<feed xml:lang="en-us" xmlns="http://www.w3.org/2005/Atom">
     <title><%blogsetting(name)%></title>
-    <subtitle><%blogsetting(desc)%></subtitle>
     <id><%blogsetting(url)%>:<%blogsetting(id)%></id>
 
     <link rel="alternate" type="text/html" href="<%blogsetting(url)%>" />

@@ -53,13 +53,16 @@ class BaseActions
         $this->level = 0;
 
         // if nesting level
-        $this->if_conditions   = array(); // array on which condition values are pushed/popped
-        $this->if_execute      = array();     // array on which condition values are pushed/popped
-        $this->if_currentlevel = 1;        // 1 = current level is displayed; 0 = current level not displayed
+        $this->if_conditions
+            = []; // array on which condition values are pushed/popped
+        $this->if_execute
+            = [];     // array on which condition values are pushed/popped
+        $this->if_currentlevel
+            = 1;        // 1 = current level is displayed; 0 = current level not displayed
 
         // highlights
         $this->strHighlight = '';            // full highlight
-        $this->aHighlight   = array();        // parsed highlight
+        $this->aHighlight   = [];        // parsed highlight
     }
 
     /**
@@ -99,12 +102,12 @@ class BaseActions
         global $skinid;
         $skin = new SKIN($skinid);
         $file = $this->getIncludeFileName($filename);
-        if (!$skin->isValid && !file_exists($file)) {
+        if ( ! $skin->isValid && ! is_file($file)) {
             return;
         }
-        $contents = (!str_contains($filename, '/') ? $skin->getContent($filename) : false);
-        if (!$contents) {
-            if (!is_file($file)) {
+        $contents = ! str_contains($filename, '/') ? $skin->getContent($filename) : false;
+        if ( ! $contents) {
+            if ( ! is_file($file)) {
                 return;
             }
             $contents = file_get_contents($file);
@@ -134,20 +137,21 @@ class BaseActions
     public function getIncludeFileName($filename)
     {
         // leave absolute filenames and http urls as they are
-        if ((substr($filename, 0, 1) == '/')
-            || (substr($filename, 0, 7) == 'http://')
-            || (substr($filename, 0, 6) == 'ftp://')
+        if (('/' === substr($filename, 0, 1))
+            || ('http://' === substr($filename, 0, 7))
+            || ('ftp://' === substr($filename, 0, 6))
         ) {
             return $filename;
         }
 
         $filename = PARSER::getProperty('IncludePrefix') . $filename;
-        if (PARSER::getProperty('IncludeMode') == 'skindir') {
+        if ('skindir' === PARSER::getProperty('IncludeMode')) {
             global $DIR_SKINS;
+
             return $DIR_SKINS . $filename;
-        } else {
-            return $filename;
         }
+
+        return $filename;
     }
 
     /**
@@ -176,9 +180,7 @@ class BaseActions
     public function _addIfCondition($condition)
     {
         $this->if_conditions[] = $condition;
-
         $this->_updateTopIfCondition();
-
         ob_start();
     }
 
@@ -187,10 +189,11 @@ class BaseActions
      */
     public function _updateTopIfCondition()
     {
-        if (count($this->if_conditions) == 0) {
+        if (0 == count($this->if_conditions)) {
             $this->if_currentlevel = 1;
         } else {
-            $this->if_currentlevel = $this->if_conditions[count($this->if_conditions) - 1];
+            $this->if_currentlevel
+                = $this->if_conditions[count($this->if_conditions) - 1];
         }
     }
 
@@ -204,12 +207,13 @@ class BaseActions
 
     /**
      * Helper function for elseif / elseifnot
-     * @param string condition to be fullfilled
+     *
+     * @param   string condition to be fullfilled
      */
     public function _updateIfExecute($condition)
     {
         $index = count($this->if_execute) - 1;
-        if (!isset($this->if_execute[$index])) {
+        if ( ! isset($this->if_execute[$index])) {
             $this->if_execute[$index] = 0;
         }
         $this->if_execute[$index] = $this->if_execute[$index] || $condition;
@@ -227,7 +231,7 @@ class BaseActions
      * Sets the search terms to be highlighted
      *
      * @param $highlight
-     *        A series of search terms
+     *                   A series of search terms
      */
     public function setHighlight($highlight)
     {
@@ -241,16 +245,17 @@ class BaseActions
      * Applies the highlight to the given piece of text
      *
      * @param &$data
-     *        Data that needs to be highlighted
+     *               Data that needs to be highlighted
+     *
      * @see setHighlight
      */
     public function highlight(&$data)
     {
-        if ($this->aHighlight) {
-            return highlight($data, $this->aHighlight, $this->template['SEARCH_HIGHLIGHT']);
-        } else {
+        if ( ! $this->aHighlight) {
             return $data;
         }
+
+        return highlight($data, $this->aHighlight, $this->template['SEARCH_HIGHLIGHT']);
     }
 
     /**
@@ -259,9 +264,7 @@ class BaseActions
     public function parse_if()
     {
         $this->_addIfExecute();
-
-        $args      = func_get_args();
-        $condition = call_user_func_array(array($this, 'checkCondition'), $args);
+        $condition = call_user_func_array([$this, 'checkCondition'], func_get_args());
         $this->_addIfCondition($condition);
     }
 
@@ -270,7 +273,7 @@ class BaseActions
      */
     public function parse_else()
     {
-        if (count($this->if_conditions) == 0) {
+        if (0 == count($this->if_conditions)) {
             return;
         }
         array_pop($this->if_conditions);
@@ -292,7 +295,7 @@ class BaseActions
      */
     public function parse_elseif()
     {
-        if (count($this->if_conditions) == 0) {
+        if (0 == count($this->if_conditions)) {
             return;
         }
         array_pop($this->if_conditions);
@@ -305,8 +308,7 @@ class BaseActions
             $this->_addIfCondition(0);
         } else {
             ob_end_clean();
-            $args      = func_get_args();
-            $condition = call_user_func_array(array($this, 'checkCondition'), $args);
+            $condition = call_user_func_array([$this, 'checkCondition'], func_get_args());
             $this->_addIfCondition($condition);
         }
     }
@@ -317,10 +319,8 @@ class BaseActions
     public function parse_ifnot()
     {
         $this->_addIfExecute();
-
-        $args      = func_get_args();
-        $condition = call_user_func_array(array($this, 'checkCondition'), $args);
-        $this->_addIfCondition(!$condition);
+        $condition = call_user_func_array([$this, 'checkCondition'], func_get_args());
+        $this->_addIfCondition( ! $condition);
     }
 
     /**
@@ -328,7 +328,7 @@ class BaseActions
      */
     public function parse_elseifnot()
     {
-        if (count($this->if_conditions) == 0) {
+        if (0 == count($this->if_conditions)) {
             return;
         }
         array_pop($this->if_conditions);
@@ -341,9 +341,8 @@ class BaseActions
             $this->_addIfCondition(0);
         } else {
             ob_end_clean();
-            $args      = func_get_args();
-            $condition = call_user_func_array(array($this, 'checkCondition'), $args);
-            $this->_addIfCondition(!$condition);
+            $condition = call_user_func_array([$this, 'checkCondition'], func_get_args());
+            $this->_addIfCondition( ! $condition);
         }
     }
 
@@ -354,7 +353,7 @@ class BaseActions
     public function parse_endif()
     {
         // we can only close what has been opened
-        if (count($this->if_conditions) == 0) {
+        if (0 == count($this->if_conditions)) {
             return;
         }
 

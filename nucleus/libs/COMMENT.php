@@ -25,9 +25,12 @@ class COMMENT
      */
     public static function getComment($commentid)
     {
-        $query = 'SELECT `cnumber` AS commentid, `cbody` AS body, `cuser` AS user, `cmail` AS userid, `cemail` AS email, `cmember` AS memberid, `ctime`, `chost` AS host, `mname` AS member, `cip` AS ip, `cblog` AS blogid'
-            . ' FROM ' . sql_table('comment') . ' LEFT OUTER JOIN ' . sql_table('member') . ' ON `cmember` = `mnumber`'
-            . ' WHERE `cnumber` = ' . intval($commentid);
+        $query = sprintf(
+            "SELECT `cnumber` AS commentid, `cbody` AS body, `cuser` AS user, `cmail` AS userid, `cemail` AS email, `cmember` AS memberid, `ctime`, `chost` AS host, `mname` AS member, `cip` AS ip, `cblog` AS blogid FROM %s LEFT OUTER JOIN %s ON `cmember`=`mnumber` WHERE `cnumber`=%s",
+            sql_table('comment'),
+            sql_table('member'),
+            (int) $commentid
+        );
         $comments = sql_query($query);
 
         $aCommentInfo = sql_fetch_assoc($comments);
@@ -56,10 +59,12 @@ class COMMENT
         $comment['email']  = trim(strtr($comment['email'], "\'\"\n", '-- '));
 
         // begin if: a comment userid is supplied, but does not have an "http://" or "https://" at the beginning - prepend an "http://"
-        if (!empty($comment['userid'])
-            && (!str_starts_with($comment['userid'], 'http://'))
-            && (!str_starts_with($comment['userid'], 'https://'))
-        ) {
+        if ( ! empty($comment['userid'])
+             && ( ! str_starts_with($comment['userid'], 'http://'))
+             && ( ! str_starts_with(
+                 $comment['userid'],
+                 'https://'
+             ))) {
             $comment['userid'] = 'http://' . $comment['userid'];
         } // end if
 
@@ -94,14 +99,13 @@ class COMMENT
         // create hyperlinks for http:// addresses
         // there's a testcase for this in /build/testcases/urllinking.txt
 
-        $replace_from = array(
+        $replace_from = [
             '/([^:\/\/\w]|^)((https:\/\/)([\w\.-]+)([\/\w+\.~%&?@=_:;#,-]+))/i',
             '/([^:\/\/\w]|^)((http:\/\/|www\.)([\w\.-]+)([\/\w+\.~%&?@=_:;#,-]+))/i',
             '/([^:\/\/\w]|^)((ftp:\/\/|ftp\.)([\w\.-]+)([\/\w+\.~%&?@=_:;#,-]+))/i',
-            '/([^:\/\/\w]|^)(mailto:(([a-zA-Z\@\%\.\-\+_])+))/i'
-        );
-
-        $body = preg_replace_callback($replace_from, array('self', 'prepareBody_cb'), $body);
+            '/([^:\/\/\w]|^)(mailto:(([a-zA-Z\@\%\.\-\+_])+))/i',
+        ];
+        $body = preg_replace_callback($replace_from, self::class . '::prepareBody_cb', $body);
 
         return $body;
     }
@@ -118,7 +122,7 @@ class COMMENT
         // it's possible that $url ends contains entities we don't want,
         // since htmlspecialchars is applied _before_ URL linking
         // move the part of URL, starting from the disallowed entity to the 'post' link part
-        $aBadEntities = array('&quot;', '&gt;', '&lt;');
+        $aBadEntities = ['&quot;', '&gt;', '&lt;'];
         foreach ($aBadEntities as $entity) {
             $pos = strpos($url, $entity);
 
@@ -129,44 +133,50 @@ class COMMENT
         }
 
         // remove entities at end (&&&&)
+        $matches = [];
         if (preg_match('/(&\w+;)+$/i', $url, $matches)) {
             $post = $matches[0] . $post;    // found entities (1 or more)
             $url  = substr($url, 0, strlen($url) - strlen($post));
         }
 
         // move ending comma from url to 'post' part
-        if (substr($url, strlen($url) - 1) == ',') {
+        if (',' == substr($url, strlen($url) - 1)) {
             $url  = substr($url, 0, strlen($url) - 1);
             $post = ',' . $post;
         }
 
-        if (!preg_match('#^' . $protocol . '://#', $url)) {
-            $linkedUrl = $protocol . (($protocol == 'mailto') ? ':' : '://') . $url;
+        if ( ! preg_match('#^' . $protocol . '://#', $url)) {
+            $linkedUrl = $protocol . (('mailto' == $protocol) ? ':' : '://')
+                         . $url;
         } else {
             $linkedUrl = $url;
         }
 
-        if ($protocol != 'mailto') {
+        if ('mailto' != $protocol) {
             $displayedUrl = $linkedUrl;
         } else {
             $displayedUrl = $url;
         }
 
-        return $pre . '<a href="' . $linkedUrl . '" rel="nofollow">' . shorten(
-            $displayedUrl,
-            30,
-            '...'
-        ) . '</a>' . $post;
+        return $pre . '<a href="' . $linkedUrl . '" rel="nofollow">'
+               . shorten(
+                   $displayedUrl,
+                   30,
+                   '...'
+               ) . '</a>' . $post;
     }
 
     /**
      * This method is a callback for creating link codes
-     * @param  array  $match
+     *
+     * @param array $match
+     *
      * @return string
      */
     public static function prepareBody_cb($match)
     {
-        if (!preg_match('/^[a-z]+/i', $match[2], $protocol)) {
+        $protocol = [];
+        if ( ! preg_match('/^[a-z]+/i', $match[2], $protocol)) {
             return $match[0];
         }
 

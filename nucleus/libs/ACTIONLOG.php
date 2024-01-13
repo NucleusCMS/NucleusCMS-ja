@@ -28,7 +28,7 @@ class ACTIONLOG
      */
     public static function add($level, $message)
     {
-        global $member, $CONF, $DB_PHP_MODULE_NAME;
+        global $member, $CONF;
 
         if ($CONF['LogLevel'] < $level) {
             return;
@@ -38,20 +38,20 @@ class ACTIONLOG
             $message = sprintf('[%s] %s', $member->getDisplayName(), $message);
         }
 
-        $timestamp = date('Y-m-d H:i:s', $_SERVER['REQUEST_TIME']);    // format timestamp
-        if ($DB_PHP_MODULE_NAME == 'pdo') {
-            $query = sprintf("INSERT INTO `%s` (timestamp, message) VALUES (?, ?)", sql_table('actionlog'));
-            sql_prepare_execute($query, array((string)$timestamp, (string)$message));
-        } else {
-            $message = sql_quote_string($message);        // add slashes
-            $query   = sprintf(
-                "INSERT INTO `%s` (timestamp, message) VALUES ('%s', %s)",
-                sql_table('actionlog'),
-                $timestamp,
-                $message
-            );
-            sql_query($query);
-        }
+        $timestamp = date(
+            'Y-m-d H:i:s',
+            $_SERVER['REQUEST_TIME']
+        );    // format timestamp
+        sql_prepare_execute(
+            sprintf(
+                'INSERT INTO `%s` (timestamp, message) VALUES (?, ?)',
+                sql_table('actionlog')
+            ),
+            [
+                (string) $timestamp,
+                (string) $message,
+            ]
+        );
 
         ACTIONLOG::trimLog();
     }
@@ -62,7 +62,7 @@ class ACTIONLOG
      */
     public static function addUnique($level, $message)
     {
-        global $member, $CONF, $DB_PHP_MODULE_NAME;
+        global $member, $CONF;
 
         if ($CONF['LogLevel'] < $level) {
             return;
@@ -73,13 +73,11 @@ class ACTIONLOG
             $msg = "[" . $member->getDisplayName() . "] " . $msg;
         }
 
-        if ($DB_PHP_MODULE_NAME == 'pdo') {
-            $query = sprintf("DELETE FROM `%s` WHERE message = ?", sql_table('actionlog'));
-            sql_prepare_execute($query, array((string)$msg));
-        } else {
-            $query = sprintf("DELETE FROM `%s` WHERE message = %s", sql_table('actionlog'), sql_quote_string($msg));
-            sql_query($query);
-        }
+        $query = sprintf(
+            "DELETE FROM `%s` WHERE message=?",
+            sql_table('actionlog')
+        );
+        sql_prepare_execute($query, [(string) $msg]);
 
         ACTIONLOG::add($level, $message);
     }
@@ -91,16 +89,15 @@ class ACTIONLOG
     {
         global $manager;
 
-        $query = 'DELETE FROM ' . sql_table('actionlog');
-
-        $param = array();
+        $param = [];
         $manager->notify('ActionLogCleared', $param);
 
-        return sql_query($query);
+        return sql_query(sprintf('DELETE FROM %s', sql_table('actionlog')));
     }
 
     /**
-     * (Static) Method to trim the action log (from over 500 back to 250 entries)
+     * (Static) Method to trim the action log (from over 500 back to 250
+     * entries)
      */
     public static function trimLog()
     {
@@ -114,14 +111,27 @@ class ACTIONLOG
         // trim
         $checked = 1;
 
-        $iTotal = quickQuery('SELECT COUNT(*) AS result FROM ' . sql_table('actionlog'));
+        $iTotal = quickQuery(sprintf(
+            'SELECT COUNT(*) AS result FROM %s',
+            sql_table('actionlog')
+        ));
 
         // if size > 500, drop back to about 250
         $iMaxSize  = 500;
         $iDropSize = 250;
         if ($iTotal > $iMaxSize) {
-            $tsChop = quickQuery('SELECT timestamp as result FROM ' . sql_table('actionlog') . ' ORDER BY timestamp DESC LIMIT ' . $iDropSize . ',1');
-            sql_query('DELETE FROM ' . sql_table('actionlog') . ' WHERE timestamp < \'' . $tsChop . '\'');
+            $tsChop = quickQuery(
+                sprintf(
+                    'SELECT timestamp as result FROM %s ORDER BY timestamp DESC LIMIT %d,1',
+                    sql_table('actionlog'),
+                    $iDropSize
+                )
+            );
+            sql_query(sprintf(
+                "DELETE FROM %s WHERE timestamp < '%s'",
+                sql_table('actionlog'),
+                $tsChop
+            ));
         }
     }
 }

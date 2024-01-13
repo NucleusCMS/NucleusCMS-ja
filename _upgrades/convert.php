@@ -77,11 +77,11 @@ class convert
         @set_time_limit(0);
 
         $rs = sql_query("SHOW TABLES LIKE '{$currentPrefix}%'");
-        if (!$rs) {
+        if ( ! $rs) {
             exit('Nucleusのtableがありません。何もせずに終了します。');
         }
 
-        $srcTableNames = array();
+        $srcTableNames = [];
         while ($row = sql_fetch_array($rs)) {
             $srcTableNames[] = $row[0];
         }
@@ -91,7 +91,7 @@ class convert
 
             sql_query("SET NAMES {$this->current_charset}");
             sql_query("CREATE TABLE `{$tmpTableName}` LIKE `{$srcTableName}`");
-            $vs  = array($tmpTableName, $new_charset, $new_collation);
+            $vs  = [$tmpTableName, $new_charset, $new_collation];
             $sql = vsprintf("ALTER TABLE `%s` CONVERT TO CHARACTER SET %s COLLATE %s", $vs);
             sql_query($sql);
 
@@ -99,8 +99,8 @@ class convert
             $rs = sql_query("SELECT * FROM `{$srcTableName}`");
             if (0 < sql_num_rows($rs)) {
                 while ($row = sql_fetch_object($rs)) {
-                    $fields = array();
-                    $values = array();
+                    $fields = [];
+                    $values = [];
                     foreach ($row as $fieldName => $value) {
                         $v        = sql_real_escape_string($value);
                         $fields[] = "`{$fieldName}`";
@@ -117,7 +117,7 @@ class convert
             $output[] = sprintf('%s のデータを%sに変換しました。<br />', $srcTableName, $new_charset);
         }
 
-        if ($this->current_charset === 'ujis') {
+        if ('ujis' === $this->current_charset) {
             sql_query(sprintf("UPDATE %s SET `value`='japanese-utf8' WHERE `name`='Language'", sql_table('config')));
         }
         return implode("\n", $output) . '<p>変換を完了しました。 <a href="convert.php">戻る</a></p>';
@@ -130,16 +130,16 @@ class convert
         $i = 0;
         while ($i < 5) {
             $i++;
-            if ($i == 1) {
+            if (1 == $i) {
                 $bkPrefix = 'bak_';
             } else {
                 $bkPrefix = sprintf('bak%s_', $i);
             }
             $rs = sql_query("SHOW TABLES LIKE '{$bkPrefix}%'");
-            if (!sql_num_rows($rs)) {
+            if ( ! sql_num_rows($rs)) {
                 break;
             }
-            if ($i == 5) {
+            if (5 == $i) {
                 exit('バックアップを作成できません。終了します。');
             }
         }
@@ -196,12 +196,12 @@ class convert
     public function getOptions()
     {
         $tpl = '<option value="<%collation%>"><%collation%>に変換</option>';
-        $_   = array();
+        $_   = [];
         foreach ($this->collations as $collation) {
             if ($collation === $this->current_collation) {
                 continue;
             }
-            $_[] = parseText($tpl, array('collation' => $collation));
+            $_[] = parseText($tpl, ['collation' => $collation]);
         }
         return implode("\n", $_);
     }
