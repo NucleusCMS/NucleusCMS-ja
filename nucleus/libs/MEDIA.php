@@ -120,6 +120,10 @@ class MEDIA
     {
         global $member, $DIR_MEDIA;
 
+        if (!is_string($collectionName)) {
+            $collectionName = (string) $collectionName;
+        }
+
         // allow creating new private directory
         if ($collectionName === (string)$member->getID()) {
             return true;
