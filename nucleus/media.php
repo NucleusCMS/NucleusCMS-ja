@@ -103,7 +103,7 @@ function media_select()
     // currently selected collection
     $currentCollection = requestVar('collection');
     if (!$currentCollection || !@is_dir($DIR_MEDIA . $currentCollection)) {
-        $currentCollection = $member->getID();
+        $currentCollection = (string)$member->getID();
     }
 
     // avoid directory travarsal and accessing invalid directory
